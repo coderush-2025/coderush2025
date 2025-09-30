@@ -1,21 +1,17 @@
+
 "use client";
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import ChatBot from "@/components/ChatBox";
 
-const Hero = () => {
-  const heroRef = useRef<HTMLDivElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
+export default function RegisterPage() {
   const backgroundRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
-    // Remove typewriter effect - now using image instead of text
-
-    // Morphing background with multiple gradients
+    // Morphing background with multiple gradients - same as Hero component
     const gradients = [
       "linear-gradient(135deg, #0e243f 0%, #204168 50%, #37c2cc 100%)",
       "linear-gradient(225deg, #37c2cc 0%, #0e243f 50%, #204168 100%)",
@@ -39,7 +35,7 @@ const Hero = () => {
     };
     changeGradient();
 
-    // Liquid bubble animations
+    // Liquid bubble animations - same as Hero component
     const bubbles = document.querySelectorAll(".liquid-bubble");
     bubbles.forEach((bubble, index) => {
       // Random floating motion
@@ -67,10 +63,7 @@ const Hero = () => {
   }, []);
 
   return (
-    <div
-      ref={heroRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
-    >
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Animated Background */}
       <div
         ref={backgroundRef}
@@ -81,7 +74,7 @@ const Hero = () => {
         }}
       />
 
-      {/* Liquid Bubble Animation */}
+      {/* Liquid Bubble Animation - Same as Hero */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
         viewBox="0 0 1200 800"
@@ -228,8 +221,8 @@ const Hero = () => {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center text-white px-4">
+        {/* Logo */}
         <motion.div
-          ref={logoRef}
           className="mb-8"
           initial={{ opacity: 0, scale: 0.5, rotateX: -90 }}
           animate={{ opacity: 1, scale: 1, rotateX: 0 }}
@@ -243,14 +236,16 @@ const Hero = () => {
           <Image
             src="/Coderush.png"
             alt="CodeRush 2025"
-            width={8000}
-            height={4000}
-            className="w-auto h-auto max-w-full"
+            width={4000}
+            height={2000}
+            className="w-auto h-auto max-w-full max-h-32"
             priority
           />
         </motion.div>
-        <motion.p
-          className="text-xl md:text-3xl mb-8 max-w-2xl font-light tracking-wide leading-relaxed"
+
+        {/* Registration Title */}
+        <motion.h1
+          className="text-2xl md:text-4xl mb-8 font-light tracking-wide leading-relaxed"
           style={{
             background:
               "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
@@ -264,48 +259,23 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0, skewX: 0 }}
           transition={{
             duration: 1,
-            delay: 1,
+            delay: 0.5,
             ease: "easeOut",
           }}
         >
-          The Ultimate Hackathon Competition
-        </motion.p>
-        <motion.button
-          className="px-10 py-5 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-[#0e243f] font-bold text-lg rounded-xl border-2 border-[#37c2cc] shadow-lg hover:shadow-2xl transition-all duration-500 relative overflow-hidden group"
-          style={{
-            fontFamily: "system-ui, -apple-system, sans-serif",
-            letterSpacing: "0.5px",
-          }}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.5 }}
-          whileHover={{
-            scale: 1.05,
-            boxShadow:
-              "0 0 40px rgba(55, 194, 204, 0.6), 0 0 80px rgba(55, 194, 204, 0.3)",
-          }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => router.push("/register")}
+          Team Registration
+        </motion.h1>
+
+        {/* ChatBot */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 1 }}
+          className="w-full max-w-lg"
         >
-          <span className="relative z-10 group-hover:text-white transition-colors duration-300">
-            Join the Rush
-          </span>
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-[#0e243f] via-[#204168] to-[#0e243f] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            initial={{ x: "-100%" }}
-            whileHover={{ x: "0%" }}
-            transition={{ duration: 0.6 }}
-          />
-          <motion.div
-            className="absolute inset-0 border-2 border-transparent group-hover:border-[#37c2cc] rounded-xl"
-            initial={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          />
-        </motion.button>
+          <ChatBot />
+        </motion.div>
       </div>
     </div>
   );
-};
-
-export default Hero;
+}
