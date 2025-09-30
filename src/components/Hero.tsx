@@ -4,11 +4,13 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const Hero = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const backgroundRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     // Remove typewriter effect - now using image instead of text
@@ -283,6 +285,7 @@ const Hero = () => {
               "0 0 40px rgba(55, 194, 204, 0.6), 0 0 80px rgba(55, 194, 204, 0.3)",
           }}
           whileTap={{ scale: 0.98 }}
+          onClick={() => router.push("/register")}
         >
           <span className="relative z-10 group-hover:text-white transition-colors duration-300">
             Join the Rush

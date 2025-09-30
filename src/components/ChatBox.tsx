@@ -15,6 +15,7 @@ export default function ChatBot() {
     }
   ]);
   const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
 
   const [sessionId] = useState(() => {
     // Check if we're in the browser environment
@@ -34,6 +35,7 @@ export default function ChatBot() {
 
     const userMsg: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
+    setIsTyping(true);
 
     try {
       const res = await fetch("/api/chat", {
@@ -80,41 +82,113 @@ export default function ChatBot() {
       ]);
     } finally {
       setInput("");
+      setIsTyping(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-4 border rounded">
-      <div className="h-96 overflow-y-auto mb-2 border p-2">
+    <div className="w-full max-w-lg mx-auto p-8 bg-white/10 backdrop-blur-xl border border-[#37c2cc]/30 rounded-2xl shadow-2xl relative overflow-hidden">
+      {/* Background gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#37c2cc]/10 via-transparent to-[#0e243f]/20 pointer-events-none" />
+      
+      {/* Header */}
+      <div className="relative z-10 mb-6 text-center">
+        <h3 
+          className="text-xl font-semibold text-white mb-2"
+          style={{
+            background: "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            fontFamily: "system-ui, -apple-system, sans-serif",
+          }}
+        >
+          Team Registration Assistant
+        </h3>
+        <div className="h-px bg-gradient-to-r from-transparent via-[#37c2cc]/50 to-transparent" />
+      </div>
+
+      {/* Messages Container */}
+      <div className="relative z-10 h-80 overflow-y-auto mb-6 bg-black/30 backdrop-blur-sm rounded-xl border border-[#37c2cc]/20 p-4 space-y-4 scrollbar-thin scrollbar-thumb-[#37c2cc]/40 scrollbar-track-transparent">
         {messages.map((m, i) => (
           <div
             key={i}
-            className={m.role === "user" ? "text-right" : "text-left"}
+            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
+            style={{ animationDelay: `${i * 0.1}s` }}
           >
-            <span
-              className={
+            <div
+              className={`max-w-xs xl:max-w-sm p-4 rounded-xl shadow-lg relative ${
                 m.role === "user"
-                  ? "bg-blue-200 p-2 rounded"
-                  : "bg-gray-200 p-2 rounded"
-              }
+                  ? "bg-gradient-to-br from-[#37c2cc] to-[#2ba8b3] text-[#0e243f] font-medium border border-[#37c2cc]/50"
+                  : "bg-white/95 backdrop-blur-sm text-[#0e243f] border border-white/30"
+              }`}
+              style={{
+                fontFamily: "system-ui, -apple-system, sans-serif",
+                lineHeight: "1.5",
+              }}
             >
+              {m.role === "bot" && (
+                <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#37c2cc] rounded-full flex items-center justify-center text-[#0e243f] text-xs font-bold">
+                  🤖
+                </div>
+              )}
               {m.content}
-            </span>
+              <div className={`absolute bottom-0 ${m.role === "user" ? "right-0" : "left-0"} w-0 h-0 ${
+                m.role === "user" 
+                  ? "border-l-8 border-l-[#37c2cc] border-t-8 border-t-transparent transform translate-x-2" 
+                  : "border-r-8 border-r-white/95 border-t-8 border-t-transparent transform -translate-x-2"
+              }`} />
+            </div>
           </div>
         ))}
+        
+        {/* Typing Indicator */}
+        {isTyping && (
+          <div className="flex justify-start animate-fade-in">
+            <div className="max-w-xs xl:max-w-sm p-4 rounded-xl shadow-lg relative bg-white/95 backdrop-blur-sm text-[#0e243f] border border-white/30">
+              <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#37c2cc] rounded-full flex items-center justify-center text-[#0e243f] text-xs font-bold">
+                🤖
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-[#37c2cc] rounded-full animate-bounce" style={{animationDelay: "0ms"}}></div>
+                  <div className="w-2 h-2 bg-[#37c2cc] rounded-full animate-bounce" style={{animationDelay: "150ms"}}></div>
+                  <div className="w-2 h-2 bg-[#37c2cc] rounded-full animate-bounce" style={{animationDelay: "300ms"}}></div>
+                </div>
+                <span className="text-sm text-[#0e243f]/70 ml-2">Typing...</span>
+              </div>
+              <div className="absolute bottom-0 left-0 w-0 h-0 border-r-8 border-r-white/95 border-t-8 border-t-transparent transform -translate-x-2" />
+            </div>
+          </div>
+        )}
       </div>
-      <div className="flex">
-        <input
-          className="flex-1 border rounded p-2"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
+
+      {/* Input Container */}
+      <div className="relative z-10 flex gap-3">
+        <div className="flex-1 relative">
+          <input
+            className="w-full bg-white/90 backdrop-blur-sm border-2 border-[#37c2cc]/30 rounded-xl p-4 text-[#0e243f] placeholder-[#0e243f]/60 focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all duration-300 shadow-lg"
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            style={{
+              fontFamily: "system-ui, -apple-system, sans-serif",
+            }}
+          />
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#37c2cc]/10 to-[#2ba8b3]/10 pointer-events-none" />
+        </div>
         <button
           onClick={sendMessage}
-          className="ml-2 bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-[#0e243f] font-bold px-6 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 relative overflow-hidden group"
+          style={{
+            fontFamily: "system-ui, -apple-system, sans-serif",
+          }}
         >
-          Send
+          <span className="relative z-10 group-hover:text-white transition-colors duration-300">
+            Send
+          </span>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0e243f] to-[#204168] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </button>
       </div>
     </div>
