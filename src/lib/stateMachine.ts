@@ -9,7 +9,7 @@ type StateConfig = {
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const indexRegex = /^[A-Za-z0-9\/-]+$/;
-const batchRegex = /^[0-9]{4}$/;
+const batchRegex = /^[0-9]{2}$/;
 
 export const MEMBER_COUNT = 4;
 

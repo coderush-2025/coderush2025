@@ -83,6 +83,9 @@ export async function POST(req: Request) {
   if (reg.state === "MEMBER_DETAILS") {
     if (!reg.currentMember) reg.currentMember = 1;
 
+    console.log("🔍 MEMBER_DETAILS state - tempMember:", JSON.stringify(reg.tempMember, null, 2));
+    console.log("🔍 Current member:", reg.currentMember, "Message:", message);
+
     // fullName
     if (!reg.tempMember) {
       if (!message) return NextResponse.json({ reply: `Member ${reg.currentMember} — Full name:` });
@@ -93,34 +96,74 @@ export async function POST(req: Request) {
 
     // indexNumber
     if (reg.tempMember && !reg.tempMember.indexNumber) {
-      if (!validators.index(message)) {
+      const trimmedMessage = message.trim();
+      if (!validators.index(trimmedMessage)) {
         return NextResponse.json({ reply: "❌ Invalid index number. Please try again (e.g., IT2023/101)." });
       }
-      reg.tempMember.indexNumber = message;
+      
+      // Create a new tempMember object to ensure proper MongoDB update
+      reg.tempMember = {
+        ...reg.tempMember,
+        indexNumber: trimmedMessage
+      };
+      
+      // Mark the field as modified for mongoose
+      reg.markModified('tempMember');
       await reg.save();
-      return NextResponse.json({ reply: `Member ${reg.currentMember} — Batch (e.g., 2023):` });
+      return NextResponse.json({ 
+        reply: `Member ${reg.currentMember} — Select your batch:`,
+        buttons: [
+          { text: "Batch 22", value: "22" },
+          { text: "Batch 23", value: "23" },
+          { text: "Batch 24", value: "24" }
+        ]
+      });
     }
 
     // batch
     if (reg.tempMember && reg.tempMember.indexNumber && !reg.tempMember.batch) {
-      if (!validators.batch(message)) {
-        return NextResponse.json({ reply: "❌ Invalid batch. Enter a 4-digit year, e.g., 2023." });
+      const trimmedMessage = message.trim();
+      console.log("🔍 Validating batch:", `"${message}"`, "Trimmed:", `"${trimmedMessage}"`, "Valid:", validators.batch(trimmedMessage));
+      console.log("🔍 tempMember before batch update:", JSON.stringify(reg.tempMember, null, 2));
+      
+      if (!validators.batch(trimmedMessage)) {
+        return NextResponse.json({ reply: "❌ Invalid batch. Must be exactly 2 digits (e.g., 21, 22, 23, 24). Please enter your batch:" });
       }
-      reg.tempMember.batch = message;
+      
+      // Create a new tempMember object to ensure proper MongoDB update
+      reg.tempMember = {
+        ...reg.tempMember,
+        batch: trimmedMessage
+      };
+      
+      // Mark the field as modified for mongoose
+      reg.markModified('tempMember');
       await reg.save();
+      
+      console.log("🔍 tempMember after batch update:", JSON.stringify(reg.tempMember, null, 2));
       return NextResponse.json({ reply: `Member ${reg.currentMember} — Email:` });
     }
 
     // email
     if (reg.tempMember && reg.tempMember.batch && !reg.tempMember.email) {
-      if (!validators.email(message)) {
+      const trimmedMessage = message.trim();
+      if (!validators.email(trimmedMessage)) {
         return NextResponse.json({ reply: "❌ Invalid email. Please enter a valid email address." });
       }
-      reg.tempMember.email = message;
+      
+      // Create a new tempMember object to ensure proper MongoDB update
+      reg.tempMember = {
+        ...reg.tempMember,
+        email: trimmedMessage
+      };
 
       // push completed member
       reg.members.push(reg.tempMember as Required<typeof reg.tempMember>);
       reg.tempMember = undefined;
+      
+      // Mark the fields as modified for mongoose
+      reg.markModified('members');
+      reg.markModified('tempMember');
       await reg.save();
 
       if ((reg.members || []).length < MEMBER_COUNT) {
@@ -132,6 +175,33 @@ export async function POST(req: Request) {
         await reg.save();
         return NextResponse.json({ reply: states.CONSENT.prompt });
       }
+    }
+
+    // Fallback case - this shouldn't happen but provides debugging info
+    console.log("⚠️ Unexpected MEMBER_DETAILS state:", {
+      hasTempMember: !!reg.tempMember,
+      tempMember: reg.tempMember,
+      currentMember: reg.currentMember
+    });
+    
+    // Determine what to ask for based on current state
+    if (reg.tempMember) {
+      if (!reg.tempMember.indexNumber) {
+        return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number:` });
+      } else if (!reg.tempMember.batch) {
+        return NextResponse.json({ 
+          reply: `Member ${reg.currentMember} — Select your batch:`,
+          buttons: [
+            { text: "Batch 22", value: "22" },
+            { text: "Batch 23", value: "23" },
+            { text: "Batch 24", value: "24" }
+          ]
+        });
+      } else if (!reg.tempMember.email) {
+        return NextResponse.json({ reply: `Member ${reg.currentMember} — Email:` });
+      }
+    } else {
+      return NextResponse.json({ reply: `Member ${reg.currentMember} — Full name:` });
     }
   }
 

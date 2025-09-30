@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 interface Message {
   role: "user" | "bot";
   content: string;
+  buttons?: { text: string; value: string }[];
 }
 
 export default function ChatBot() {
@@ -30,10 +31,20 @@ export default function ChatBot() {
     return id;
   });
 
+  const handleButtonClick = async (value: string) => {
+    const userMsg: Message = { role: "user", content: value };
+    setMessages((prev) => [...prev, userMsg]);
+    await sendMessageToAPI(value);
+  };
+
   const sendMessage = async () => {
     if (!input.trim()) return;
+    await sendMessageToAPI(input);
+    setInput("");
+  };
 
-    const userMsg: Message = { role: "user", content: input };
+  const sendMessageToAPI = async (message: string) => {
+    const userMsg: Message = { role: "user", content: message };
     setMessages((prev) => [...prev, userMsg]);
     setIsTyping(true);
 
@@ -43,7 +54,7 @@ export default function ChatBot() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ sessionId, message: input }),
+        body: JSON.stringify({ sessionId, message }),
       });
 
       // Check if the response is ok
@@ -67,7 +78,12 @@ export default function ChatBot() {
       }
 
       if (data.reply) {
-        setMessages((prev) => [...prev, { role: "bot", content: data.reply }]);
+        const botMessage: Message = { 
+          role: "bot", 
+          content: data.reply,
+          buttons: data.buttons || undefined
+        };
+        setMessages((prev) => [...prev, botMessage]);
       } else {
         setMessages((prev) => [...prev, { role: "bot", content: "Sorry, I didn't receive a proper response. Please try again." }]);
       }
@@ -81,7 +97,6 @@ export default function ChatBot() {
         }
       ]);
     } finally {
-      setInput("");
       setIsTyping(false);
     }
   };
@@ -132,7 +147,26 @@ export default function ChatBot() {
                   🤖
                 </div>
               )}
-              {m.content}
+              <div>{m.content}</div>
+              
+              {/* Render buttons if they exist */}
+              {m.buttons && m.buttons.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {m.buttons.map((button, btnIndex) => (
+                    <button
+                      key={btnIndex}
+                      onClick={() => handleButtonClick(button.value)}
+                      className="bg-[#37c2cc] hover:bg-[#2ba8b3] text-[#0e243f] font-medium px-3 py-1 rounded-lg text-sm transition-all duration-200 hover:scale-105 shadow-md"
+                      style={{
+                        fontFamily: "system-ui, -apple-system, sans-serif",
+                      }}
+                    >
+                      {button.text}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
               <div className={`absolute bottom-0 ${m.role === "user" ? "right-0" : "left-0"} w-0 h-0 ${
                 m.role === "user" 
                   ? "border-l-8 border-l-[#37c2cc] border-t-8 border-t-transparent transform translate-x-2" 

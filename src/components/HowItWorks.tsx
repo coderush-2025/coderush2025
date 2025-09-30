@@ -1,6 +1,10 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import React from "react";
 
 const HowItWorks = () => {
+  const router = useRouter();
   const steps = [
     "CodeRush 2025 will be conducted entirely on the HackerRank platform.",
     "Each team must consist of four registered participants.",
@@ -74,7 +78,10 @@ const HowItWorks = () => {
               Gather your team of four and prepare for the ultimate coding
               challenge on HackerRank!
             </p>
-            <button className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-900 font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-cyan-400/25 text-sm">
+            <button
+              onClick={() => router.push("/register")}
+              className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-900 font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-cyan-400/25 text-sm"
+            >
               Register Your Team
             </button>
           </div>
