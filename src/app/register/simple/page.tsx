@@ -1,5 +1,5 @@
-import SimpleRegistrationForm from "@/components/SimpleRegistrationForm";
+import { redirect } from "next/navigation";
 
 export default function SimpleRegisterPage() {
-  return <SimpleRegistrationForm />;
+  redirect("/register");
 }
