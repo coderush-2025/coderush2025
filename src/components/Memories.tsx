@@ -3,8 +3,6 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ParallaxScroll } from "../ui/parallax-scroll";
-import { WobbleCard } from "../ui/wobble-card";
-import { BlurFade } from "./BlurFade";
 
 const galleryImages = [
   "/1.jpeg",
