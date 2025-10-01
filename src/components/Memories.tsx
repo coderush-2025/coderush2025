@@ -47,8 +47,8 @@ const galleryImages = [
 
 const Memories = () => {
   return (
-    <section className="py-16 bg-gradient-to-b from-blue-50 via-[#204168] to-[#37c2cc]">
-      <div className="container mx-auto px-6 lg:px-20">
+    <section className="py-16 bg-gradient-to-b bg-slate-900">
+      <div className="container mx-auto px-6 lg:px-20 from-slate-900 via-slate-800 to-slate-900">
         <motion.h2
           className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-center mb-16 text-gradient bg-gradient-to-r from-[#0e243f] to-cyan-200 bg-clip-text text-transparent drop-shadow-lg leading-snug overflow-visible"
           initial={{ opacity: 0, y: -40 }}
