@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
   FaCalendarAlt,
@@ -63,18 +63,17 @@ const events: TimelineEvent[] = [
   },
 ];
 
-const container = {
+const container: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.12 } },
 };
 
-const stepVariants = {
+const stepVariants: Variants = {
   hidden: { opacity: 0, y: 18, scale: 0.99 },
   visible: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.56, ease: [0.22, 1, 0.36, 1] as unknown as any },
   },
   hover: { scale: 1.02 },
 };
@@ -145,7 +144,8 @@ export default function Timeline() {
             Key Dates & Timeline
           </h2>
           <p className="mt-3 text-sm md:text-base text-slate-200 max-w-2xl mx-auto">
-            Important deadlines and event days - plan ahead and don't miss out.
+            Important deadlines and event days - plan ahead and don&apos;t miss
+            out.
           </p>
         </div>
 
@@ -187,7 +187,13 @@ export default function Timeline() {
                 className="group relative"
                 variants={stepVariants}
                 whileHover="hover"
-                style={{ zIndex: 10, ["--accent" as any]: ev.accent }}
+                transition={{ duration: 0.56, ease: "easeOut" }}
+                style={
+                  {
+                    zIndex: 10,
+                    "--accent": ev.accent,
+                  } as React.CSSProperties & { "--accent": string }
+                }
               >
                 {/* subtle decorative overlay on hover */}
                 <div
@@ -209,7 +215,7 @@ export default function Timeline() {
                     transition={{
                       duration: 3.8,
                       repeat: Infinity,
-                      ease: [0.42, 0, 0.58, 1] as unknown as any,
+                      ease: "easeInOut",
                     }}
                     className="flex items-center justify-center rounded-full p-3"
                     style={{
