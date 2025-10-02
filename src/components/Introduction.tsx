@@ -1,46 +1,65 @@
 ﻿"use client";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 
 export default function Introduction() {
-  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
   const images = ["/1.jpeg", "/2.jpeg", "/3.jpeg", "/4.jpeg", "/5.jpeg", "/6.jpeg", "/7.jpeg", "/8.jpeg"];
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 100,
-        y: (e.clientY / window.innerHeight) * 100,
-      });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden">
       <div className="absolute inset-0">
         <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-[#0e243f] via-[#204168] to-[#37c2cc]"
+          className="absolute inset-0"
           animate={{
             background: [
-              "linear-gradient(135deg, #0e243f 0%, #204168 50%, #37c2cc 100%)",
-              "linear-gradient(225deg, #37c2cc 0%, #0e243f 50%, #204168 100%)",
-              "linear-gradient(315deg, #204168 0%, #37c2cc 50%, #0e243f 100%)",
-              "radial-gradient(circle, #0e243f 0%, #204168 50%, #37c2cc 100%)",
+              "linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #37c2cc 100%)",
+              "linear-gradient(225deg, #37c2cc 0%, #16213e 25%, #1a1a2e 50%, #0f3460 100%)",
+              "linear-gradient(315deg, #0f3460 0%, #37c2cc 25%, #16213e 50%, #1a1a2e 100%)",
+              "linear-gradient(45deg, #16213e 0%, #1a1a2e 25%, #37c2cc 50%, #0f3460 100%)",
             ],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Floating geometric shapes */}
+        <motion.div
+          className="absolute top-20 left-20 w-32 h-32 bg-[#37c2cc]/10 rounded-full blur-xl"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, -50, 0],
+            scale: [1, 1.5, 1],
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        <motion.div
+          className="absolute top-1/3 right-32 w-24 h-24 bg-[#204168]/20 rounded-lg rotate-45 blur-lg"
+          animate={{
+            rotate: [45, 225, 45],
+            scale: [1, 0.8, 1.2, 1],
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        <motion.div
+          className="absolute bottom-32 left-1/4 w-20 h-20 bg-[#37c2cc]/15 rounded-full blur-md"
+          animate={{
+            x: [0, -80, 0],
+            y: [0, 40, 0],
+            opacity: [0.3, 0.8, 0.3],
+          }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        />
+        
+        <motion.div
+          className="absolute top-1/2 left-1/2 w-40 h-40 bg-gradient-to-r from-[#37c2cc]/5 to-[#204168]/5 rounded-full blur-2xl"
+          animate={{
+            scale: [1, 1.3, 0.9, 1],
+            rotate: [0, 180, 360],
           }}
           transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
         />
       </div>
-
-      <div
-        className="absolute inset-0 opacity-40"
-        style={{
-          background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(55, 194, 204, 0.4) 0%, transparent 60%)`,
-        }}
-      />
 
       <div className="relative z-10 flex flex-col lg:flex-row items-center justify-center min-h-screen px-6 py-12 gap-12">
         <motion.div
@@ -65,31 +84,77 @@ export default function Introduction() {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-4 gap-3 mt-6 lg:absolute lg:top-0 lg:right-0 lg:w-3/5 lg:mt-0">
+          <div className="grid grid-cols-6 gap-2 mt-6 lg:absolute lg:top-0 lg:right-0 lg:w-4/5 lg:mt-0 lg:h-full">
             {images.slice(1, 8).map((src, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 + i * 0.1, duration: 0.8 }}
-                className="relative group aspect-square overflow-hidden rounded-2xl"
-                whileHover={{ scale: 1.05, zIndex: 20 }}
+                initial={{ opacity: 0, scale: 0.5, rotate: 0 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                transition={{ delay: 0.6 + i * 0.15, duration: 1, type: "spring", bounce: 0.4 }}
+                className="relative group overflow-hidden rounded-3xl shadow-xl"
+                whileHover={{ 
+                  scale: 1.1, 
+                  rotate: i % 2 === 0 ? 3 : -3,
+                  zIndex: 30,
+                  transition: { duration: 0.3 }
+                }}
                 style={{
-                  gridColumn: i === 0 ? "span 2" : "span 1",
-                  gridRow: i === 3 ? "span 2" : "span 1",
+                  gridColumn: i === 0 ? "span 3" : i === 1 ? "span 2" : i === 2 ? "span 1" : i === 3 ? "span 2" : i === 4 ? "span 2" : i === 5 ? "span 2" : "span 2",
+                  gridRow: i === 0 ? "span 2" : i === 3 ? "span 2" : "span 1",
+                  aspectRatio: i === 0 ? "16/10" : i === 3 ? "4/5" : "1/1",
                 }}
               >
                 <div className="relative h-full w-full">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-[#37c2cc] to-[#204168] rounded-2xl opacity-0 group-hover:opacity-60 transition-opacity duration-300 blur-sm" />
-                  <div className="relative h-full w-full rounded-2xl overflow-hidden border-2 border-white/20 group-hover:border-[#37c2cc]/50 transition-colors duration-300">
-                    <Image src={src} alt={`CodeRush ${i + 2}`} fill className="object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0e243f]/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
-                      <span className="text-white text-xs font-medium">{i % 2 === 0 ? "Day 01" : "Day 02"}</span>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-[#37c2cc] via-[#204168] to-[#37c2cc] rounded-3xl opacity-0 group-hover:opacity-80 transition-all duration-500 blur-md animate-pulse" />
+                  <div className="relative h-full w-full rounded-3xl overflow-hidden border-3 border-white/30 group-hover:border-[#37c2cc]/80 transition-all duration-500 backdrop-blur-sm">
+                    <Image 
+                      src={src} 
+                      alt={`CodeRush Memory ${i + 2}`} 
+                      fill 
+                      className="object-cover group-hover:scale-110 transition-transform duration-700" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0e243f]/95 via-[#0e243f]/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-end p-4">
+                      <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        whileHover={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-center"
+                      >
+                        <span className="text-[#37c2cc] text-sm font-bold block">{["Innovation", "Teamwork", "Challenge", "Excellence", "Creativity", "Success", "Achievement"][i]}</span>
+                        <span className="text-white/80 text-xs">CodeRush 2025</span>
+                      </motion.div>
                     </div>
                   </div>
                 </div>
               </motion.div>
             ))}
+            
+            {/* Additional decorative elements */}
+            <motion.div
+              className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-r from-[#37c2cc]/20 to-[#204168]/20 rounded-full blur-xl"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.3, 0.6, 0.3],
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+            <motion.div
+              className="absolute -bottom-6 -left-6 w-16 h-16 bg-gradient-to-r from-[#204168]/20 to-[#37c2cc]/20 rounded-full blur-lg"
+              animate={{
+                scale: [1.2, 1, 1.2],
+                opacity: [0.4, 0.7, 0.4],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1,
+              }}
+            />
           </div>
         </motion.div>
 
@@ -137,7 +202,7 @@ export default function Introduction() {
                 transition={{ delay: 1.6, duration: 0.8 }}
                 className="text-2xl lg:text-3xl text-white/90 font-light mb-8 leading-relaxed"
               >
-                Get ready for the <span className="text-[#37c2cc] font-semibold italic">ultimate coding showdown</span> at the Faculty of Information Technology!
+                Get ready for the <span className="text-[#37c2cc] font-semibold italic">ultimate 24-hour coding challenge</span> by Faculty of Information Technology <span className="text-[#37c2cc] font-bold">INTECS</span>!
               </motion.p>
 
               <motion.div
@@ -146,17 +211,17 @@ export default function Introduction() {
                 transition={{ delay: 1.8, duration: 0.8 }}
                 className="space-y-6 text-white/80 text-lg leading-relaxed mb-10"
               >
-                <p>CodeRush is back with unprecedented excitement! Experience two thrilling rounds that will test your skills and creativity:</p>
+                <p>CodeRush 2025 is more than just a coding competition — it&apos;s a celebration of innovation, teamwork, and problem-solving. Bringing together the brightest minds from across the country, this event challenges participants to push the limits of creativity and technology.</p>
                 
                 <div className="grid gap-4">
                   <motion.div
                     className="flex items-start gap-4 p-4 bg-[#37c2cc]/10 border border-[#37c2cc]/20 rounded-2xl"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="w-8 h-8 bg-[#37c2cc] rounded-full flex items-center justify-center text-white font-bold text-sm">01</div>
+                    <div className="w-10 h-10 bg-[#37c2cc] rounded-full flex items-center justify-center text-white font-bold">24h</div>
                     <div>
-                      <h3 className="text-[#37c2cc] font-semibold mb-1">Day 01</h3>
-                      <p className="text-sm">Fast-paced coding challenge powered by HackerRank</p>
+                      <h3 className="text-[#37c2cc] font-semibold mb-1">HackerRank Platform</h3>
+                      <p className="text-sm">Intensive coding challenges over 24 hours of non-stop innovation</p>
                     </div>
                   </motion.div>
                   
@@ -164,10 +229,10 @@ export default function Introduction() {
                     className="flex items-start gap-4 p-4 bg-white/5 border border-white/20 rounded-2xl"
                     whileHover={{ scale: 1.02 }}
                   >
-                    <div className="w-8 h-8 bg-white/80 text-[#0e243f] rounded-full flex items-center justify-center font-bold text-sm">02</div>
+                    <div className="w-10 h-10 bg-white/80 text-[#0e243f] rounded-full flex items-center justify-center font-bold text-sm">💡</div>
                     <div>
-                      <h3 className="text-white font-semibold mb-1">Day 02</h3>
-                      <p className="text-sm">Idea submission round - where creativity meets innovation </p>
+                      <h3 className="text-white font-semibold mb-1">For Everyone</h3>
+                      <p className="text-sm">Whether you&apos;re a beginner or experienced coder, showcase your skills and learn from peers</p>
                     </div>
                   </motion.div>
                 </div>
@@ -191,28 +256,6 @@ export default function Introduction() {
           </div>
         </motion.div>
       </div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2.5, duration: 1 }}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/60"
-      >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="flex flex-col items-center gap-3"
-        >
-          <span className="text-sm font-light">Discover More</span>
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
-            <motion.div
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-1 h-3 bg-[#37c2cc] rounded-full mt-2"
-            />
-          </div>
-        </motion.div>
-      </motion.div>
     </section>
   );
 }
