@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 
 interface FAQItem {
   question: string;
@@ -10,40 +11,10 @@ interface FAQItem {
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [visibleItems, setVisibleItems] = useState<Set<number>>(new Set());
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
-
-  useEffect(() => {
-    const observers: IntersectionObserver[] = [];
-
-    itemRefs.current.forEach((ref, index) => {
-      if (ref) {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting) {
-                setTimeout(() => {
-                  setVisibleItems((prev) => new Set(prev).add(index));
-                }, index * 100); // Stagger animation by 100ms per item
-              }
-            });
-          },
-          { threshold: 0.1 }
-        );
-
-        observer.observe(ref);
-        observers.push(observer);
-      }
-    });
-
-    return () => {
-      observers.forEach((observer) => observer.disconnect());
-    };
-  }, []);
 
   const faqData: FAQItem[] = [
     // Eligibility & Team Formation
@@ -148,7 +119,13 @@ const FAQ = () => {
 
       <div className="relative max-w-7xl mx-auto">
         {/* Title */}
-        <div className="text-center mb-16">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: -40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
           <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-wider">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 drop-shadow-lg">
               FREQUENTLY ASKED QUESTIONS
@@ -157,17 +134,23 @@ const FAQ = () => {
           <p className="text-gray-400 text-lg mt-4">
             Everything you need to know about CodeRush 2025
           </p>
-        </div>
+        </motion.div>
 
         {/* FAQ Accordion */}
         <div className="max-w-4xl mx-auto space-y-8">
           {categories.map((category, catIndex) => (
             <div key={catIndex} className="space-y-4">
               {/* Category Header */}
-              <h3 className="text-2xl font-bold text-cyan-400 mb-4 flex items-center gap-2 py-2">
+              <motion.h3
+                className="text-2xl font-bold text-cyan-400 mb-4 flex items-center gap-2 py-2"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
                 <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
                 {category}
-              </h3>
+              </motion.h3>
 
               {/* Questions in this category */}
               <div className="space-y-3">
@@ -176,19 +159,19 @@ const FAQ = () => {
                   .map((faq, index) => {
                     const globalIndex = faqData.indexOf(faq);
                     const isOpen = openIndex === globalIndex;
-                    const isVisible = visibleItems.has(globalIndex);
 
                     return (
-                      <div
+                      <motion.div
                         key={globalIndex}
-                        ref={(el) => {
-                          itemRefs.current[globalIndex] = el;
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.3 }}
+                        transition={{
+                          duration: 0.5,
+                          delay: index * 0.1,
+                          ease: "easeOut"
                         }}
-                        className={`bg-gradient-to-r from-slate-800/50 to-slate-800/30 backdrop-blur-sm border-2 border-cyan-400/30 rounded-xl overflow-hidden transition-all duration-500 hover:border-cyan-400/80 hover:shadow-lg hover:shadow-cyan-400/20 hover:scale-[1.02] transform ${
-                          isVisible
-                            ? "translate-y-0 opacity-100"
-                            : "translate-y-8 opacity-0"
-                        }`}
+                        className="bg-gradient-to-r from-slate-800/50 to-slate-800/30 backdrop-blur-sm border-2 border-cyan-400/30 rounded-xl overflow-hidden transition-all duration-500 hover:border-cyan-400/80 hover:shadow-lg hover:shadow-cyan-400/20 hover:scale-[1.02] transform"
                       >
                         {/* Question Button */}
                         <button
@@ -240,7 +223,7 @@ const FAQ = () => {
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
               </div>
