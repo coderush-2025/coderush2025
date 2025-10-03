@@ -18,7 +18,15 @@ const registrationSchema = new Schema<RegistrationDocument>({
   state: { type: String, default: "WELCOME" },
   consent: { type: Boolean, required: false },
   createdAt: { type: Date, default: Date.now },
-  tempMember: { type: Object, required: false },
+  tempMember: { 
+    type: {
+      fullName: { type: String, required: false },
+      indexNumber: { type: String, required: false },
+      batch: { type: String, required: false },
+      email: { type: String, required: false }
+    }, 
+    required: false 
+  },
   currentMember: { type: Number, required: false },
 });
 

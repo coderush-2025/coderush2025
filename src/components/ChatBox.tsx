@@ -1,21 +1,31 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 interface Message {
   role: "user" | "bot";
   content: string;
+  buttons?: { text: string; value: string }[];
 }
 
 export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
-      content: "👋 Hi — I'll register your team for CodeRush 2025. What's your team name?"
+      content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
     }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
 
   const [sessionId] = useState(() => {
     // Check if we're in the browser environment
@@ -30,10 +40,20 @@ export default function ChatBot() {
     return id;
   });
 
+  const handleButtonClick = async (value: string) => {
+    const userMsg: Message = { role: "user", content: value };
+    setMessages((prev) => [...prev, userMsg]);
+    await sendMessageToAPI(value);
+  };
+
   const sendMessage = async () => {
     if (!input.trim()) return;
+    await sendMessageToAPI(input);
+    setInput("");
+  };
 
-    const userMsg: Message = { role: "user", content: input };
+  const sendMessageToAPI = async (message: string) => {
+    const userMsg: Message = { role: "user", content: message };
     setMessages((prev) => [...prev, userMsg]);
     setIsTyping(true);
 
@@ -43,7 +63,7 @@ export default function ChatBot() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ sessionId, message: input }),
+        body: JSON.stringify({ sessionId, message }),
       });
 
       // Check if the response is ok
@@ -67,7 +87,12 @@ export default function ChatBot() {
       }
 
       if (data.reply) {
-        setMessages((prev) => [...prev, { role: "bot", content: data.reply }]);
+        const botMessage: Message = { 
+          role: "bot", 
+          content: data.reply,
+          buttons: data.buttons || undefined
+        };
+        setMessages((prev) => [...prev, botMessage]);
       } else {
         setMessages((prev) => [...prev, { role: "bot", content: "Sorry, I didn't receive a proper response. Please try again." }]);
       }
@@ -81,7 +106,6 @@ export default function ChatBot() {
         }
       ]);
     } finally {
-      setInput("");
       setIsTyping(false);
     }
   };
@@ -109,35 +133,85 @@ export default function ChatBot() {
       </div>
 
       {/* Messages Container */}
-      <div className="relative z-10 h-80 overflow-y-auto mb-6 bg-black/30 backdrop-blur-sm rounded-xl border border-[#37c2cc]/20 p-4 space-y-4 scrollbar-thin scrollbar-thumb-[#37c2cc]/40 scrollbar-track-transparent">
+      <div className="relative z-10 h-80 overflow-y-auto mb-6 bg-black/20 backdrop-blur-sm rounded-2xl border border-[#37c2cc]/20 p-4 space-y-3 scrollbar-thin scrollbar-thumb-[#37c2cc]/50 scrollbar-track-transparent">
         {messages.map((m, i) => (
           <div
             key={i}
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
-            style={{ animationDelay: `${i * 0.1}s` }}
+            style={{ animationDelay: `${i * 0.05}s` }}
           >
-            <div
-              className={`max-w-xs xl:max-w-sm p-4 rounded-xl shadow-lg relative ${
-                m.role === "user"
-                  ? "bg-gradient-to-br from-[#37c2cc] to-[#2ba8b3] text-[#0e243f] font-medium border border-[#37c2cc]/50"
-                  : "bg-white/95 backdrop-blur-sm text-[#0e243f] border border-white/30"
-              }`}
-              style={{
-                fontFamily: "system-ui, -apple-system, sans-serif",
-                lineHeight: "1.5",
-              }}
-            >
+            <div className={`flex ${m.role === "user" ? "flex-row-reverse" : "flex-row"} items-start gap-2 max-w-[85%]`}>
+              {/* Avatar */}
               {m.role === "bot" && (
-                <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#37c2cc] rounded-full flex items-center justify-center text-[#0e243f] text-xs font-bold">
-                  🤖
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#37c2cc] to-[#2ba8b3] flex items-center justify-center shadow-lg ring-2 ring-[#37c2cc]/30">
+                  <span className="text-base">🤖</span>
                 </div>
               )}
-              {m.content}
-              <div className={`absolute bottom-0 ${m.role === "user" ? "right-0" : "left-0"} w-0 h-0 ${
-                m.role === "user" 
-                  ? "border-l-8 border-l-[#37c2cc] border-t-8 border-t-transparent transform translate-x-2" 
-                  : "border-r-8 border-r-white/95 border-t-8 border-t-transparent transform -translate-x-2"
-              }`} />
+              {m.role === "user" && (
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#0e243f] to-[#204168] flex items-center justify-center shadow-lg ring-2 ring-white/20">
+                  <span className="text-base">👤</span>
+                </div>
+              )}
+              
+              {/* Message Bubble */}
+              <div
+                className={`relative group ${
+                  m.role === "user"
+                    ? "bg-gradient-to-br from-[#37c2cc] via-[#37c2cc] to-[#2ba8b3] text-white rounded-2xl rounded-tr-md"
+                    : "bg-gradient-to-br from-[#e0f7fa] via-[#b2ebf2] to-[#80deea] text-[#0e243f] rounded-2xl rounded-tl-md border border-[#37c2cc]/20"
+                }`}
+                style={{
+                  boxShadow: m.role === "user" 
+                    ? "0 8px 24px rgba(55, 194, 204, 0.35), 0 4px 12px rgba(55, 194, 204, 0.2)" 
+                    : "0 8px 24px rgba(55, 194, 204, 0.2), 0 4px 12px rgba(55, 194, 204, 0.1)",
+                }}
+              >
+                <div className="px-4 py-3">
+                  <div 
+                    className={`text-[15px] leading-relaxed whitespace-pre-wrap ${
+                      m.role === "user" ? "font-medium" : ""
+                    }`}
+                    style={{
+                      fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {m.content}
+                  </div>
+                  
+                  {/* Render buttons if they exist */}
+                  {m.buttons && m.buttons.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-gray-200/50">
+                      {m.buttons.map((button, btnIndex) => (
+                        <button
+                          key={btnIndex}
+                          onClick={() => handleButtonClick(button.value)}
+                          className="group/btn relative bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white font-semibold px-4 py-2 rounded-full text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95"
+                          style={{
+                            fontFamily: "system-ui, -apple-system, sans-serif",
+                            boxShadow: "0 2px 8px rgba(55, 194, 204, 0.3)",
+                          }}
+                        >
+                          <span className="relative z-10 flex items-center gap-1">
+                            {button.text}
+                            <svg className="w-3 h-3 transition-transform group-hover/btn:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Enhanced gradient overlay for depth */}
+                <div className={`absolute inset-0 rounded-2xl ${
+                  m.role === "user" ? "rounded-tr-md" : "rounded-tl-md"
+                } bg-gradient-to-br ${
+                  m.role === "user" 
+                    ? "from-white/20 via-transparent to-black/5" 
+                    : "from-white/10 via-transparent to-transparent"
+                } pointer-events-none`} />
+              </div>
             </div>
           </div>
         ))}
@@ -145,22 +219,34 @@ export default function ChatBot() {
         {/* Typing Indicator */}
         {isTyping && (
           <div className="flex justify-start animate-fade-in">
-            <div className="max-w-xs xl:max-w-sm p-4 rounded-xl shadow-lg relative bg-white/95 backdrop-blur-sm text-[#0e243f] border border-white/30">
-              <div className="absolute -top-2 -left-2 w-6 h-6 bg-[#37c2cc] rounded-full flex items-center justify-center text-[#0e243f] text-xs font-bold">
-                🤖
+            <div className="flex items-start gap-2 max-w-[85%]">
+              {/* Bot Avatar */}
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#37c2cc] to-[#2ba8b3] flex items-center justify-center shadow-lg ring-2 ring-[#37c2cc]/30">
+                <span className="text-base">🤖</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-[#37c2cc] rounded-full animate-bounce" style={{animationDelay: "0ms"}}></div>
-                  <div className="w-2 h-2 bg-[#37c2cc] rounded-full animate-bounce" style={{animationDelay: "150ms"}}></div>
-                  <div className="w-2 h-2 bg-[#37c2cc] rounded-full animate-bounce" style={{animationDelay: "300ms"}}></div>
+              
+              {/* Typing Bubble */}
+              <div 
+                className="bg-gradient-to-br from-[#e0f7fa] via-[#b2ebf2] to-[#80deea] rounded-2xl rounded-tl-md px-5 py-3 relative border border-[#37c2cc]/20"
+                style={{
+                  boxShadow: "0 8px 24px rgba(55, 194, 204, 0.2), 0 4px 12px rgba(55, 194, 204, 0.1)",
+                }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-[#0e243f] rounded-full animate-bounce shadow-sm" style={{animationDelay: "0ms"}}></div>
+                  <div className="w-2.5 h-2.5 bg-[#0e243f] rounded-full animate-bounce shadow-sm" style={{animationDelay: "150ms"}}></div>
+                  <div className="w-2.5 h-2.5 bg-[#0e243f] rounded-full animate-bounce shadow-sm" style={{animationDelay: "300ms"}}></div>
                 </div>
-                <span className="text-sm text-[#0e243f]/70 ml-2">Typing...</span>
+                
+                {/* Enhanced gradient overlay */}
+                <div className="absolute inset-0 rounded-2xl rounded-tl-md bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none" />
               </div>
-              <div className="absolute bottom-0 left-0 w-0 h-0 border-r-8 border-r-white/95 border-t-8 border-t-transparent transform -translate-x-2" />
             </div>
           </div>
         )}
+        
+        {/* Scroll anchor */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Container */}

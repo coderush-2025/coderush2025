@@ -8,8 +8,8 @@ type StateConfig = {
 };
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const indexRegex = /^[A-Za-z0-9\/-]+$/;
-const batchRegex = /^[0-9]{4}$/;
+const indexRegex = /^[0-9]{2}[0-9]{4}[A-Z]$/;
+const batchRegex = /^[0-9]{2}$/;
 
 export const MEMBER_COUNT = 4;
 
@@ -23,13 +23,6 @@ export const states: Record<string, StateConfig> = {
   MEMBER_DETAILS: {
     // handled dynamically by the API loop (see route.ts). prompts change depending on which field is next.
     prompt: "",
-  },
-
-  CONSENT: {
-    prompt: "Do you agree to the hackathon rules and code of conduct? (yes/no)",
-    validate: (input) => ["yes", "no"].includes(input.toLowerCase()),
-    save: (reg, input) => (reg.consent = input.toLowerCase() === "yes"),
-    next: "CONFIRMATION",
   },
 
   CONFIRMATION: {

@@ -18,7 +18,7 @@ const organizers: Organizer[] = [
     name: "Ishan Hansaka",
     photo: "/ishan.jpg",
     phone: "0775437008",
-    email: "Silvahih.22@uom.lk",
+    email: "silvahih.22@uom.lk",
   },
   {
     id: 2,
