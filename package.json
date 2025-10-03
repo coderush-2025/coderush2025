@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "setup-sheets": "tsx scripts/setup-sheets.ts"
+    "setup-sheets": "tsx scripts/setup-sheets.ts",
+    "check-teams": "tsx scripts/check-team-count.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.6",

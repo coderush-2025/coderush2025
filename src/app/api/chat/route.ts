@@ -46,11 +46,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply: "❌ Team name must be at least 3 characters. Try again." });
     }
 
-    // Check team count
-    const teamCount = await Registration.countDocuments({});
+    // Check team count (only count completed registrations)
+    const teamCount = await Registration.countDocuments({ state: "DONE" });
     if (teamCount >= MAX_TEAMS) {
       return NextResponse.json({ reply: `❌ Registration closed: maximum of ${MAX_TEAMS} teams reached.` });
     }
+    console.log(`✅ Team count: ${teamCount}/${MAX_TEAMS}`);
 
     // Check uniqueness (case-insensitive)
     const exists = await Registration.findOne({ teamName: { $regex: `^${escapeRegExp(message)}$`, $options: "i" } });
@@ -68,8 +69,9 @@ export async function POST(req: Request) {
     await reg.save();
     console.log("💾 New registration saved with team name:", reg.teamName);
     
+    const slotsRemaining = MAX_TEAMS - teamCount;
     return NextResponse.json({
-      reply: `Team name saved as "${reg.teamName}".\nNow enter your Hackerrank username. It should be "${reg.teamName}_CR" (team name can be any case, but _CR must be uppercase).`
+      reply: `Team name saved as "${reg.teamName}". 🎉\n\n📊 ${slotsRemaining} slots remaining out of ${MAX_TEAMS} teams.\n\nNow enter your Hackerrank username. It should be "${reg.teamName}_CR" (team name can be any case, but _CR must be uppercase).`
     });
   }
   
@@ -129,7 +131,7 @@ export async function POST(req: Request) {
       // Mark the field as modified for mongoose
       reg.markModified('tempMember');
       await reg.save();
-      return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number (must start with ${trimmedMessage}):` });
+      return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number:` });
     }
 
     // indexNumber (validate against selected batch)
@@ -312,10 +314,11 @@ export async function POST(req: Request) {
   if (reg.state === "DONE") {
 
     // final checks
-    const teamCount = await Registration.countDocuments({});
+    const teamCount = await Registration.countDocuments({ state: "DONE" });
     if (teamCount >= MAX_TEAMS) {
       return NextResponse.json({ reply: `❌ Registration failed: maximum of ${MAX_TEAMS} teams reached.` });
     }
+    console.log(`✅ Finalizing registration. Team count: ${teamCount + 1}/${MAX_TEAMS}`);
 
     const exists = await Registration.findOne({ teamName: { $regex: `^${escapeRegExp(reg.teamName || "")}$`, $options: "i" }, _id: { $ne: reg._id } });
     if (exists) {
