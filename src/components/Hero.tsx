@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import Image from "next/image";
@@ -9,9 +9,71 @@ const Hero = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const backgroundRef = useRef<HTMLDivElement>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isClient, setIsClient] = useState(false);
+  
+  // Generate consistent bubble positions for SSR (responsive percentages)
+  const bubblePositions = useRef([
+    { x: 15, y: 20, scale: 0.8 },   // 15% from left, 20% from top
+    { x: 60, y: 15, scale: 1.2 },   // 60% from left, 15% from top
+    { x: 25, y: 60, scale: 1.0 },   // 25% from left, 60% from top
+    { x: 80, y: 40, scale: 0.9 },   // 80% from left, 40% from top
+    { x: 10, y: 70, scale: 1.1 },   // 10% from left, 70% from top
+    { x: 70, y: 65, scale: 0.7 },   // 70% from left, 65% from top
+    { x: 40, y: 30, scale: 1.3 },   // 40% from left, 30% from top
+    { x: 55, y: 80, scale: 0.8 },   // 55% from left, 80% from top
+    { x: 20, y: 35, scale: 1.0 },   // 20% from left, 35% from top
+    { x: 85, y: 25, scale: 1.1 },   // 85% from left, 25% from top
+    { x: 35, y: 50, scale: 0.9 },   // 35% from left, 50% from top
+    { x: 65, y: 75, scale: 1.2 }    // 65% from left, 75% from top
+  ]);
 
   useEffect(() => {
-    // Remove typewriter effect - now using image instead of text
+    // Set client-side flag to prevent hydration mismatch
+    setIsClient(true);
+
+    // Mouse and touch tracking for interactive bubbles
+    const handleInteraction = (clientX: number, clientY: number) => {
+      setMousePosition({ x: clientX, y: clientY });
+      
+      // Magnetic effect for bubbles near cursor/touch
+      const bubbles = document.querySelectorAll('.liquid-bubble');
+      bubbles.forEach((bubble) => {
+        const rect = bubble.getBoundingClientRect();
+        const bubbleCenterX = rect.left + rect.width / 2;
+        const bubbleCenterY = rect.top + rect.height / 2;
+        const distance = Math.sqrt(
+          Math.pow(clientX - bubbleCenterX, 2) + Math.pow(clientY - bubbleCenterY, 2)
+        );
+        
+        // Adjust interaction radius for mobile
+        const interactionRadius = window.innerWidth < 768 ? 100 : 150;
+        
+        if (distance < interactionRadius) {
+          const strength = (interactionRadius - distance) / interactionRadius;
+          const moveX = (clientX - bubbleCenterX) * strength * 0.2;
+          const moveY = (clientY - bubbleCenterY) * strength * 0.2;
+          
+          gsap.to(bubble, {
+            x: moveX,
+            y: moveY,
+            scale: 1 + strength * 0.3,
+            duration: 0.3,
+            ease: "power2.out"
+          });
+        }
+      });
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      handleInteraction(e.clientX, e.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
 
     // Morphing background with multiple gradients
     const gradients = [
@@ -37,37 +99,79 @@ const Hero = () => {
     };
     changeGradient();
 
-    // Liquid bubble animations
-    const bubbles = document.querySelectorAll(".liquid-bubble");
-    bubbles.forEach((bubble, index) => {
-      // Random floating motion
-      gsap.to(bubble, {
-        x: `random(-100, 100)`,
-        y: `random(-80, 80)`,
-        scale: `random(0.8, 1.3)`,
-        duration: `random(4, 8)`,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
-        delay: index * 0.5,
-      });
+    // Liquid bubble animations with responsive positioning
+    setTimeout(() => {
+      const bubbles = document.querySelectorAll(".liquid-bubble");
+      bubbles.forEach((bubble, index) => {
+        const position = bubblePositions.current[index];
+        if (position) {
+          const vw = window.innerWidth / 100;
+          const vh = window.innerHeight / 100;
+          
+          // Consistent floating motion based on viewport units
+          gsap.to(bubble, {
+            x: position.x * vw + (index % 2 === 0 ? 3 * vw : -3 * vw),
+            y: position.y * vh + (index % 3 === 0 ? -2 * vh : 2 * vh),
+            scale: position.scale,
+            duration: 4 + (index * 0.5),
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+            delay: index * 0.5,
+          });
 
-      // Pulsing effect
-      gsap.to(bubble, {
-        opacity: `random(0.3, 0.8)`,
-        duration: `random(2, 4)`,
-        ease: "power2.inOut",
-        repeat: -1,
-        yoyo: true,
-        delay: index * 0.3,
+          // Pulsing effect with consistent timing
+          gsap.to(bubble, {
+            opacity: 0.3 + (index % 5) * 0.1,
+            duration: 2 + (index % 3),
+            ease: "power2.inOut",
+            repeat: -1,
+            yoyo: true,
+            delay: index * 0.3,
+          });
+        }
       });
-    });
+    }, 100);
+
+    // Keyboard interaction - make bubbles dance on spacebar
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        const bubbles = document.querySelectorAll('.liquid-bubble');
+        bubbles.forEach((bubble, index) => {
+          gsap.to(bubble, {
+            scale: 2,
+            rotation: 720,
+            y: -100,
+            duration: 0.8,
+            ease: "back.out(1.7)",
+            yoyo: true,
+            repeat: 1,
+            delay: index * 0.1,
+            onComplete: () => {
+              gsap.set(bubble, { rotation: 0 });
+            }
+          });
+        });
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('keydown', handleKeyPress);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('keydown', handleKeyPress);
+    };
   }, []);
 
   return (
     <div
       ref={heroRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden touch-none"
     >
       {/* Animated Background */}
       <div
@@ -79,33 +183,223 @@ const Hero = () => {
         }}
       />
 
-      {/* Liquid Bubble Animation */}
+      {/* Mouse Cursor Trail Effect */}
+      {isClient && (
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+          <motion.div
+            className="absolute w-4 h-4 rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(55, 194, 204, 0.6) 0%, transparent 70%)',
+              boxShadow: '0 0 20px rgba(55, 194, 204, 0.8)'
+            }}
+            animate={{
+              x: mousePosition.x - 8,
+              y: mousePosition.y - 8,
+            }}
+            transition={{
+              duration: 0.1,
+              ease: "easeOut"
+            }}
+          />
+        </div>
+      )}
+
+      {/* Interactive Liquid Bubble Animation */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        {isClient && [...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full liquid-bubble cursor-pointer"
+            style={{
+              width: `${30 + (i % 4) * 15}px`,
+              height: `${30 + (i % 4) * 15}px`,
+              background: `radial-gradient(circle at ${30 + (i % 3) * 20}% ${30 + (i % 3) * 20}%, 
+                rgba(55, 194, 204, 0.8) 0%, 
+                rgba(32, 65, 104, 0.4) 70%, 
+                rgba(14, 36, 63, 0.1) 100%)`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(55, 194, 204, 0.3)',
+              boxShadow: '0 0 20px rgba(55, 194, 204, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1)'
+            }}
+            initial={{
+              x: isClient ? `${bubblePositions.current[i].x}vw` : 0,
+              y: isClient ? `${bubblePositions.current[i].y}vh` : 0,
+              scale: 0,
+              opacity: 0,
+            }}
+            animate={isClient ? {
+              x: [
+                `${bubblePositions.current[i].x}vw`,
+                `${bubblePositions.current[i].x + 10}vw`,
+                `${bubblePositions.current[i].x - 5}vw`,
+              ],
+              y: [
+                `${bubblePositions.current[i].y}vh`,
+                `${bubblePositions.current[i].y - 8}vh`,
+                `${bubblePositions.current[i].y + 6}vh`,
+              ],
+              scale: [bubblePositions.current[i].scale, bubblePositions.current[i].scale * 1.2, bubblePositions.current[i].scale],
+              opacity: [0.3, 0.8, 0.6, 0.9, 0.5],
+              rotate: [0, 180, 360],
+            } : {}}
+            transition={{
+              duration: 8 + i * 0.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.3,
+            }}
+            whileHover={{
+              scale: 1.8,
+              opacity: 1,
+              rotate: 360,
+              transition: {
+                duration: 0.3,
+                type: "spring",
+                stiffness: 300,
+              }
+            }}
+            whileTap={{
+              scale: 0.5,
+              opacity: 0.2,
+              transition: { duration: 0.1 }
+            }}
+            onHoverStart={() => {
+              // Ripple effect on nearby bubbles
+              const nearbyBubbles = document.querySelectorAll('.liquid-bubble');
+              nearbyBubbles.forEach((bubble, index) => {
+                if (Math.abs(index - i) <= 2) {
+                  gsap.to(bubble, {
+                    scale: 1.3,
+                    duration: 0.3,
+                    ease: "back.out(1.7)",
+                    yoyo: true,
+                    repeat: 1
+                  });
+                }
+              });
+            }}
+            onClick={() => {
+              // Burst effect when clicked
+              const clickedBubble = document.querySelectorAll('.liquid-bubble')[i];
+              if (clickedBubble) {
+                // Create burst animation
+                gsap.to(clickedBubble, {
+                  scale: 2.5,
+                  opacity: 0,
+                  rotation: 720,
+                  duration: 0.6,
+                  ease: "power2.out",
+                  onComplete: () => {
+                    // Reset bubble after burst using predefined position
+                    const vw = window.innerWidth / 100;
+                    const vh = window.innerHeight / 100;
+                    gsap.set(clickedBubble, {
+                      scale: 1,
+                      opacity: 0.6,
+                      rotation: 0,
+                      x: bubblePositions.current[i].x * vw,
+                      y: bubblePositions.current[i].y * vh,
+                    });
+                  }
+                });
+
+                // Create ripple effect on all other bubbles
+                const allBubbles = document.querySelectorAll('.liquid-bubble');
+                allBubbles.forEach((bubble, index) => {
+                  if (index !== i) {
+                    gsap.to(bubble, {
+                      scale: 1.4,
+                      duration: 0.2,
+                      ease: "power2.out",
+                      yoyo: true,
+                      repeat: 1,
+                      delay: index * 0.05
+                    });
+                  }
+                });
+              }
+            }}
+          >
+            {/* Dynamic Inner glow effect */}
+            <motion.div
+              className="absolute inset-2 rounded-full"
+              style={{
+                background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 70%)'
+              }}
+              animate={{
+                opacity: [0.2, 0.6, 0.3, 0.8],
+                scale: [0.8, 1.2, 0.9, 1.1],
+              }}
+              transition={{
+                duration: 3 + i * 0.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: i * 0.1,
+              }}
+            />
+
+            {/* Interactive Color Ring */}
+            <motion.div
+              className="absolute inset-0 rounded-full opacity-0 pointer-events-none"
+              style={{
+                background: `conic-gradient(from ${i * 30}deg, rgba(55, 194, 204, 0.8), rgba(255, 255, 255, 0.6), rgba(55, 194, 204, 0.8))`,
+                filter: 'blur(2px)'
+              }}
+              whileHover={{
+                opacity: 0.7,
+                scale: 1.2,
+                rotate: 360,
+                transition: {
+                  duration: 2,
+                  ease: "linear"
+                }
+              }}
+            />
+
+            {/* Floating particles inside bubble */}
+            {[...Array(3)].map((_, pi) => (
+              <motion.div
+                key={pi}
+                className="absolute w-1 h-1 bg-white rounded-full opacity-60"
+                style={{
+                  left: `${20 + pi * 25}%`,
+                  top: `${30 + pi * 20}%`,
+                }}
+                animate={{
+                  x: [0, 10, -5, 8, 0],
+                  y: [0, -8, 5, -10, 0],
+                  opacity: [0.3, 0.8, 0.5, 0.9, 0.4],
+                }}
+                transition={{
+                  duration: 4 + pi * 0.5,
+                  repeat: Infinity,
+                  delay: pi * 0.2,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Enhanced SVG Effects */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
         viewBox="0 0 1200 800"
       >
         <defs>
-          <radialGradient id="bubbleGradient1" cx="30%" cy="30%">
-            <stop offset="0%" stopColor="#37c2cc" stopOpacity="0.8" />
-            <stop offset="70%" stopColor="#204168" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#0e243f" stopOpacity="0.1" />
-          </radialGradient>
-          <radialGradient id="bubbleGradient2" cx="70%" cy="70%">
-            <stop offset="0%" stopColor="#37c2cc" stopOpacity="0.6" />
-            <stop offset="60%" stopColor="#204168" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#0e243f" stopOpacity="0.05" />
-          </radialGradient>
-          <radialGradient id="bubbleGradient3" cx="50%" cy="50%">
-            <stop offset="0%" stopColor="#37c2cc" stopOpacity="0.7" />
-            <stop offset="80%" stopColor="#204168" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#0e243f" stopOpacity="0.02" />
-          </radialGradient>
-          <filter id="liquidBlur">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+          <filter id="liquidGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+            <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0" result="whiteBlur"/>
             <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
             </feMerge>
+          </filter>
+          
+          <filter id="ripple" x="-50%" y="-50%" width="200%" height="200%">
+            <feTurbulence baseFrequency="0.02" numOctaves="3" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="5"/>
           </filter>
         </defs>
 
@@ -225,7 +519,7 @@ const Hero = () => {
       </svg>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center text-white px-4">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center text-white px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={logoRef}
           className="mb-8"
@@ -247,59 +541,244 @@ const Hero = () => {
             priority
           />
         </motion.div>
-        <motion.p
-          className="text-xl md:text-3xl mb-8 max-w-2xl font-light tracking-wide leading-relaxed"
-          style={{
-            background:
-              "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            textShadow: "0 0 20px rgba(55, 194, 204, 0.3)",
-            fontFamily: "system-ui, -apple-system, sans-serif",
-          }}
-          initial={{ opacity: 0, y: 50, skewX: -10 }}
-          animate={{ opacity: 1, y: 0, skewX: 0 }}
+        <motion.div
+          className="mb-8 max-w-4xl relative mt-16"
+          initial={{ opacity: 0, y: 100, rotateX: -45 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0 }}
           transition={{
-            duration: 1,
+            duration: 1.5,
             delay: 1,
-            ease: "easeOut",
+            type: "spring",
+            stiffness: 80,
+            damping: 15,
           }}
         >
-          The Ultimate Hackathon Competition
-        </motion.p>
-        <motion.button
-          className="px-10 py-5 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-[#0e243f] font-bold text-lg rounded-xl border-2 border-[#37c2cc] shadow-lg hover:shadow-2xl transition-all duration-500 relative overflow-hidden group"
-          style={{
-            fontFamily: "system-ui, -apple-system, sans-serif",
-            letterSpacing: "0.5px",
-          }}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.5 }}
-          whileHover={{
-            scale: 1.05,
-            boxShadow:
-              "0 0 40px rgba(55, 194, 204, 0.6), 0 0 80px rgba(55, 194, 204, 0.3)",
-          }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <span className="relative z-10 group-hover:text-white transition-colors duration-300">
-            Join the Rush
-          </span>
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-[#0e243f] via-[#204168] to-[#0e243f] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            initial={{ x: "-100%" }}
-            whileHover={{ x: "0%" }}
-            transition={{ duration: 0.6 }}
-          />
-          <motion.div
-            className="absolute inset-0 border-2 border-transparent group-hover:border-[#37c2cc] rounded-xl"
-            initial={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          />
-        </motion.button>
+          <motion.h2
+            className="text-lg md:text-2xl lg:text-3xl font-bold tracking-wider leading-tight relative z-10"
+            style={{
+              background:
+                "linear-gradient(45deg, #ffffff 0%, #37c2cc 25%, #ffffff 50%, #37c2cc 75%, #ffffff 100%)",
+              backgroundSize: "300% 100%",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontFamily:
+                "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              textShadow: "0 0 30px rgba(55, 194, 204, 0.5)",
+            }}
+            animate={{
+              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+            }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1.5,
+            }}
+          >
+            {["Where", "Ideas", "Ignite,", "Code", "Unites!"].map(
+              (word, index) => (
+                <motion.span
+                  key={index}
+                  className="inline-block mr-2 md:mr-4"
+                  initial={{ opacity: 0, y: 50, rotateY: -90 }}
+                  animate={{ opacity: 1, y: 0, rotateY: 0 }}
+                  transition={{
+                    duration: 0.8,
+                    delay: 1.2 + index * 0.2,
+                    type: "spring",
+                    stiffness: 100,
+                  }}
+                >
+                  {word}
+                </motion.span>
+              )
+            )}
+          </motion.h2>
+
+          {/* Floating particles around text */}
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 bg-[#37c2cc] rounded-full opacity-60"
+              style={{
+                left: `${10 + i * 12}%`,
+                top: `${20 + (i % 3) * 20}%`,
+              }}
+              animate={{
+                y: [0, -20, 0],
+                x: [0, 10, 0],
+                scale: [0.8, 1.2, 0.8],
+                opacity: [0.3, 0.8, 0.3],
+              }}
+              transition={{
+                duration: 3 + i * 0.5,
+                repeat: Infinity,
+                delay: i * 0.3,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </motion.div>
+        <motion.div className="relative group">
+          {/* Floating orbs around button */}
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-3 h-3 bg-[#37c2cc] rounded-full opacity-60 blur-sm"
+              style={{
+                left: `${20 + i * 15}%`,
+                top: `${10 + (i % 2) * 80}%`,
+              }}
+              animate={{
+                y: [0, -15, 0],
+                x: [0, Math.sin(i) * 10, 0],
+                scale: [0.8, 1.4, 0.8],
+                opacity: [0.3, 0.8, 0.3],
+              }}
+              transition={{
+                duration: 2.5 + i * 0.3,
+                repeat: Infinity,
+                delay: i * 0.4 + 2,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+
+          <motion.button
+            className="px-8 py-4 md:px-12 md:py-6 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu"
+            style={{
+              fontFamily: "system-ui, -apple-system, sans-serif",
+              letterSpacing: "1px",
+              backgroundSize: "200% 100%",
+            }}
+            initial={{ 
+              opacity: 0, 
+              y: 50, 
+              scale: 0.8,
+              rotateX: -30 
+            }}
+            animate={{ 
+              opacity: 1, 
+              y: 0, 
+              scale: 1,
+              rotateX: 0,
+              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+            }}
+            transition={{ 
+              duration: 1.2, 
+              delay: 2,
+              type: "spring",
+              stiffness: 100,
+              backgroundPosition: {
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }
+            }}
+            whileHover={{
+              scale: 1.08,
+              y: -5,
+              rotateY: 5,
+              boxShadow: [
+                "0 10px 40px rgba(55, 194, 204, 0.4)",
+                "0 15px 60px rgba(55, 194, 204, 0.6)",
+                "0 10px 40px rgba(55, 194, 204, 0.4)"
+              ],
+              transition: {
+                duration: 0.3,
+                boxShadow: {
+                  duration: 2,
+                  repeat: Infinity,
+                }
+              }
+            }}
+            whileTap={{ 
+              scale: 0.95,
+              y: 0,
+              transition: { duration: 0.1 }
+            }}
+          >
+            {/* Animated background layers */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-[#0e243f] via-[#37c2cc] to-[#0e243f] opacity-0"
+              animate={{
+                opacity: [0, 0.3, 0],
+                scale: [0.8, 1.2, 0.8],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                delay: 1,
+              }}
+            />
+
+            {/* Shimmer effect */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0"
+              style={{ transform: "skew(-12deg)" }}
+              animate={{
+                x: ["-200%", "200%"],
+                opacity: [0, 0.6, 0]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: 3,
+                ease: "easeInOut"
+              }}
+            />
+
+            {/* Pulsing border */}
+            <motion.div
+              className="absolute inset-0 rounded-2xl border-2 border-[#37c2cc]"
+              animate={{
+                borderColor: ["#37c2cc", "#ffffff", "#37c2cc"],
+                borderWidth: ["2px", "3px", "2px"],
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                delay: 0.5,
+              }}
+            />
+
+            <motion.span 
+              className="relative z-10 inline-block"
+              animate={{
+                textShadow: [
+                  "0 0 10px rgba(55, 194, 204, 0.5)",
+                  "0 0 20px rgba(55, 194, 204, 0.8)",
+                  "0 0 10px rgba(55, 194, 204, 0.5)"
+                ]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: 1.5
+              }}
+            >
+              {"Join the Rush".split("").map((char, i) => (
+                <motion.span
+                  key={i}
+                  className="inline-block"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: 2.2 + i * 0.05,
+                  }}
+                  whileHover={{
+                    y: -2,
+                    transition: { duration: 0.1 }
+                  }}
+                >
+                  {char === " " ? "\u00A0" : char}
+                </motion.span>
+              ))}
+            </motion.span>
+          </motion.button>
+        </motion.div>
       </div>
     </div>
   );
