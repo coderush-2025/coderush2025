@@ -6,8 +6,7 @@ import { states, validators, MEMBER_COUNT } from "@/lib/stateMachine";
 type ReqBody = { sessionId: string; message: string };
 
 const MAX_TEAMS = 100;
-// allow letters/numbers/dot/underscore/hyphen before _CR, suffix required (case-insensitive)
-const HR_USERNAME_REGEX = /^[A-Za-z0-9._-]+_CR$/i;
+// HackerRank username validation is now done with custom logic
 
 function escapeRegExp(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -69,7 +68,7 @@ export async function POST(req: Request) {
     console.log("💾 New registration saved with team name:", reg.teamName);
     
     return NextResponse.json({
-      reply: `Team name saved as "${reg.teamName}".\nNow enter your Hackerrank username. It must end with _CR (e.g., TeamName_CR).`
+      reply: `Team name saved as "${reg.teamName}".\nNow enter your Hackerrank username. It should be "${reg.teamName}_CR" (team name can be any case, but _CR must be uppercase).`
     });
   }
   
@@ -94,40 +93,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number:` });
     }
 
-    // indexNumber
-    if (reg.tempMember && !reg.tempMember.indexNumber) {
-      const trimmedMessage = message.trim();
-      if (!validators.index(trimmedMessage)) {
-        return NextResponse.json({ reply: "❌ Invalid index number. Please try again (e.g., IT2023/101)." });
+    // batch selection (ask first)
+    if (reg.tempMember && !reg.tempMember.batch) {
+      if (!message) {
+        return NextResponse.json({ 
+          reply: `Member ${reg.currentMember} — Select your batch:`,
+          buttons: [
+            { text: "Batch 22", value: "22" },
+            { text: "Batch 23", value: "23" },
+            { text: "Batch 24", value: "24" }
+          ]
+        });
       }
       
-      // Create a new tempMember object to ensure proper MongoDB update
-      reg.tempMember = {
-        ...reg.tempMember,
-        indexNumber: trimmedMessage
-      };
-      
-      // Mark the field as modified for mongoose
-      reg.markModified('tempMember');
-      await reg.save();
-      return NextResponse.json({ 
-        reply: `Member ${reg.currentMember} — Select your batch:`,
-        buttons: [
-          { text: "Batch 22", value: "22" },
-          { text: "Batch 23", value: "23" },
-          { text: "Batch 24", value: "24" }
-        ]
-      });
-    }
-
-    // batch
-    if (reg.tempMember && reg.tempMember.indexNumber && !reg.tempMember.batch) {
       const trimmedMessage = message.trim();
-      console.log("🔍 Validating batch:", `"${message}"`, "Trimmed:", `"${trimmedMessage}"`, "Valid:", validators.batch(trimmedMessage));
-      console.log("🔍 tempMember before batch update:", JSON.stringify(reg.tempMember, null, 2));
-      
       if (!validators.batch(trimmedMessage)) {
-        return NextResponse.json({ reply: "❌ Invalid batch. Must be exactly 2 digits (e.g., 21, 22, 23, 24). Please enter your batch:" });
+        return NextResponse.json({ reply: "❌ Invalid batch. Must be exactly 2 digits (e.g., 22, 23, 24). Please select again:" });
       }
       
       // Create a new tempMember object to ensure proper MongoDB update
@@ -139,8 +120,33 @@ export async function POST(req: Request) {
       // Mark the field as modified for mongoose
       reg.markModified('tempMember');
       await reg.save();
+      return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number (must start with ${trimmedMessage}):` });
+    }
+
+    // indexNumber (validate against selected batch)
+    if (reg.tempMember && reg.tempMember.batch && !reg.tempMember.indexNumber) {
+      const trimmedMessage = message.trim().toUpperCase();
+      if (!validators.index(trimmedMessage)) {
+        return NextResponse.json({ reply: "❌ Invalid index number. Must be 6 digits followed by a capital letter (e.g., 224001T)." });
+      }
       
-      console.log("🔍 tempMember after batch update:", JSON.stringify(reg.tempMember, null, 2));
+      // Validate that index number starts with the selected batch
+      const indexBatch = trimmedMessage.substring(0, 2);
+      if (indexBatch !== reg.tempMember.batch) {
+        return NextResponse.json({ 
+          reply: `❌ Index number must start with your selected batch ${reg.tempMember.batch}. You entered ${indexBatch}. Please enter a valid index number:` 
+        });
+      }
+      
+      // Create a new tempMember object to ensure proper MongoDB update
+      reg.tempMember = {
+        ...reg.tempMember,
+        indexNumber: trimmedMessage
+      };
+      
+      // Mark the field as modified for mongoose
+      reg.markModified('tempMember');
+      await reg.save();
       return NextResponse.json({ reply: `Member ${reg.currentMember} — Email:` });
     }
 
@@ -171,9 +177,16 @@ export async function POST(req: Request) {
         await reg.save();
         return NextResponse.json({ reply: `Member ${reg.currentMember} — Full name:` });
       } else {
-        reg.state = "CONSENT";
+        reg.state = "CONFIRMATION";
         await reg.save();
-        return NextResponse.json({ reply: states.CONSENT.prompt });
+        const summaryLines = [
+          `Team: ${reg.teamName}`,
+          `Hackerrank: ${reg.hackerrankUsername || "N/A"}`,
+          `Members:`,
+          ...(reg.members || []).map((m, i: number) => `${i + 1}. ${m.fullName} — ${m.indexNumber} — ${m.batch} — ${m.email}`),
+        ];
+        const summary = summaryLines.join("\n");
+        return NextResponse.json({ reply: `${summary}\n\n${states.CONFIRMATION.prompt}` });
       }
     }
 
@@ -186,9 +199,7 @@ export async function POST(req: Request) {
     
     // Determine what to ask for based on current state
     if (reg.tempMember) {
-      if (!reg.tempMember.indexNumber) {
-        return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number:` });
-      } else if (!reg.tempMember.batch) {
+      if (!reg.tempMember.batch) {
         return NextResponse.json({ 
           reply: `Member ${reg.currentMember} — Select your batch:`,
           buttons: [
@@ -197,6 +208,8 @@ export async function POST(req: Request) {
             { text: "Batch 24", value: "24" }
           ]
         });
+      } else if (!reg.tempMember.indexNumber) {
+        return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number (must start with ${reg.tempMember.batch}):` });
       } else if (!reg.tempMember.email) {
         return NextResponse.json({ reply: `Member ${reg.currentMember} — Email:` });
       }
@@ -209,28 +222,51 @@ export async function POST(req: Request) {
   const cfg = states[reg.state];
   if (!cfg) return NextResponse.json({ reply: "Invalid state. Please start again." });
 
-  // HACKERRANK handling: must end with _CR
+  // HACKERRANK handling: must be teamname_CR (team name case insensitive, _CR case sensitive)
   if (reg.state === "HACKERRANK") {
-    if (!message) {
-      return NextResponse.json({ reply: "Please enter your Hackerrank username (must end with _CR)." });
+    if (!reg.teamName) {
+      return NextResponse.json({ reply: "❌ Error: Team name not found. Please restart registration." });
     }
 
-    if (!HR_USERNAME_REGEX.test(message)) {
+    if (!message) {
+      return NextResponse.json({ reply: `Please enter your Hackerrank username. It should be "${reg.teamName}_CR" (team name can be any case, but _CR must be uppercase).` });
+    }
+
+    const trimmedMessage = message.trim();
+    
+    // Check if it ends with _CR (case sensitive)
+    if (!trimmedMessage.endsWith('_CR')) {
       return NextResponse.json({
         reply:
-          `❌ Invalid Hackerrank username. It must end with _CR and contain only letters, numbers, dot, underscore, or hyphen before the suffix.\n` +
-          `Example valid: TeamName_CR or team123_CR\nPlease re-enter the username.`,
+          `❌ Invalid Hackerrank username. It must end with _CR (uppercase).\n` +
+          `Examples: "${reg.teamName}_CR", "${reg.teamName.toLowerCase()}_CR", "${reg.teamName.toUpperCase()}_CR"\nPlease re-enter the username.`,
+      });
+    }
+
+    // Extract the team name part (everything before _CR)
+    const usernameTeamPart = trimmedMessage.slice(0, -3); // Remove '_CR' from end
+    
+    // Check if the team name part matches (case insensitive)
+    if (usernameTeamPart.toLowerCase() !== reg.teamName.toLowerCase()) {
+      return NextResponse.json({
+        reply:
+          `❌ Hackerrank username should start with your team name.\n` +
+          `Your team name is "${reg.teamName}". Valid examples:\n` +
+          `• "${reg.teamName}_CR"\n` +
+          `• "${reg.teamName.toLowerCase()}_CR"\n` +
+          `• "${reg.teamName.toUpperCase()}_CR"\n` +
+          `Please re-enter the correct username.`,
       });
     }
 
     // Optional: check hackerrank username uniqueness among existing registrations
-    const hrExists = await Registration.findOne({ hackerrankUsername: { $regex: `^${escapeRegExp(message)}$`, $options: "i" } });
+    const hrExists = await Registration.findOne({ hackerrankUsername: { $regex: `^${escapeRegExp(trimmedMessage)}$`, $options: "i" } });
     if (hrExists) {
       return NextResponse.json({ reply: "❌ That Hackerrank username is already used. Please contact organizers or choose another team name." });
     }
 
     // Save entered username (preserve user case)
-    reg.hackerrankUsername = message;
+    reg.hackerrankUsername = trimmedMessage;
     // move to members collection
     reg.state = "MEMBER_DETAILS";
     reg.currentMember = 1;
@@ -240,7 +276,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ reply: `Hackerrank username saved as "${reg.hackerrankUsername}".\nMember 1 — Full name:` });
   }
 
-  // generic validations (CONSENT, CONFIRMATION)
+  // generic validations (CONFIRMATION)
   if (cfg.validate && !cfg.validate(message)) {
     return NextResponse.json({ reply: "❌ Invalid input. Please try again." });
   }
@@ -265,9 +301,6 @@ export async function POST(req: Request) {
 
   // finalize on DONE
   if (reg.state === "DONE") {
-    if (!reg.consent) {
-      return NextResponse.json({ reply: "You must accept the rules to complete registration." });
-    }
 
     // final checks
     const teamCount = await Registration.countDocuments({});

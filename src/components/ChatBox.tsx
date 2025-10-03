@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 interface Message {
@@ -12,11 +12,20 @@ export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
-      content: "👋 Hi — I'll register your team for CodeRush 2025. What's your team name?"
+      content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
     }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
 
   const [sessionId] = useState(() => {
     // Check if we're in the browser environment
@@ -195,6 +204,9 @@ export default function ChatBot() {
             </div>
           </div>
         )}
+        
+        {/* Scroll anchor */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Container */}
