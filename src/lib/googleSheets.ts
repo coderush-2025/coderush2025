@@ -39,39 +39,18 @@ export async function appendToGoogleSheets(data: RegistrationData) {
     // Prepare row data
     const timestamp = new Date().toISOString();
     
-    // Create rows - one row per team with all members
-    const memberDetails = data.members.map((m, index) => 
-      `Member ${index + 1}: ${m.fullName} (${m.indexNumber}, Batch ${m.batch}, ${m.email})`
-    ).join(' | ');
-
-    const rows = [
-      [
-        timestamp,
-        data.teamName,
-        data.hackerrankUsername,
-        data.members.length,
-        memberDetails,
-        // Individual member columns for easier filtering
-        data.members[0]?.fullName || '',
-        data.members[0]?.indexNumber || '',
-        data.members[0]?.batch || '',
-        data.members[0]?.email || '',
-        data.members[1]?.fullName || '',
-        data.members[1]?.indexNumber || '',
-        data.members[1]?.batch || '',
-        data.members[1]?.email || '',
-        data.members[2]?.fullName || '',
-        data.members[2]?.indexNumber || '',
-        data.members[2]?.batch || '',
-        data.members[2]?.email || '',
-        data.members[3]?.fullName || '',
-        data.members[3]?.indexNumber || '',
-        data.members[3]?.batch || '',
-        data.members[3]?.email || '',
-      ],
-    ];
-
-    // Append to sheet
+  // Create rows (one row per member)
+  // Only include team info (timestamp, team name, hackerrank username) in the first row
+  const rows = data.members.map((member, index) => [
+    index === 0 ? timestamp : '',
+    index === 0 ? data.teamName : '',
+    index === 0 ? data.hackerrankUsername : '',
+    data.members.length,
+    member.fullName,
+    member.indexNumber,
+    member.batch,
+    member.email,
+  ]);    // Append to sheet
     // Wrap sheet name in quotes if it contains spaces or special characters
     const sheetRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-') 
       ? `'${SHEET_NAME}'!A1` 
@@ -111,29 +90,12 @@ export async function initializeSheetHeaders() {
       [
         'Timestamp',
         'Team Name',
-        'HackerRank Username',
-        'Member Count',
-        'All Members',
-        // Member 1
-        'Member 1 Name',
-        'Member 1 Index',
-        'Member 1 Batch',
-        'Member 1 Email',
-        // Member 2
-        'Member 2 Name',
-        'Member 2 Index',
-        'Member 2 Batch',
-        'Member 2 Email',
-        // Member 3
-        'Member 3 Name',
-        'Member 3 Index',
-        'Member 3 Batch',
-        'Member 3 Email',
-        // Member 4
-        'Member 4 Name',
-        'Member 4 Index',
-        'Member 4 Batch',
-        'Member 4 Email',
+        'Hackerrank Username',
+        'Team Size',
+        'Member',
+        'Index Number',
+        'Batch',
+        'Email',
       ],
     ];
 
