@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Registration from "@/models/Registration";
 import { states, validators, MEMBER_COUNT } from "@/lib/stateMachine";
+import { appendToGoogleSheets } from "@/lib/googleSheets";
 
 type ReqBody = { sessionId: string; message: string };
 
@@ -90,7 +91,15 @@ export async function POST(req: Request) {
       if (!message) return NextResponse.json({ reply: `Member ${reg.currentMember} — Full name:` });
       reg.tempMember = { fullName: message };
       await reg.save();
-      return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number:` });
+      // After full name, ask for batch selection
+      return NextResponse.json({ 
+        reply: `Member ${reg.currentMember} — Select your batch:`,
+        buttons: [
+          { text: "Batch 22", value: "22" },
+          { text: "Batch 23", value: "23" },
+          { text: "Batch 24", value: "24" }
+        ]
+      });
     }
 
     // batch selection (ask first)
@@ -314,6 +323,25 @@ export async function POST(req: Request) {
     }
 
     await reg.save();
+
+    // Save to Google Sheets
+    try {
+      const sheetsResult = await appendToGoogleSheets({
+        teamName: reg.teamName || '',
+        hackerrankUsername: reg.hackerrankUsername || '',
+        members: reg.members || [],
+        timestamp: new Date(),
+      });
+      
+      if (sheetsResult.success) {
+        console.log('✅ Registration saved to Google Sheets');
+      } else {
+        console.error('⚠️ Failed to save to Google Sheets:', sheetsResult.error);
+      }
+    } catch (sheetsError) {
+      console.error('⚠️ Google Sheets error (non-blocking):', sheetsError);
+      // Don't fail the registration if Google Sheets fails
+    }
 
     // Optionally send confirmation email here
 
