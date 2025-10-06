@@ -453,78 +453,251 @@ export default function Introduction() {
             </div>
           </motion.div>
 
-          {/* Right Side - Content */}
+          {/* Right Side - Code Editor Style Content */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, delay: 1.2 }}
             className="flex-1 max-w-2xl"
           >
-            <div className="backdrop-blur-xl bg-black/20 border border-white/20 p-8 lg:p-10 rounded-3xl shadow-2xl">
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.5, duration: 0.8 }}
-                className="text-2xl lg:text-3xl text-white/90 font-light mb-8 leading-relaxed"
-              >
-                The <span className="text-[#37c2cc] font-semibold">ultimate 24-hour coding challenge</span> by Faculty of Information Technology <span className="text-[#37c2cc] font-bold">INTECS</span>
-              </motion.p>
+            {/* Code Editor Window */}
+            <div className="bg-[#1e1e1e] border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
+              {/* Editor Header */}
+              <div className="bg-[#2d2d30] border-b border-gray-700 px-4 py-3 flex items-center gap-3">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <span className="text-gray-400 text-sm font-mono">coderush_2025.js</span>
+                <div className="ml-auto flex items-center gap-2">
+                  <div className="w-2 h-2 bg-[#37c2cc] rounded-full animate-pulse"></div>
+                  <span className="text-[#37c2cc] text-xs font-mono">Running...</span>
+                </div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.7, duration: 0.8 }}
-                className="grid gap-4 mb-8"
-              >
-                <motion.div
-                  className="flex items-center gap-4 p-4 bg-[#37c2cc]/10 border border-[#37c2cc]/20 rounded-xl"
-                  whileHover={{ scale: 1.02, backgroundColor: "rgba(55, 194, 204, 0.15)" }}
-                >
-                  <div className="w-12 h-12 bg-[#37c2cc] rounded-full flex items-center justify-center text-white font-bold">24h</div>
-                  <div>
-                    <h3 className="text-[#37c2cc] font-semibold mb-1">HackerRank Platform</h3>
-                    <p className="text-white/80 text-sm">Non-stop innovation and coding challenges</p>
+              {/* Code Content */}
+              <div className="p-6 font-mono text-sm">
+                {/* Line Numbers */}
+                <div className="flex">
+                  <div className="text-gray-500 select-none pr-4 text-right min-w-[3rem]">
+                    <div>1</div>
+                    <div>2</div>
+                    <div>3</div>
+                    <div>4</div>
+                    <div>5</div>
+                    <div>6</div>
+                    <div>7</div>
+                    <div>8</div>
+                    <div>9</div>
+                    <div>10</div>
+                    <div>11</div>
+                    <div>12</div>
+                    <div>13</div>
+                    <div>14</div>
+                    <div>15</div>
                   </div>
-                </motion.div>
-                
-                <motion.div
-                  className="flex items-center gap-4 p-4 bg-white/5 border border-white/20 rounded-xl"
-                  whileHover={{ scale: 1.02, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
-                >
-                  <div className="w-12 h-12 bg-white/20 text-white rounded-full flex items-center justify-center font-bold text-lg">💡</div>
-                  <div>
-                    <h3 className="text-white font-semibold mb-1">For Everyone</h3>
-                    <p className="text-white/80 text-sm">Whether you&apos;re a beginner or experienced coder</p>
+                  
+                  {/* Code Content */}
+                  <div className="flex-1">
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.5 }}
+                    >
+                      <span className="text-purple-400">const</span> <span className="text-blue-400">codeRush2025</span> <span className="text-white">=</span> <span className="text-yellow-400">{"{"}</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.7 }}
+                      className="pl-4"
+                    >
+                      <span className="text-green-400">event</span><span className="text-white">:</span> <span className="text-orange-400">&quot;Ultimate 24-hour Coding Challenge&quot;</span><span className="text-white">,</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.9 }}
+                      className="pl-4"
+                    >
+                      <span className="text-green-400">organizer</span><span className="text-white">:</span> <span className="text-orange-400">&quot;Faculty of IT INTECS&quot;</span><span className="text-white">,</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 2.1 }}
+                      className="pl-4"
+                    >
+                      <span className="text-green-400">platform</span><span className="text-white">:</span> <span className="text-orange-400">&quot;HackerRank&quot;</span><span className="text-white">,</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 2.3 }}
+                      className="pl-4"
+                    >
+                      <span className="text-green-400">duration</span><span className="text-white">:</span> <span className="text-cyan-400">24</span> <span className="text-gray-400">{`// hours`}</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 2.5 }}
+                      className="pl-4"
+                    >
+                      <span className="text-green-400">features</span><span className="text-white">:</span> <span className="text-yellow-400">[</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 2.7 }}
+                      className="pl-8"
+                    >
+                      <span className="text-orange-400">&quot;Innovation &amp; Creativity&quot;</span><span className="text-white">,</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 2.9 }}
+                      className="pl-8"
+                    >
+                      <span className="text-orange-400">&quot;Team Collaboration&quot;</span><span className="text-white">,</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 3.1 }}
+                      className="pl-8"
+                    >
+                      <span className="text-orange-400">&quot;Problem Solving&quot;</span><span className="text-white">,</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 3.3 }}
+                      className="pl-8"
+                    >
+                      <span className="text-orange-400">&quot;Technology Excellence&quot;</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 3.5 }}
+                      className="pl-4"
+                    >
+                      <span className="text-yellow-400">]</span><span className="text-white">,</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 3.7 }}
+                      className="pl-4"
+                    >
+                      <span className="text-green-400">participants</span><span className="text-white">:</span> <span className="text-orange-400">&quot;Brightest minds across the country&quot;</span><span className="text-white">,</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 3.9 }}
+                      className="pl-4"
+                    >
+                      <span className="text-green-400">openFor</span><span className="text-white">:</span> <span className="text-orange-400">&quot;All skill levels - Beginners to Experts&quot;</span>
+                    </motion.div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 4.1 }}
+                    >
+                      <span className="text-yellow-400">{"}"}</span><span className="text-white">;</span>
+                    </motion.div>
+
+                    {/* Typing Cursor */}
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: [0, 1, 0] }}
+                      transition={{ 
+                        delay: 4.3,
+                        duration: 1,
+                        repeat: Infinity,
+                        repeatType: "loop"
+                      }}
+                      className="text-[#37c2cc] text-lg"
+                    >
+                      |
+                    </motion.span>
                   </div>
-                </motion.div>
-              </motion.div>
+                </div>
 
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.9, duration: 0.8 }}
-                className="text-white/80 text-lg leading-relaxed mb-8"
-              >
-                A celebration of innovation, teamwork, and problem-solving. Bringing together the brightest minds from across the country to push the limits of creativity and technology.
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 2.1, duration: 0.8 }}
-              >
-                <motion.button
-                  whileHover={{ 
-                    scale: 1.05, 
-                    boxShadow: "0 20px 40px rgba(55, 194, 204, 0.3)",
-                    backgroundColor: "rgba(55, 194, 204, 0.1)"
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-8 py-4 border-2 border-[#37c2cc] text-[#37c2cc] font-semibold rounded-xl transition-all duration-300 hover:text-white"
+                {/* Terminal Output Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 4.5 }}
+                  className="mt-6 pt-4 border-t border-gray-700"
                 >
-                  Learn More
-                </motion.button>
-              </motion.div>
+                  <div className="text-gray-400 text-xs mb-2">OUTPUT:</div>
+                  <motion.div
+                    className="bg-black/50 rounded p-3 border-l-4 border-[#37c2cc]"
+                  >
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 4.7 }}
+                      className="text-[#37c2cc] text-sm"
+                    >
+                      ✓ Event initialized successfully
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 4.9 }}
+                      className="text-green-400 text-sm"
+                    >
+                      ✓ Ready for registration
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 5.1 }}
+                      className="text-yellow-400 text-sm"
+                    >
+                      ⚡ Join the ultimate coding experience!
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
+
+                {/* Action Button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 5.3 }}
+                  className="mt-6"
+                >
+                  <motion.button
+                    whileHover={{ 
+                      scale: 1.02,
+                      boxShadow: "0 0 20px rgba(55, 194, 204, 0.5)"
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-gradient-to-r from-[#37c2cc] to-[#204168] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 font-mono"
+                  >
+                    {'>> Execute Registration'}
+                  </motion.button>
+                </motion.div>
+              </div>
             </div>
           </motion.div>
         </div>
