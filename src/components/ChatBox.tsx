@@ -6,6 +6,17 @@ interface Message {
   role: "user" | "bot";
   content: string;
   buttons?: { text: string; value: string }[];
+  showEditForm?: boolean;
+  registrationData?: {
+    teamName: string;
+    hackerrankUsername: string;
+    teamBatch: string;
+    members: {
+      fullName: string;
+      indexNumber: string;
+      email: string;
+    }[];
+  };
 }
 
 export default function ChatBot() {
@@ -17,6 +28,9 @@ export default function ChatBot() {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState<any>(null);
+  const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -27,12 +41,12 @@ export default function ChatBot() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const [sessionId] = useState(() => {
+  const [sessionId, setSessionId] = useState(() => {
     // Check if we're in the browser environment
     if (typeof window === "undefined") {
       return uuidv4(); // Generate a temporary ID for server-side rendering
     }
-    
+
     const existing = localStorage.getItem("regSessionId");
     if (existing) return existing;
     const id = uuidv4();
@@ -40,14 +54,128 @@ export default function ChatBot() {
     return id;
   });
 
+  const resetSession = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("regSessionId");
+      const newId = uuidv4();
+      localStorage.setItem("regSessionId", newId);
+      setSessionId(newId);
+      setMessages([{
+        role: "bot",
+        content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
+      }]);
+      setInput("");
+    }
+  };
+
   const handleButtonClick = async (value: string) => {
-    const userMsg: Message = { role: "user", content: value };
-    setMessages((prev) => [...prev, userMsg]);
+    // Check if this is the edit form trigger
+    if (value === "OPEN_EDIT_FORM") {
+      // Find the last message with registration data
+      const lastMessageWithData = [...messages].reverse().find(m => m.registrationData);
+      if (lastMessageWithData && lastMessageWithData.registrationData) {
+        setEditData(lastMessageWithData.registrationData);
+        setShowEditModal(true);
+      }
+      return;
+    }
+
+    // Don't add message here - sendMessageToAPI will do it
     await sendMessageToAPI(value);
+  };
+
+  const handleMessageEdit = async (messageIndex: number, newContent: string) => {
+    setIsTyping(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+          message: "EDIT_MESSAGE",
+          messageIndex,
+          newContent
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.updatedMessages) {
+        // Replace all messages with updated ones from server
+        setMessages(data.updatedMessages);
+      } else if (data.reply) {
+        // Fallback: just add bot reply
+        setMessages((prev) => [...prev, { role: "bot", content: data.reply }]);
+      }
+    } catch (error) {
+      console.error("Error editing message:", error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", content: "Error updating message. Please try again." }
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editData) return;
+
+    setShowEditModal(false);
+    setIsTyping(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+          message: "SAVE_EDITED_DATA",
+          editedData: editData
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.reply) {
+        setMessages((prev) => [...prev, { role: "bot", content: data.reply }]);
+      }
+    } catch (error) {
+      console.error("Error saving edited data:", error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", content: "Error saving changes. Please try again." }
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
+
+    // If editing an existing message
+    if (editingMessageIndex !== null) {
+      // Update the message at the index
+      const updatedMessages = [...messages];
+      updatedMessages[editingMessageIndex] = {
+        ...updatedMessages[editingMessageIndex],
+        content: input
+      };
+      setMessages(updatedMessages);
+      setEditingMessageIndex(null);
+      setInput("");
+
+      // Notify backend about the edit and get updated responses
+      await handleMessageEdit(editingMessageIndex, input);
+      return;
+    }
+
     await sendMessageToAPI(input);
     setInput("");
   };
@@ -87,12 +215,21 @@ export default function ChatBot() {
       }
 
       if (data.reply) {
-        const botMessage: Message = { 
-          role: "bot", 
+        const botMessage: Message = {
+          role: "bot",
           content: data.reply,
-          buttons: data.buttons || undefined
+          buttons: data.buttons || undefined,
+          showEditForm: data.showEditForm || false,
+          registrationData: data.registrationData || undefined
         };
         setMessages((prev) => [...prev, botMessage]);
+
+        // If server wants to show edit form, open modal
+        if (data.showEditForm && data.registrationData) {
+          console.log("🔧 Opening edit modal with data:", data.registrationData);
+          setEditData(data.registrationData);
+          setShowEditModal(true);
+        }
       } else {
         setMessages((prev) => [...prev, { role: "bot", content: "Sorry, I didn't receive a proper response. Please try again." }]);
       }
@@ -111,24 +248,34 @@ export default function ChatBot() {
   };
 
   return (
+    <>
     <div className="w-full max-w-lg mx-auto p-8 bg-white/10 backdrop-blur-xl border border-[#37c2cc]/30 rounded-2xl shadow-2xl relative overflow-hidden">
       {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#37c2cc]/10 via-transparent to-[#0e243f]/20 pointer-events-none" />
       
       {/* Header */}
-      <div className="relative z-10 mb-6 text-center">
-        <h3 
-          className="text-xl font-semibold text-white mb-2"
-          style={{
-            background: "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            fontFamily: "system-ui, -apple-system, sans-serif",
-          }}
-        >
-          Team Registration Assistant
-        </h3>
+      <div className="relative z-10 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h3
+            className="text-xl font-semibold text-white flex-1 text-center"
+            style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontFamily: "system-ui, -apple-system, sans-serif",
+            }}
+          >
+            Team Registration Assistant
+          </h3>
+          <button
+            onClick={resetSession}
+            className="text-xs text-white/60 hover:text-white/90 px-2 py-1 rounded hover:bg-white/10 transition-all"
+            title="Start new registration"
+          >
+            🔄 Reset
+          </button>
+        </div>
         <div className="h-px bg-gradient-to-r from-transparent via-[#37c2cc]/50 to-transparent" />
       </div>
 
@@ -152,7 +299,7 @@ export default function ChatBot() {
                   <span className="text-base">👤</span>
                 </div>
               )}
-              
+
               {/* Message Bubble */}
               <div
                 className={`relative group ${
@@ -161,21 +308,39 @@ export default function ChatBot() {
                     : "bg-gradient-to-br from-[#e0f7fa] via-[#b2ebf2] to-[#80deea] text-[#0e243f] rounded-2xl rounded-tl-md border border-[#37c2cc]/20"
                 }`}
                 style={{
-                  boxShadow: m.role === "user" 
-                    ? "0 8px 24px rgba(55, 194, 204, 0.35), 0 4px 12px rgba(55, 194, 204, 0.2)" 
+                  boxShadow: m.role === "user"
+                    ? "0 8px 24px rgba(55, 194, 204, 0.35), 0 4px 12px rgba(55, 194, 204, 0.2)"
                     : "0 8px 24px rgba(55, 194, 204, 0.2), 0 4px 12px rgba(55, 194, 204, 0.1)",
                 }}
               >
                 <div className="px-4 py-3">
-                  <div 
-                    className={`text-[15px] leading-relaxed whitespace-pre-wrap ${
-                      m.role === "user" ? "font-medium" : ""
-                    }`}
-                    style={{
-                      fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {m.content}
+                  <div className="flex items-start justify-between gap-2">
+                    <div
+                      className={`text-[15px] leading-relaxed whitespace-pre-wrap flex-1 ${
+                        m.role === "user" ? "font-medium" : ""
+                      }`}
+                      style={{
+                        fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+                      }}
+                    >
+                      {m.content}
+                    </div>
+
+                    {/* Edit button for user messages */}
+                    {m.role === "user" && (
+                      <button
+                        onClick={() => {
+                          setInput(m.content);
+                          setEditingMessageIndex(i);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 active:scale-95"
+                        title="Edit this message"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                   
                   {/* Render buttons if they exist */}
@@ -278,5 +443,121 @@ export default function ChatBot() {
         </button>
       </div>
     </div>
+
+      {/* Edit Modal - Outside chat container */}
+      {showEditModal && editData && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+          <div className="bg-gradient-to-br from-[#0e243f] to-[#204168] p-6 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-[#37c2cc]/30 relative">
+            <h2 className="text-2xl font-bold text-white mb-4 text-center bg-gradient-to-r from-[#37c2cc] to-white bg-clip-text text-transparent">
+              Edit Registration Details
+            </h2>
+
+            {/* Team Name */}
+            <div className="mb-4">
+              <label className="block text-white/80 mb-2 text-sm font-semibold">Team Name</label>
+              <input
+                type="text"
+                value={editData.teamName}
+                onChange={(e) => setEditData({ ...editData, teamName: e.target.value })}
+                className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+              />
+            </div>
+
+            {/* Hackerrank Username */}
+            <div className="mb-4">
+              <label className="block text-white/80 mb-2 text-sm font-semibold">Hackerrank Username</label>
+              <input
+                type="text"
+                value={editData.hackerrankUsername}
+                onChange={(e) => setEditData({ ...editData, hackerrankUsername: e.target.value })}
+                className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+              />
+            </div>
+
+            {/* Batch */}
+            <div className="mb-4">
+              <label className="block text-white/80 mb-2 text-sm font-semibold">Batch</label>
+              <select
+                value={editData.teamBatch}
+                onChange={(e) => setEditData({ ...editData, teamBatch: e.target.value })}
+                className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+              >
+                <option value="23" className="bg-[#0e243f]">Batch 23</option>
+                <option value="24" className="bg-[#0e243f]">Batch 24</option>
+              </select>
+            </div>
+
+            {/* Members */}
+            <div className="mb-6">
+              <h3 className="text-white/90 mb-3 text-lg font-semibold">Team Members</h3>
+              {editData.members.map((member: any, index: number) => (
+                <div key={index} className="mb-4 p-4 bg-white/5 rounded-lg border border-[#37c2cc]/20">
+                  <h4 className="text-[#37c2cc] mb-2 font-semibold">
+                    {index === 0 ? 'Team Leader' : `Member ${index + 1}`}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-white/60 mb-1 text-xs">Full Name</label>
+                      <input
+                        type="text"
+                        value={member.fullName}
+                        onChange={(e) => {
+                          const newMembers = [...editData.members];
+                          newMembers[index].fullName = e.target.value;
+                          setEditData({ ...editData, members: newMembers });
+                        }}
+                        className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/60 mb-1 text-xs">Index Number</label>
+                      <input
+                        type="text"
+                        value={member.indexNumber}
+                        onChange={(e) => {
+                          const newMembers = [...editData.members];
+                          newMembers[index].indexNumber = e.target.value.toUpperCase();
+                          setEditData({ ...editData, members: newMembers });
+                        }}
+                        className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/60 mb-1 text-xs">Email</label>
+                      <input
+                        type="email"
+                        value={member.email}
+                        onChange={(e) => {
+                          const newMembers = [...editData.members];
+                          newMembers[index].email = e.target.value;
+                          setEditData({ ...editData, members: newMembers });
+                        }}
+                        className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl"
+              >
+                Save & Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

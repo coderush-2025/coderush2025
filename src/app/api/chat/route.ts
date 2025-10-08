@@ -77,6 +77,78 @@ export async function POST(req: Request) {
   
   console.log("📋 Found existing registration, state:", reg.state);
 
+  // Handle message edit - this is simpler: just show updated info
+  if (message === "EDIT_MESSAGE") {
+    const { newContent } = body as any;
+
+    // For now, just return a simple acknowledgment
+    // Full implementation would require tracking conversation history
+    return NextResponse.json({
+      reply: `Message updated to: "${newContent}". Please continue with the registration.`,
+      updatedMessages: null // Could implement full conversation rebuild here
+    });
+  }
+
+  // Handle save edited data
+  if (message === "SAVE_EDITED_DATA") {
+    const { editedData } = body as any;
+
+    if (!editedData) {
+      return NextResponse.json({ reply: "❌ No edited data provided." }, { status: 400 });
+    }
+
+    // Update registration with edited data
+    reg.teamName = editedData.teamName;
+    reg.hackerrankUsername = editedData.hackerrankUsername;
+    reg.teamBatch = editedData.teamBatch;
+    reg.members = editedData.members.map((m: any) => ({
+      fullName: m.fullName,
+      indexNumber: m.indexNumber,
+      batch: editedData.teamBatch, // All members have same batch
+      email: m.email
+    }));
+
+    // Check if registration is complete (has all 4 members)
+    const isComplete = reg.members.length === MEMBER_COUNT;
+
+    if (isComplete) {
+      // Complete registration
+      reg.state = "DONE";
+      await reg.save();
+
+      // Save to Google Sheets
+      try {
+        const sheetsResult = await appendToGoogleSheets({
+          teamName: reg.teamName || '',
+          hackerrankUsername: reg.hackerrankUsername || '',
+          teamBatch: reg.teamBatch || '',
+          members: reg.members || [],
+          timestamp: new Date(),
+        });
+
+        if (sheetsResult.success) {
+          console.log('✅ Registration saved to Google Sheets');
+        } else {
+          console.error('⚠️ Failed to save to Google Sheets:', sheetsResult.error);
+        }
+      } catch (sheetsError) {
+        console.error('⚠️ Google Sheets error (non-blocking):', sheetsError);
+      }
+
+      return NextResponse.json({ reply: "🎉 Done! Your team is registered with updated details. You will receive a confirmation email shortly." });
+    } else {
+      // Continue registration - ask for next member
+      reg.currentMember = reg.members.length + 1;
+      reg.tempMember = undefined;
+      await reg.save();
+
+      const nextMemberLabel = reg.currentMember === 1 ? "Team Leader (Member 1)" : `Member ${reg.currentMember}`;
+      return NextResponse.json({
+        reply: `Details saved! Let's continue.\n\n${nextMemberLabel} — Full name:`
+      });
+    }
+  }
+
   if (reg.state === "DONE") {
     return NextResponse.json({ reply: "This session has already completed registration." });
   }
@@ -84,90 +156,57 @@ export async function POST(req: Request) {
   // MEMBER_DETAILS loop (collect exactly MEMBER_COUNT members)
   if (reg.state === "MEMBER_DETAILS") {
     if (!reg.currentMember) reg.currentMember = 1;
+    if (!reg.teamBatch) {
+      return NextResponse.json({ reply: "❌ Error: Team batch not set. Please restart registration." });
+    }
 
     console.log("🔍 MEMBER_DETAILS state - tempMember:", JSON.stringify(reg.tempMember, null, 2));
     console.log("🔍 Current member:", reg.currentMember, "Message:", message);
 
+    const memberLabel = reg.currentMember === 1 ? "Team Leader (Member 1)" : `Member ${reg.currentMember}`;
+
     // fullName
     if (!reg.tempMember) {
-      if (!message) return NextResponse.json({ reply: `Member ${reg.currentMember} — Full name:` });
-      reg.tempMember = { fullName: message };
+      if (!message) return NextResponse.json({ reply: `${memberLabel} — Full name:` });
+      reg.tempMember = { fullName: message, batch: reg.teamBatch };
       await reg.save();
-      // After full name, ask for batch selection
-      return NextResponse.json({ 
-        reply: `Member ${reg.currentMember} — Select your batch:`,
-        buttons: [
-          { text: "Batch 22", value: "22" },
-          { text: "Batch 23", value: "23" },
-          { text: "Batch 24", value: "24" }
-        ]
-      });
+      return NextResponse.json({ reply: `${memberLabel} — Index number (must start with ${reg.teamBatch}):` });
     }
 
-    // batch selection (ask first)
-    if (reg.tempMember && !reg.tempMember.batch) {
-      if (!message) {
-        return NextResponse.json({ 
-          reply: `Member ${reg.currentMember} — Select your batch:`,
-          buttons: [
-            { text: "Batch 22", value: "22" },
-            { text: "Batch 23", value: "23" },
-            { text: "Batch 24", value: "24" }
-          ]
-        });
-      }
-      
-      const trimmedMessage = message.trim();
-      if (!validators.batch(trimmedMessage)) {
-        return NextResponse.json({ reply: "❌ Invalid batch. Must be exactly 2 digits (e.g., 22, 23, 24). Please select again:" });
-      }
-      
-      // Create a new tempMember object to ensure proper MongoDB update
-      reg.tempMember = {
-        ...reg.tempMember,
-        batch: trimmedMessage
-      };
-      
-      // Mark the field as modified for mongoose
-      reg.markModified('tempMember');
-      await reg.save();
-      return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number:` });
-    }
-
-    // indexNumber (validate against selected batch)
-    if (reg.tempMember && reg.tempMember.batch && !reg.tempMember.indexNumber) {
+    // indexNumber (validate against team batch)
+    if (reg.tempMember && !reg.tempMember.indexNumber) {
       const trimmedMessage = message.trim().toUpperCase();
       if (!validators.index(trimmedMessage)) {
-        return NextResponse.json({ reply: "❌ Invalid index number. Must be 6 digits followed by a capital letter (e.g., 224001T)." });
+        return NextResponse.json({ reply: "❌ Invalid index number. Must be 6 digits followed by a capital letter (e.g., 234001T)." });
       }
-      
-      // Validate that index number starts with the selected batch
+
+      // Validate that index number starts with the team batch
       const indexBatch = trimmedMessage.substring(0, 2);
-      if (indexBatch !== reg.tempMember.batch) {
-        return NextResponse.json({ 
-          reply: `❌ Index number must start with your selected batch ${reg.tempMember.batch}. You entered ${indexBatch}. Please enter a valid index number:` 
+      if (indexBatch !== reg.teamBatch) {
+        return NextResponse.json({
+          reply: `❌ Index number must start with your team batch ${reg.teamBatch}. You entered ${indexBatch}. Please enter a valid index number:`
         });
       }
-      
+
       // Create a new tempMember object to ensure proper MongoDB update
       reg.tempMember = {
         ...reg.tempMember,
         indexNumber: trimmedMessage
       };
-      
+
       // Mark the field as modified for mongoose
       reg.markModified('tempMember');
       await reg.save();
-      return NextResponse.json({ reply: `Member ${reg.currentMember} — Email:` });
+      return NextResponse.json({ reply: `${memberLabel} — Email:` });
     }
 
     // email
-    if (reg.tempMember && reg.tempMember.batch && !reg.tempMember.email) {
+    if (reg.tempMember && reg.tempMember.indexNumber && !reg.tempMember.email) {
       const trimmedMessage = message.trim();
       if (!validators.email(trimmedMessage)) {
         return NextResponse.json({ reply: "❌ Invalid email. Please enter a valid email address." });
       }
-      
+
       // Create a new tempMember object to ensure proper MongoDB update
       reg.tempMember = {
         ...reg.tempMember,
@@ -177,7 +216,7 @@ export async function POST(req: Request) {
       // push completed member
       reg.members.push(reg.tempMember as Required<typeof reg.tempMember>);
       reg.tempMember = undefined;
-      
+
       // Mark the fields as modified for mongoose
       reg.markModified('members');
       reg.markModified('tempMember');
@@ -186,15 +225,19 @@ export async function POST(req: Request) {
       if ((reg.members || []).length < MEMBER_COUNT) {
         reg.currentMember = (reg.currentMember || 1) + 1;
         await reg.save();
-        return NextResponse.json({ reply: `Member ${reg.currentMember} — Full name:` });
+        const nextMemberLabel = `Member ${reg.currentMember}`;
+        return NextResponse.json({
+          reply: `${nextMemberLabel} — Full name:`
+        });
       } else {
         reg.state = "CONFIRMATION";
         await reg.save();
         const summaryLines = [
           `Team: ${reg.teamName}`,
           `Hackerrank: ${reg.hackerrankUsername || "N/A"}`,
+          `Batch: ${reg.teamBatch}`,
           `Members:`,
-          ...(reg.members || []).map((m, i: number) => `${i + 1}. ${m.fullName} — ${m.indexNumber} — ${m.batch} — ${m.email}`),
+          ...(reg.members || []).map((m, i: number) => `${i + 1}. ${m.fullName} — ${m.indexNumber} — ${m.email}`),
         ];
         const summary = summaryLines.join("\n");
         return NextResponse.json({ reply: `${summary}\n\n${states.CONFIRMATION.prompt}` });
@@ -207,25 +250,16 @@ export async function POST(req: Request) {
       tempMember: reg.tempMember,
       currentMember: reg.currentMember
     });
-    
+
     // Determine what to ask for based on current state
     if (reg.tempMember) {
-      if (!reg.tempMember.batch) {
-        return NextResponse.json({ 
-          reply: `Member ${reg.currentMember} — Select your batch:`,
-          buttons: [
-            { text: "Batch 22", value: "22" },
-            { text: "Batch 23", value: "23" },
-            { text: "Batch 24", value: "24" }
-          ]
-        });
-      } else if (!reg.tempMember.indexNumber) {
-        return NextResponse.json({ reply: `Member ${reg.currentMember} — Index number (must start with ${reg.tempMember.batch}):` });
+      if (!reg.tempMember.indexNumber) {
+        return NextResponse.json({ reply: `${memberLabel} — Index number (must start with ${reg.teamBatch}):` });
       } else if (!reg.tempMember.email) {
-        return NextResponse.json({ reply: `Member ${reg.currentMember} — Email:` });
+        return NextResponse.json({ reply: `${memberLabel} — Email:` });
       }
     } else {
-      return NextResponse.json({ reply: `Member ${reg.currentMember} — Full name:` });
+      return NextResponse.json({ reply: `${memberLabel} — Full name:` });
     }
   }
 
@@ -278,33 +312,96 @@ export async function POST(req: Request) {
 
     // Save entered username (preserve user case)
     reg.hackerrankUsername = trimmedMessage;
-    // move to members collection
+    // move to batch selection
+    reg.state = "BATCH_SELECTION";
+    await reg.save();
+
+    return NextResponse.json({
+      reply: `Hackerrank username saved as "${reg.hackerrankUsername}".\n\nSelect your team's batch (all 4 members must be from the same batch):`,
+      buttons: [
+        { text: "Batch 23", value: "23" },
+        { text: "Batch 24", value: "24" }
+      ]
+    });
+  }
+
+  // BATCH_SELECTION handling
+  if (reg.state === "BATCH_SELECTION") {
+    const trimmedMessage = message.trim();
+    if (!validators.batch(trimmedMessage)) {
+      return NextResponse.json({
+        reply: "❌ Invalid batch. Please select Batch 23 or Batch 24:",
+        buttons: [
+          { text: "Batch 23", value: "23" },
+          { text: "Batch 24", value: "24" }
+        ]
+      });
+    }
+
+    reg.teamBatch = trimmedMessage;
     reg.state = "MEMBER_DETAILS";
     reg.currentMember = 1;
     reg.tempMember = undefined;
     await reg.save();
 
-    return NextResponse.json({ reply: `Hackerrank username saved as "${reg.hackerrankUsername}".\nMember 1 — Full name:` });
+    return NextResponse.json({
+      reply: `Team batch saved as Batch ${reg.teamBatch}.\n\nTeam Leader (Member 1) — Full name:`
+    });
   }
 
-  // generic validations (CONFIRMATION)
-  if (cfg.validate && !cfg.validate(message)) {
-    return NextResponse.json({ reply: "❌ Invalid input. Please try again." });
+  // Handle CONFIRMATION state
+  if (reg.state === "CONFIRMATION") {
+    const trimmedMessage = message.trim().toLowerCase();
+
+    if (!["yes", "no"].includes(trimmedMessage)) {
+      return NextResponse.json({ reply: "❌ Invalid input. Please type 'yes' to confirm or 'no' to edit details." });
+    }
+
+    if (trimmedMessage === "no") {
+      // User wants to edit - send edit form data with a button
+      return NextResponse.json({
+        reply: "Click the button below to edit your registration details:",
+        buttons: [
+          { text: "📝 Open Edit Form", value: "OPEN_EDIT_FORM" }
+        ],
+        showEditForm: true,
+        registrationData: {
+          teamName: reg.teamName,
+          hackerrankUsername: reg.hackerrankUsername,
+          teamBatch: reg.teamBatch,
+          members: reg.members.map(m => ({
+            fullName: m.fullName,
+            indexNumber: m.indexNumber,
+            email: m.email
+          }))
+        }
+      });
+    }
+
+    // User said "yes" - proceed to DONE
+    reg.state = "DONE";
+    await reg.save();
+  } else {
+    // generic validations for other states
+    if (cfg.validate && !cfg.validate(message)) {
+      return NextResponse.json({ reply: "❌ Invalid input. Please try again." });
+    }
+
+    if (cfg.save) cfg.save(reg, message);
+
+    // advance state
+    reg.state = cfg.next || reg.state;
+    await reg.save();
   }
-
-  if (cfg.save) cfg.save(reg, message);
-
-  // advance state
-  reg.state = cfg.next || reg.state;
-  await reg.save();
 
   // If we moved to CONFIRMATION, prepare summary
   if (reg.state === "CONFIRMATION") {
     const summaryLines = [
       `Team: ${reg.teamName}`,
       `Hackerrank: ${reg.hackerrankUsername || "N/A"}`,
+      `Batch: ${reg.teamBatch}`,
       `Members:`,
-      ...(reg.members || []).map((m, i: number) => `${i + 1}. ${m.fullName} — ${m.indexNumber} — ${m.batch} — ${m.email}`),
+      ...(reg.members || []).map((m, i: number) => `${i + 1}. ${m.fullName} — ${m.indexNumber} — ${m.email}`),
     ];
     const summary = summaryLines.join("\n");
     return NextResponse.json({ reply: `${summary}\n\n${states.CONFIRMATION.prompt}` });
@@ -332,6 +429,7 @@ export async function POST(req: Request) {
       const sheetsResult = await appendToGoogleSheets({
         teamName: reg.teamName || '',
         hackerrankUsername: reg.hackerrankUsername || '',
+        teamBatch: reg.teamBatch || '',
         members: reg.members || [],
         timestamp: new Date(),
       });

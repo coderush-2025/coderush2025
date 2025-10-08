@@ -17,6 +17,7 @@ const SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Sheet1'; // Sheet name (can
 export interface RegistrationData {
   teamName: string;
   hackerrankUsername: string;
+  teamBatch: string;
   members: {
     fullName: string;
     indexNumber: string;
@@ -38,17 +39,17 @@ export async function appendToGoogleSheets(data: RegistrationData) {
 
     // Prepare row data
     const timestamp = new Date().toISOString();
-    
+
   // Create rows (one row per member)
-  // Only include team info (timestamp, team name, hackerrank username) in the first row
+  // Only include team info (timestamp, team name, hackerrank username, batch) in the first row
   const rows = data.members.map((member, index) => [
     index === 0 ? timestamp : '',
     index === 0 ? data.teamName : '',
     index === 0 ? data.hackerrankUsername : '',
+    index === 0 ? data.teamBatch : '',
     data.members.length,
     member.fullName,
     member.indexNumber,
-    member.batch,
     member.email,
   ]);    // Append to sheet
     // Wrap sheet name in quotes if it contains spaces or special characters
@@ -91,10 +92,10 @@ export async function initializeSheetHeaders() {
         'Timestamp',
         'Team Name',
         'Hackerrank Username',
-        'Team Size',
-        'Member',
-        'Index Number',
         'Batch',
+        'Team Size',
+        'Member Name',
+        'Index Number',
         'Email',
       ],
     ];
