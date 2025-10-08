@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Registration from "@/models/Registration";
 import { states, validators, MEMBER_COUNT } from "@/lib/stateMachine";
 import { appendToGoogleSheets } from "@/lib/googleSheets";
+import { sendRegistrationEmail } from "@/lib/emailService";
 
 type ReqBody = { sessionId: string; message: string };
 
@@ -53,8 +54,11 @@ export async function POST(req: Request) {
     }
     console.log(`✅ Team count: ${teamCount}/${MAX_TEAMS}`);
 
-    // Check uniqueness (case-insensitive)
-    const exists = await Registration.findOne({ teamName: { $regex: `^${escapeRegExp(message)}$`, $options: "i" } });
+    // Check uniqueness (case-insensitive) - only check completed registrations
+    const exists = await Registration.findOne({
+      teamName: { $regex: `^${escapeRegExp(message)}$`, $options: "i" },
+      state: "DONE"
+    });
     if (exists) {
       return NextResponse.json({ reply: "❌ Team name already taken. Please choose another team name." });
     }
@@ -90,6 +94,78 @@ export async function POST(req: Request) {
       return NextResponse.json({
         reply: "✅ This registration has already been submitted. To register another team, click the 🔄 Reset button."
       });
+    }
+
+    // Check if team name is already taken by another completed team
+    const teamNameExists = await Registration.findOne({
+      teamName: { $regex: `^${escapeRegExp(editedData.teamName)}$`, $options: "i" },
+      state: "DONE",
+      _id: { $ne: reg._id }
+    });
+    if (teamNameExists) {
+      return NextResponse.json({
+        reply: `❌ Team name "${editedData.teamName}" is already registered. Please choose another team name.`
+      });
+    }
+
+    // Check if HackerRank username is already taken by another completed team
+    const hackerrankExists = await Registration.findOne({
+      hackerrankUsername: { $regex: `^${escapeRegExp(editedData.hackerrankUsername)}$`, $options: "i" },
+      state: "DONE",
+      _id: { $ne: reg._id }
+    });
+    if (hackerrankExists) {
+      return NextResponse.json({
+        reply: `❌ HackerRank username "${editedData.hackerrankUsername}" is already registered. Please update your team name and HackerRank username.`
+      });
+    }
+
+    // Validate no duplicate index numbers within team
+    const indexNumbers = editedData.members.map((m: any) => m.indexNumber);
+    const duplicateIndexes = indexNumbers.filter((item: string, index: number) => indexNumbers.indexOf(item) !== index);
+    if (duplicateIndexes.length > 0) {
+      return NextResponse.json({
+        reply: `❌ Duplicate index numbers found in your team: ${duplicateIndexes.join(', ')}. Each member must have a unique index number.`
+      });
+    }
+
+    // Validate no duplicate emails within team
+    const emails = editedData.members.map((m: any) => m.email.toLowerCase());
+    const duplicateEmails = emails.filter((item: string, index: number) => emails.indexOf(item) !== index);
+    if (duplicateEmails.length > 0) {
+      return NextResponse.json({
+        reply: `❌ Duplicate email addresses found in your team: ${duplicateEmails.join(', ')}. Each member must have a unique email address.`
+      });
+    }
+
+    // Check if any index number exists in other teams
+    for (const member of editedData.members) {
+      const indexExists = await Registration.findOne({
+        'members.indexNumber': member.indexNumber,
+        state: 'DONE',
+        _id: { $ne: reg._id }
+      });
+
+      if (indexExists) {
+        return NextResponse.json({
+          reply: `❌ Index number ${member.indexNumber} is already registered in another team. Please update this index number.`
+        });
+      }
+    }
+
+    // Check if any email exists in other teams
+    for (const member of editedData.members) {
+      const emailExists = await Registration.findOne({
+        'members.email': { $regex: `^${escapeRegExp(member.email)}$`, $options: 'i' },
+        state: 'DONE',
+        _id: { $ne: reg._id }
+      });
+
+      if (emailExists) {
+        return NextResponse.json({
+          reply: `❌ Email ${member.email} is already registered in another team. Please update this email address.`
+        });
+      }
     }
 
     // Update registration with edited data
@@ -132,7 +208,35 @@ export async function POST(req: Request) {
         console.error('⚠️ Google Sheets error (non-blocking):', sheetsError);
       }
 
-      return NextResponse.json({ reply: "🎉 Done! Your team is registered with updated details. You will receive a confirmation email shortly." });
+      // Send confirmation email to team leader
+      console.log('📧 Sending confirmation email to:', reg.members[0]?.email);
+      try {
+        const emailResult = await sendRegistrationEmail({
+          teamName: reg.teamName || '',
+          hackerrankUsername: reg.hackerrankUsername || '',
+          teamBatch: reg.teamBatch || '',
+          leaderName: reg.members[0]?.fullName || '',
+          leaderEmail: reg.members[0]?.email || '',
+          leaderIndex: reg.members[0]?.indexNumber || '',
+          members: reg.members.slice(1).map(m => ({
+            fullName: m.fullName,
+            indexNumber: m.indexNumber,
+            email: m.email,
+          })),
+        });
+
+        if (emailResult.success) {
+          console.log('✅ Confirmation email sent successfully');
+        } else {
+          console.error('⚠️ Failed to send email:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('⚠️ Email error (non-blocking):', emailError);
+      }
+
+      return NextResponse.json({
+        reply: `🎉 Registration Successful!\n\nYour team "${reg.teamName}" has been registered for CodeRush 2025!\n\n✅ Registration confirmed\n📧 Confirmation email sent to ${reg.members[0]?.email}\n📊 Team data saved\n\n🏆 Good luck and may the best team win!`
+      });
     } else {
       // Continue registration - ask for next member
       reg.currentMember = reg.members.length + 1;
@@ -211,6 +315,27 @@ export async function POST(req: Request) {
         });
       }
 
+      // Check if index number already exists in current team
+      const indexExistsInTeam = reg.members.some(m => m.indexNumber === trimmedMessage);
+      if (indexExistsInTeam) {
+        return NextResponse.json({
+          reply: `❌ This index number (${trimmedMessage}) is already registered in your team. Please enter a different index number:`
+        });
+      }
+
+      // Check if index number exists in any other completed registration
+      const indexExists = await Registration.findOne({
+        'members.indexNumber': trimmedMessage,
+        state: 'DONE',
+        _id: { $ne: reg._id }
+      });
+
+      if (indexExists) {
+        return NextResponse.json({
+          reply: `❌ This index number (${trimmedMessage}) is already registered in another team. Please enter a valid index number:`
+        });
+      }
+
       // Create a new tempMember object to ensure proper MongoDB update
       reg.tempMember = {
         ...reg.tempMember,
@@ -234,6 +359,27 @@ export async function POST(req: Request) {
 
       if (!validators.email(trimmedMessage)) {
         return NextResponse.json({ reply: "❌ Invalid email. Please enter a valid email address (e.g., name@example.com)." });
+      }
+
+      // Check if email already exists in current team
+      const emailExistsInTeam = reg.members.some(m => m.email.toLowerCase() === trimmedMessage.toLowerCase());
+      if (emailExistsInTeam) {
+        return NextResponse.json({
+          reply: `❌ This email (${trimmedMessage}) is already registered in your team. Please enter a different email address:`
+        });
+      }
+
+      // Check if email exists in any other completed registration
+      const emailExists = await Registration.findOne({
+        'members.email': { $regex: `^${escapeRegExp(trimmedMessage)}$`, $options: 'i' },
+        state: 'DONE',
+        _id: { $ne: reg._id }
+      });
+
+      if (emailExists) {
+        return NextResponse.json({
+          reply: `❌ This email (${trimmedMessage}) is already registered in another team. Please enter a valid email address:`
+        });
       }
 
       // Create a new tempMember object to ensure proper MongoDB update
@@ -333,10 +479,14 @@ export async function POST(req: Request) {
       });
     }
 
-    // Optional: check hackerrank username uniqueness among existing registrations
-    const hrExists = await Registration.findOne({ hackerrankUsername: { $regex: `^${escapeRegExp(trimmedMessage)}$`, $options: "i" } });
+    // Check hackerrank username uniqueness among completed registrations
+    const hrExists = await Registration.findOne({
+      hackerrankUsername: { $regex: `^${escapeRegExp(trimmedMessage)}$`, $options: "i" },
+      state: "DONE",
+      _id: { $ne: reg._id }
+    });
     if (hrExists) {
-      return NextResponse.json({ reply: "❌ That Hackerrank username is already used. Please contact organizers or choose another team name." });
+      return NextResponse.json({ reply: "❌ That Hackerrank username is already registered. Please choose another team name and try again." });
     }
 
     // Save entered username (preserve user case)

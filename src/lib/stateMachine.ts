@@ -37,7 +37,7 @@ export const states: Record<string, StateConfig> = {
   },
 
   DONE: {
-    prompt: "🎉 Done! Your team is registered. You will receive a confirmation email shortly.",
+    prompt: "🎉 Registration Successful! Your team has been registered for CodeRush 2025. Check your email for confirmation details.",
   },
 };
 
