@@ -77,18 +77,6 @@ export async function POST(req: Request) {
   
   console.log("📋 Found existing registration, state:", reg.state);
 
-  // Handle message edit - this is simpler: just show updated info
-  if (message === "EDIT_MESSAGE") {
-    const { newContent } = body as any;
-
-    // For now, just return a simple acknowledgment
-    // Full implementation would require tracking conversation history
-    return NextResponse.json({
-      reply: `Message updated to: "${newContent}". Please continue with the registration.`,
-      updatedMessages: null // Could implement full conversation rebuild here
-    });
-  }
-
   // Handle save edited data
   if (message === "SAVE_EDITED_DATA") {
     const { editedData } = body as any;
@@ -168,7 +156,24 @@ export async function POST(req: Request) {
     // fullName
     if (!reg.tempMember) {
       if (!message) return NextResponse.json({ reply: `${memberLabel} — Full name:` });
-      reg.tempMember = { fullName: message, batch: reg.teamBatch };
+
+      const trimmedMessage = message.trim();
+
+      // Validate that name is not just numbers (prevent batch numbers being used as names)
+      if (/^\d+$/.test(trimmedMessage)) {
+        return NextResponse.json({
+          reply: `❌ Invalid name. Full name cannot be just numbers.\n\n${memberLabel} — Full name:`
+        });
+      }
+
+      // Validate name has at least 2 characters
+      if (trimmedMessage.length < 2) {
+        return NextResponse.json({
+          reply: `❌ Name must be at least 2 characters.\n\n${memberLabel} — Full name:`
+        });
+      }
+
+      reg.tempMember = { fullName: trimmedMessage, batch: reg.teamBatch };
       await reg.save();
       return NextResponse.json({ reply: `${memberLabel} — Index number (must start with ${reg.teamBatch}):` });
     }
@@ -378,9 +383,26 @@ export async function POST(req: Request) {
       });
     }
 
-    // User said "yes" - proceed to DONE
-    reg.state = "DONE";
-    await reg.save();
+    // User said "yes" - show edit form popup to confirm before final submission
+    if (trimmedMessage === "yes") {
+      return NextResponse.json({
+        reply: "Please review your details one final time before submission:",
+        buttons: [
+          { text: "📝 Review & Submit", value: "OPEN_EDIT_FORM" }
+        ],
+        showEditForm: true,
+        registrationData: {
+          teamName: reg.teamName,
+          hackerrankUsername: reg.hackerrankUsername,
+          teamBatch: reg.teamBatch,
+          members: reg.members.map(m => ({
+            fullName: m.fullName,
+            indexNumber: m.indexNumber,
+            email: m.email
+          }))
+        }
+      });
+    }
   } else {
     // generic validations for other states
     if (cfg.validate && !cfg.validate(message)) {

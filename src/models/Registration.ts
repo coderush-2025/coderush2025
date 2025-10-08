@@ -29,6 +29,14 @@ const registrationSchema = new Schema<RegistrationDocument>({
     required: false
   },
   currentMember: { type: Number, required: false },
+  conversationHistory: {
+    type: [{
+      role: { type: String, required: true },
+      content: { type: String, required: true },
+      state: { type: String, required: true }
+    }],
+    default: []
+  },
 });
 
 // Add compound index that only applies uniqueness when teamName exists

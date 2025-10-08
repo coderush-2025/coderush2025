@@ -30,7 +30,6 @@ export default function ChatBot() {
   const [isTyping, setIsTyping] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState<any>(null);
-  const [editingMessageIndex, setEditingMessageIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -84,45 +83,83 @@ export default function ChatBot() {
     await sendMessageToAPI(value);
   };
 
-  const handleMessageEdit = async (messageIndex: number, newContent: string) => {
-    setIsTyping(true);
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sessionId,
-          message: "EDIT_MESSAGE",
-          messageIndex,
-          newContent
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.updatedMessages) {
-        // Replace all messages with updated ones from server
-        setMessages(data.updatedMessages);
-      } else if (data.reply) {
-        // Fallback: just add bot reply
-        setMessages((prev) => [...prev, { role: "bot", content: data.reply }]);
-      }
-    } catch (error) {
-      console.error("Error editing message:", error);
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", content: "Error updating message. Please try again." }
-      ]);
-    } finally {
-      setIsTyping(false);
-    }
-  };
 
   const handleSaveEdit = async () => {
     if (!editData) return;
+
+    // Validate team name and HackerRank username match
+    if (!editData.hackerrankUsername.endsWith('_CR')) {
+      alert('❌ HackerRank username must end with _CR (uppercase)');
+      return;
+    }
+
+    const extractedTeamName = editData.hackerrankUsername.slice(0, -3);
+    if (extractedTeamName.toLowerCase() !== editData.teamName.toLowerCase()) {
+      alert(`❌ Team name and HackerRank username mismatch!\n\nTeam name: "${editData.teamName}"\nHackerRank username: "${editData.hackerrankUsername}"\n\nThe HackerRank username should be "${editData.teamName}_CR"`);
+      return;
+    }
+
+    // Validate batch
+    if (!editData.teamBatch || !['23', '24'].includes(editData.teamBatch)) {
+      alert('❌ Invalid batch. Please select Batch 23 or Batch 24');
+      return;
+    }
+
+    // Validate all index numbers match the batch
+    const invalidMembers = editData.members.filter((member: any, index: number) => {
+      const indexNumber = member.indexNumber?.trim();
+      if (!indexNumber || indexNumber.length < 2) {
+        return true; // Invalid - too short
+      }
+      const indexBatch = indexNumber.substring(0, 2);
+      return indexBatch !== editData.teamBatch;
+    });
+
+    if (invalidMembers.length > 0) {
+      const membersList = invalidMembers.map((m: any, i: number) => {
+        const memberIndex = editData.members.indexOf(m) + 1;
+        const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
+        return `${memberLabel}: ${m.indexNumber} (should start with ${editData.teamBatch})`;
+      }).join('\n');
+
+      alert(`❌ Index numbers must match the team batch!\n\nBatch: ${editData.teamBatch}\n\nInvalid index numbers:\n${membersList}\n\nPlease correct the index numbers to start with ${editData.teamBatch}`);
+      return;
+    }
+
+    // Validate index number format (6 digits + letter)
+    const indexRegex = /^[0-9]{6}[A-Z]$/;
+    const invalidFormats = editData.members.filter((member: any) => {
+      const indexNumber = member.indexNumber?.trim().toUpperCase();
+      return !indexRegex.test(indexNumber);
+    });
+
+    if (invalidFormats.length > 0) {
+      const membersList = invalidFormats.map((m: any) => {
+        const memberIndex = editData.members.indexOf(m) + 1;
+        const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
+        return `${memberLabel}: "${m.indexNumber}"`;
+      }).join('\n');
+
+      alert(`❌ Invalid index number format!\n\nIndex numbers must be 6 digits followed by a capital letter.\nExample: 234001T\n\nInvalid entries:\n${membersList}`);
+      return;
+    }
+
+    // Validate emails
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = editData.members.filter((member: any) => {
+      return !emailRegex.test(member.email?.trim());
+    });
+
+    if (invalidEmails.length > 0) {
+      const membersList = invalidEmails.map((m: any) => {
+        const memberIndex = editData.members.indexOf(m) + 1;
+        const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
+        return `${memberLabel}: "${m.email}"`;
+      }).join('\n');
+
+      alert(`❌ Invalid email addresses!\n\n${membersList}`);
+      return;
+    }
 
     setShowEditModal(false);
     setIsTyping(true);
@@ -158,23 +195,6 @@ export default function ChatBot() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-
-    // If editing an existing message
-    if (editingMessageIndex !== null) {
-      // Update the message at the index
-      const updatedMessages = [...messages];
-      updatedMessages[editingMessageIndex] = {
-        ...updatedMessages[editingMessageIndex],
-        content: input
-      };
-      setMessages(updatedMessages);
-      setEditingMessageIndex(null);
-      setInput("");
-
-      // Notify backend about the edit and get updated responses
-      await handleMessageEdit(editingMessageIndex, input);
-      return;
-    }
 
     await sendMessageToAPI(input);
     setInput("");
@@ -314,33 +334,15 @@ export default function ChatBot() {
                 }}
               >
                 <div className="px-4 py-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div
-                      className={`text-[15px] leading-relaxed whitespace-pre-wrap flex-1 ${
-                        m.role === "user" ? "font-medium" : ""
-                      }`}
-                      style={{
-                        fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-                      }}
-                    >
-                      {m.content}
-                    </div>
-
-                    {/* Edit button for user messages */}
-                    {m.role === "user" && (
-                      <button
-                        onClick={() => {
-                          setInput(m.content);
-                          setEditingMessageIndex(i);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 active:scale-95"
-                        title="Edit this message"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                    )}
+                  <div
+                    className={`text-[15px] leading-relaxed whitespace-pre-wrap ${
+                      m.role === "user" ? "font-medium" : ""
+                    }`}
+                    style={{
+                      fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {m.content}
                   </div>
                   
                   {/* Render buttons if they exist */}
@@ -479,7 +481,29 @@ export default function ChatBot() {
               <label className="block text-white/80 mb-2 text-sm font-semibold">Batch</label>
               <select
                 value={editData.teamBatch}
-                onChange={(e) => setEditData({ ...editData, teamBatch: e.target.value })}
+                onChange={(e) => {
+                  const newBatch = e.target.value;
+
+                  // Check if any index numbers don't match the new batch
+                  const mismatchedMembers = editData.members.filter((member: any) => {
+                    const indexNumber = member.indexNumber?.trim();
+                    if (!indexNumber || indexNumber.length < 2) return false;
+                    const indexBatch = indexNumber.substring(0, 2);
+                    return indexBatch !== newBatch;
+                  });
+
+                  if (mismatchedMembers.length > 0) {
+                    const membersList = mismatchedMembers.map((m: any) => {
+                      const memberIndex = editData.members.indexOf(m) + 1;
+                      const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
+                      return `${memberLabel}: ${m.indexNumber}`;
+                    }).join('\n');
+
+                    alert(`⚠️ Warning: Batch changed to ${newBatch}\n\nThe following index numbers don't match:\n${membersList}\n\nPlease update these index numbers to start with ${newBatch} before submitting.`);
+                  }
+
+                  setEditData({ ...editData, teamBatch: newBatch });
+                }}
                 className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
               >
                 <option value="23" className="bg-[#0e243f]">Batch 23</option>
@@ -515,11 +539,24 @@ export default function ChatBot() {
                         type="text"
                         value={member.indexNumber}
                         onChange={(e) => {
+                          let newIndexNumber = e.target.value.toUpperCase();
+
+                          // Auto-correct batch prefix if user is typing and has at least 2 digits
+                          if (newIndexNumber.length >= 2 && /^\d{2}/.test(newIndexNumber)) {
+                            const currentBatchPrefix = newIndexNumber.substring(0, 2);
+
+                            // If the first 2 digits don't match the team batch, replace them
+                            if (currentBatchPrefix !== editData.teamBatch) {
+                              newIndexNumber = editData.teamBatch + newIndexNumber.substring(2);
+                            }
+                          }
+
                           const newMembers = [...editData.members];
-                          newMembers[index].indexNumber = e.target.value.toUpperCase();
+                          newMembers[index].indexNumber = newIndexNumber;
                           setEditData({ ...editData, members: newMembers });
                         }}
                         className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                        placeholder={`${editData.teamBatch}XXXXY (e.g., ${editData.teamBatch}4001T)`}
                       />
                     </div>
                     <div>
