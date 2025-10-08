@@ -7,7 +7,7 @@ type StateConfig = {
   save?: (reg: Registration, input: string) => void;
 };
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const indexRegex = /^[0-9]{2}[0-9]{4}[A-Z]$/;
 const batchRegex = /^(23|24)$/;
 

@@ -19,6 +19,12 @@ interface Message {
   };
 }
 
+interface Toast {
+  id: number;
+  message: string;
+  type: 'error' | 'warning' | 'success';
+}
+
 export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -30,6 +36,7 @@ export default function ChatBot() {
   const [isTyping, setIsTyping] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState<any>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -39,6 +46,16 @@ export default function ChatBot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  const showToast = (message: string, type: 'error' | 'warning' | 'success' = 'error') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, 5000);
+  };
 
   const [sessionId, setSessionId] = useState(() => {
     // Check if we're in the browser environment
@@ -89,19 +106,19 @@ export default function ChatBot() {
 
     // Validate team name and HackerRank username match
     if (!editData.hackerrankUsername.endsWith('_CR')) {
-      alert('❌ HackerRank username must end with _CR (uppercase)');
+      showToast('HackerRank username must end with _CR (uppercase)', 'error');
       return;
     }
 
     const extractedTeamName = editData.hackerrankUsername.slice(0, -3);
     if (extractedTeamName.toLowerCase() !== editData.teamName.toLowerCase()) {
-      alert(`❌ Team name and HackerRank username mismatch!\n\nTeam name: "${editData.teamName}"\nHackerRank username: "${editData.hackerrankUsername}"\n\nThe HackerRank username should be "${editData.teamName}_CR"`);
+      showToast(`Team name and HackerRank username mismatch! Expected: "${editData.teamName}_CR"`, 'error');
       return;
     }
 
     // Validate batch
     if (!editData.teamBatch || !['23', '24'].includes(editData.teamBatch)) {
-      alert('❌ Invalid batch. Please select Batch 23 or Batch 24');
+      showToast('Invalid batch. Please select Batch 23 or Batch 24', 'error');
       return;
     }
 
@@ -119,10 +136,10 @@ export default function ChatBot() {
       const membersList = invalidMembers.map((m: any, i: number) => {
         const memberIndex = editData.members.indexOf(m) + 1;
         const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
-        return `${memberLabel}: ${m.indexNumber} (should start with ${editData.teamBatch})`;
-      }).join('\n');
+        return `${memberLabel}: ${m.indexNumber}`;
+      }).join(', ');
 
-      alert(`❌ Index numbers must match the team batch!\n\nBatch: ${editData.teamBatch}\n\nInvalid index numbers:\n${membersList}\n\nPlease correct the index numbers to start with ${editData.teamBatch}`);
+      showToast(`Index numbers must start with ${editData.teamBatch}. Check: ${membersList}`, 'error');
       return;
     }
 
@@ -137,10 +154,10 @@ export default function ChatBot() {
       const membersList = invalidFormats.map((m: any) => {
         const memberIndex = editData.members.indexOf(m) + 1;
         const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
-        return `${memberLabel}: "${m.indexNumber}"`;
-      }).join('\n');
+        return `${memberLabel}`;
+      }).join(', ');
 
-      alert(`❌ Invalid index number format!\n\nIndex numbers must be 6 digits followed by a capital letter.\nExample: 234001T\n\nInvalid entries:\n${membersList}`);
+      showToast(`Invalid index format (must be 6 digits + letter). Check: ${membersList}`, 'error');
       return;
     }
 
@@ -154,10 +171,10 @@ export default function ChatBot() {
       const membersList = invalidEmails.map((m: any) => {
         const memberIndex = editData.members.indexOf(m) + 1;
         const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
-        return `${memberLabel}: "${m.email}"`;
-      }).join('\n');
+        return memberLabel;
+      }).join(', ');
 
-      alert(`❌ Invalid email addresses!\n\n${membersList}`);
+      showToast(`Invalid email addresses. Check: ${membersList}`, 'error');
       return;
     }
 
@@ -496,10 +513,10 @@ export default function ChatBot() {
                     const membersList = mismatchedMembers.map((m: any) => {
                       const memberIndex = editData.members.indexOf(m) + 1;
                       const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
-                      return `${memberLabel}: ${m.indexNumber}`;
-                    }).join('\n');
+                      return memberLabel;
+                    }).join(', ');
 
-                    alert(`⚠️ Warning: Batch changed to ${newBatch}\n\nThe following index numbers don't match:\n${membersList}\n\nPlease update these index numbers to start with ${newBatch} before submitting.`);
+                    showToast(`Batch changed to ${newBatch}. Update index numbers for: ${membersList}`, 'warning');
                   }
 
                   setEditData({ ...editData, teamBatch: newBatch });
@@ -595,6 +612,58 @@ export default function ChatBot() {
           </div>
         </div>
       )}
+
+      {/* Toast Notifications */}
+      <div className="fixed top-4 right-4 z-[10000] flex flex-col gap-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`min-w-[300px] max-w-md px-6 py-4 rounded-lg shadow-2xl backdrop-blur-xl border-2 transform transition-all duration-300 animate-slide-in ${
+              toast.type === 'error'
+                ? 'bg-red-500/90 border-red-400 text-white'
+                : toast.type === 'warning'
+                ? 'bg-yellow-500/90 border-yellow-400 text-gray-900'
+                : 'bg-green-500/90 border-green-400 text-white'
+            }`}
+            style={{
+              animation: 'slideIn 0.3s ease-out',
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 text-2xl">
+                {toast.type === 'error' && '❌'}
+                {toast.type === 'warning' && '⚠️'}
+                {toast.type === 'success' && '✅'}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm leading-relaxed">{toast.message}</p>
+              </div>
+              <button
+                onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                className="flex-shrink-0 text-xl hover:opacity-70 transition-opacity"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in {
+          animation: slideIn 0.3s ease-out;
+        }
+      `}</style>
     </>
   );
 }

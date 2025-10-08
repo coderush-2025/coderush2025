@@ -138,7 +138,16 @@ export async function POST(req: Request) {
   }
 
   if (reg.state === "DONE") {
-    return NextResponse.json({ reply: "This session has already completed registration." });
+    return NextResponse.json({
+      reply: "✅ This session has already completed registration.\n\nTo register another team, please click the 🔄 Reset button at the top of the chat."
+    });
+  }
+
+  // If in CONFIRMATION state and receiving any message other than yes/no, provide guidance
+  if (reg.state === "CONFIRMATION" && message && !["yes", "no"].includes(message.toLowerCase())) {
+    return NextResponse.json({
+      reply: "❌ Invalid input. Please type 'yes' to confirm or 'no' to edit details.\n\nIf you want to start a new registration, click the 🔄 Reset button."
+    });
   }
 
   // MEMBER_DETAILS loop (collect exactly MEMBER_COUNT members)
@@ -208,8 +217,14 @@ export async function POST(req: Request) {
     // email
     if (reg.tempMember && reg.tempMember.indexNumber && !reg.tempMember.email) {
       const trimmedMessage = message.trim();
+
+      // Check for invalid characters like backslashes
+      if (trimmedMessage.includes('\\') || trimmedMessage.includes('/')) {
+        return NextResponse.json({ reply: "❌ Invalid email. Email cannot contain backslashes or forward slashes. Please enter a valid email address." });
+      }
+
       if (!validators.email(trimmedMessage)) {
-        return NextResponse.json({ reply: "❌ Invalid email. Please enter a valid email address." });
+        return NextResponse.json({ reply: "❌ Invalid email. Please enter a valid email address (e.g., name@example.com)." });
       }
 
       // Create a new tempMember object to ensure proper MongoDB update

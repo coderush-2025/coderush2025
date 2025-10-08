@@ -40,14 +40,19 @@ export async function appendToGoogleSheets(data: RegistrationData) {
     // Prepare row data
     const timestamp = new Date().toISOString();
 
-  // Create rows (one row per member)
-  // Only include team info (timestamp, team name, hackerrank username, batch) in the first row
-  const rows = data.members.map((member, index) => [
+  // Create rows - one per other member (excluding leader)
+  // First row includes team info + leader info, then other members follow
+  const rows = data.members.slice(1).map((member, index) => [
+    // Team info only in first row
     index === 0 ? timestamp : '',
     index === 0 ? data.teamName : '',
     index === 0 ? data.hackerrankUsername : '',
     index === 0 ? data.teamBatch : '',
-    data.members.length,
+    // Leader info only in first row
+    index === 0 ? data.members[0]?.fullName || '' : '',
+    index === 0 ? data.members[0]?.indexNumber || '' : '',
+    index === 0 ? data.members[0]?.email || '' : '',
+    // Other member info (appears in all 3 rows)
     member.fullName,
     member.indexNumber,
     member.email,
@@ -93,10 +98,12 @@ export async function initializeSheetHeaders() {
         'Team Name',
         'Hackerrank Username',
         'Batch',
-        'Team Size',
+        'Leader Name',
+        'Leader Index',
+        'Leader Email',
         'Member Name',
-        'Index Number',
-        'Email',
+        'Member Index',
+        'Member Email',
       ],
     ];
 
