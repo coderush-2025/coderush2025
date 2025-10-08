@@ -85,6 +85,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply: "❌ No edited data provided." }, { status: 400 });
     }
 
+    // Check if already in DONE state (prevent duplicate submission)
+    if (reg.state === "DONE") {
+      return NextResponse.json({
+        reply: "✅ This registration has already been submitted. To register another team, click the 🔄 Reset button."
+      });
+    }
+
     // Update registration with edited data
     reg.teamName = editedData.teamName;
     reg.hackerrankUsername = editedData.hackerrankUsername;
@@ -103,6 +110,8 @@ export async function POST(req: Request) {
       // Complete registration
       reg.state = "DONE";
       await reg.save();
+
+      console.log('📊 Saving to Google Sheets for team:', reg.teamName);
 
       // Save to Google Sheets
       try {

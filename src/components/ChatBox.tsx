@@ -37,6 +37,7 @@ export default function ChatBot() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState<any>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -103,6 +104,12 @@ export default function ChatBot() {
 
   const handleSaveEdit = async () => {
     if (!editData) return;
+
+    // Prevent double submission
+    if (isSubmitting) {
+      showToast('Submission in progress, please wait...', 'warning');
+      return;
+    }
 
     // Validate team name and HackerRank username match
     if (!editData.hackerrankUsername.endsWith('_CR')) {
@@ -180,6 +187,7 @@ export default function ChatBot() {
 
     setShowEditModal(false);
     setIsTyping(true);
+    setIsSubmitting(true);
 
     try {
       const res = await fetch("/api/chat", {
@@ -198,6 +206,7 @@ export default function ChatBot() {
 
       if (data.reply) {
         setMessages((prev) => [...prev, { role: "bot", content: data.reply }]);
+        showToast('Registration submitted successfully!', 'success');
       }
     } catch (error) {
       console.error("Error saving edited data:", error);
@@ -205,8 +214,10 @@ export default function ChatBot() {
         ...prev,
         { role: "bot", content: "Error saving changes. Please try again." }
       ]);
+      showToast('Submission failed. Please try again.', 'error');
     } finally {
       setIsTyping(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -604,9 +615,12 @@ export default function ChatBot() {
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl"
+                disabled={isSubmitting}
+                className={`px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl ${
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Save & Submit
+                {isSubmitting ? 'Submitting...' : 'Save & Submit'}
               </button>
             </div>
           </div>
