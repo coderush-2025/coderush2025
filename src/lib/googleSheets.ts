@@ -17,6 +17,7 @@ const SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Sheet1'; // Sheet name (can
 export interface RegistrationData {
   teamName: string;
   hackerrankUsername: string;
+  teamBatch: string;
   members: {
     fullName: string;
     indexNumber: string;
@@ -38,17 +39,22 @@ export async function appendToGoogleSheets(data: RegistrationData) {
 
     // Prepare row data
     const timestamp = new Date().toISOString();
-    
-  // Create rows (one row per member)
-  // Only include team info (timestamp, team name, hackerrank username) in the first row
-  const rows = data.members.map((member, index) => [
+
+  // Create rows - one per other member (excluding leader)
+  // First row includes team info + leader info, then other members follow
+  const rows = data.members.slice(1).map((member, index) => [
+    // Team info only in first row
     index === 0 ? timestamp : '',
     index === 0 ? data.teamName : '',
     index === 0 ? data.hackerrankUsername : '',
-    data.members.length,
+    index === 0 ? data.teamBatch : '',
+    // Leader info only in first row
+    index === 0 ? data.members[0]?.fullName || '' : '',
+    index === 0 ? data.members[0]?.indexNumber || '' : '',
+    index === 0 ? data.members[0]?.email || '' : '',
+    // Other member info (appears in all 3 rows)
     member.fullName,
     member.indexNumber,
-    member.batch,
     member.email,
   ]);    // Append to sheet
     // Wrap sheet name in quotes if it contains spaces or special characters
@@ -91,11 +97,13 @@ export async function initializeSheetHeaders() {
         'Timestamp',
         'Team Name',
         'Hackerrank Username',
-        'Team Size',
-        'Member',
-        'Index Number',
         'Batch',
-        'Email',
+        'Leader Name',
+        'Leader Index',
+        'Leader Email',
+        'Member Name',
+        'Member Index',
+        'Member Email',
       ],
     ];
 

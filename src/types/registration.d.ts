@@ -9,6 +9,7 @@ export interface Registration {
   sessionId: string;
   teamName?: string;
   hackerrankUsername?: string;
+  teamBatch?: string;
   track?: string;
   members: Member[];
   state: string;
@@ -16,4 +17,5 @@ export interface Registration {
   createdAt?: Date;
   tempMember?: Partial<Member>;
   currentMember?: number;
+  conversationHistory?: { role: string; content: string; state: string }[];
 }

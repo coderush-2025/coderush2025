@@ -14,20 +14,29 @@ const registrationSchema = new Schema<RegistrationDocument>({
   sessionId: { type: String, unique: true, required: true },
   teamName: { type: String, sparse: true, required: false }, // remove unique constraint temporarily
   hackerrankUsername: { type: String, required: false },
+  teamBatch: { type: String, required: false },
   members: { type: [memberSchema], default: [] },
   state: { type: String, default: "WELCOME" },
   consent: { type: Boolean, required: false },
   createdAt: { type: Date, default: Date.now },
-  tempMember: { 
+  tempMember: {
     type: {
       fullName: { type: String, required: false },
       indexNumber: { type: String, required: false },
       batch: { type: String, required: false },
       email: { type: String, required: false }
-    }, 
-    required: false 
+    },
+    required: false
   },
   currentMember: { type: Number, required: false },
+  conversationHistory: {
+    type: [{
+      role: { type: String, required: true },
+      content: { type: String, required: true },
+      state: { type: String, required: true }
+    }],
+    default: []
+  },
 });
 
 // Add compound index that only applies uniqueness when teamName exists

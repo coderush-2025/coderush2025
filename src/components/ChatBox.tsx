@@ -6,6 +6,23 @@ interface Message {
   role: "user" | "bot";
   content: string;
   buttons?: { text: string; value: string }[];
+  showEditForm?: boolean;
+  registrationData?: {
+    teamName: string;
+    hackerrankUsername: string;
+    teamBatch: string;
+    members: {
+      fullName: string;
+      indexNumber: string;
+      email: string;
+    }[];
+  };
+}
+
+interface Toast {
+  id: number;
+  message: string;
+  type: 'error' | 'warning' | 'success';
 }
 
 export default function ChatBot() {
@@ -17,6 +34,15 @@ export default function ChatBot() {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editData, setEditData] = useState<{
+    teamName: string;
+    hackerrankUsername: string;
+    teamBatch: string;
+    members: Array<{ fullName: string; indexNumber: string; email: string }>;
+  } | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -27,12 +53,22 @@ export default function ChatBot() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const [sessionId] = useState(() => {
+  const showToast = (message: string, type: 'error' | 'warning' | 'success' = 'error') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, 5000);
+  };
+
+  const [sessionId, setSessionId] = useState(() => {
     // Check if we're in the browser environment
     if (typeof window === "undefined") {
       return uuidv4(); // Generate a temporary ID for server-side rendering
     }
-    
+
     const existing = localStorage.getItem("regSessionId");
     if (existing) return existing;
     const id = uuidv4();
@@ -40,14 +76,159 @@ export default function ChatBot() {
     return id;
   });
 
+  const resetSession = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("regSessionId");
+      const newId = uuidv4();
+      localStorage.setItem("regSessionId", newId);
+      setSessionId(newId);
+      setMessages([{
+        role: "bot",
+        content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
+      }]);
+      setInput("");
+    }
+  };
+
   const handleButtonClick = async (value: string) => {
-    const userMsg: Message = { role: "user", content: value };
-    setMessages((prev) => [...prev, userMsg]);
+    // Check if this is the edit form trigger
+    if (value === "OPEN_EDIT_FORM") {
+      // Find the last message with registration data
+      const lastMessageWithData = [...messages].reverse().find(m => m.registrationData);
+      if (lastMessageWithData && lastMessageWithData.registrationData) {
+        setEditData(lastMessageWithData.registrationData);
+        setShowEditModal(true);
+      }
+      return;
+    }
+
+    // Don't add message here - sendMessageToAPI will do it
     await sendMessageToAPI(value);
+  };
+
+
+  const handleSaveEdit = async () => {
+    if (!editData) return;
+
+    // Prevent double submission
+    if (isSubmitting) {
+      showToast('Submission in progress, please wait...', 'warning');
+      return;
+    }
+
+    // Validate team name and HackerRank username match
+    if (!editData.hackerrankUsername.endsWith('_CR')) {
+      showToast('HackerRank username must end with _CR (uppercase)', 'error');
+      return;
+    }
+
+    const extractedTeamName = editData.hackerrankUsername.slice(0, -3);
+    if (extractedTeamName.toLowerCase() !== editData.teamName.toLowerCase()) {
+      showToast(`Team name and HackerRank username mismatch! Expected: "${editData.teamName}_CR"`, 'error');
+      return;
+    }
+
+    // Validate batch
+    if (!editData.teamBatch || !['23', '24'].includes(editData.teamBatch)) {
+      showToast('Invalid batch. Please select Batch 23 or Batch 24', 'error');
+      return;
+    }
+
+    // Validate all index numbers match the batch
+    const invalidMembers = editData.members.filter((member) => {
+      const indexNumber = member.indexNumber?.trim();
+      if (!indexNumber || indexNumber.length < 2) {
+        return true; // Invalid - too short
+      }
+      const indexBatch = indexNumber.substring(0, 2);
+      return indexBatch !== editData.teamBatch;
+    });
+
+    if (invalidMembers.length > 0) {
+      const membersList = invalidMembers.map((m) => {
+        const memberIndex = editData.members.indexOf(m) + 1;
+        const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
+        return `${memberLabel}: ${m.indexNumber}`;
+      }).join(', ');
+
+      showToast(`Index numbers must start with ${editData.teamBatch}. Check: ${membersList}`, 'error');
+      return;
+    }
+
+    // Validate index number format (6 digits + letter)
+    const indexRegex = /^[0-9]{6}[A-Z]$/;
+    const invalidFormats = editData.members.filter((member) => {
+      const indexNumber = member.indexNumber?.trim().toUpperCase();
+      return !indexRegex.test(indexNumber);
+    });
+
+    if (invalidFormats.length > 0) {
+      const membersList = invalidFormats.map((m) => {
+        const memberIndex = editData.members.indexOf(m) + 1;
+        const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
+        return `${memberLabel}`;
+      }).join(', ');
+
+      showToast(`Invalid index format (must be 6 digits + letter). Check: ${membersList}`, 'error');
+      return;
+    }
+
+    // Validate emails
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = editData.members.filter((member) => {
+      return !emailRegex.test(member.email?.trim());
+    });
+
+    if (invalidEmails.length > 0) {
+      const membersList = invalidEmails.map((m) => {
+        const memberIndex = editData.members.indexOf(m) + 1;
+        const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
+        return memberLabel;
+      }).join(', ');
+
+      showToast(`Invalid email addresses. Check: ${membersList}`, 'error');
+      return;
+    }
+
+    setShowEditModal(false);
+    setIsTyping(true);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+          message: "SAVE_EDITED_DATA",
+          editedData: editData
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.reply) {
+        setMessages((prev) => [...prev, { role: "bot", content: data.reply }]);
+        showToast('Registration submitted successfully!', 'success');
+      }
+    } catch (error) {
+      console.error("Error saving edited data:", error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", content: "Error saving changes. Please try again." }
+      ]);
+      showToast('Submission failed. Please try again.', 'error');
+    } finally {
+      setIsTyping(false);
+      setIsSubmitting(false);
+    }
   };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
+
     await sendMessageToAPI(input);
     setInput("");
   };
@@ -87,12 +268,21 @@ export default function ChatBot() {
       }
 
       if (data.reply) {
-        const botMessage: Message = { 
-          role: "bot", 
+        const botMessage: Message = {
+          role: "bot",
           content: data.reply,
-          buttons: data.buttons || undefined
+          buttons: data.buttons || undefined,
+          showEditForm: data.showEditForm || false,
+          registrationData: data.registrationData || undefined
         };
         setMessages((prev) => [...prev, botMessage]);
+
+        // If server wants to show edit form, open modal
+        if (data.showEditForm && data.registrationData) {
+          console.log("🔧 Opening edit modal with data:", data.registrationData);
+          setEditData(data.registrationData);
+          setShowEditModal(true);
+        }
       } else {
         setMessages((prev) => [...prev, { role: "bot", content: "Sorry, I didn't receive a proper response. Please try again." }]);
       }
@@ -111,24 +301,34 @@ export default function ChatBot() {
   };
 
   return (
+    <>
     <div className="w-full max-w-lg mx-auto p-8 bg-white/10 backdrop-blur-xl border border-[#37c2cc]/30 rounded-2xl shadow-2xl relative overflow-hidden">
       {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#37c2cc]/10 via-transparent to-[#0e243f]/20 pointer-events-none" />
       
       {/* Header */}
-      <div className="relative z-10 mb-6 text-center">
-        <h3 
-          className="text-xl font-semibold text-white mb-2"
-          style={{
-            background: "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            fontFamily: "system-ui, -apple-system, sans-serif",
-          }}
-        >
-          Team Registration Assistant
-        </h3>
+      <div className="relative z-10 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h3
+            className="text-xl font-semibold text-white flex-1 text-center"
+            style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              fontFamily: "system-ui, -apple-system, sans-serif",
+            }}
+          >
+            Team Registration Assistant
+          </h3>
+          <button
+            onClick={resetSession}
+            className="text-xs text-white/60 hover:text-white/90 px-2 py-1 rounded hover:bg-white/10 transition-all"
+            title="Start new registration"
+          >
+            🔄 Reset
+          </button>
+        </div>
         <div className="h-px bg-gradient-to-r from-transparent via-[#37c2cc]/50 to-transparent" />
       </div>
 
@@ -152,7 +352,7 @@ export default function ChatBot() {
                   <span className="text-base">👤</span>
                 </div>
               )}
-              
+
               {/* Message Bubble */}
               <div
                 className={`relative group ${
@@ -161,13 +361,13 @@ export default function ChatBot() {
                     : "bg-gradient-to-br from-[#e0f7fa] via-[#b2ebf2] to-[#80deea] text-[#0e243f] rounded-2xl rounded-tl-md border border-[#37c2cc]/20"
                 }`}
                 style={{
-                  boxShadow: m.role === "user" 
-                    ? "0 8px 24px rgba(55, 194, 204, 0.35), 0 4px 12px rgba(55, 194, 204, 0.2)" 
+                  boxShadow: m.role === "user"
+                    ? "0 8px 24px rgba(55, 194, 204, 0.35), 0 4px 12px rgba(55, 194, 204, 0.2)"
                     : "0 8px 24px rgba(55, 194, 204, 0.2), 0 4px 12px rgba(55, 194, 204, 0.1)",
                 }}
               >
                 <div className="px-4 py-3">
-                  <div 
+                  <div
                     className={`text-[15px] leading-relaxed whitespace-pre-wrap ${
                       m.role === "user" ? "font-medium" : ""
                     }`}
@@ -278,5 +478,211 @@ export default function ChatBot() {
         </button>
       </div>
     </div>
+
+      {/* Edit Modal - Outside chat container */}
+      {showEditModal && editData && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+          <div className="bg-gradient-to-br from-[#0e243f] to-[#204168] p-6 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-[#37c2cc]/30 relative">
+            <h2 className="text-2xl font-bold text-white mb-4 text-center bg-gradient-to-r from-[#37c2cc] to-white bg-clip-text text-transparent">
+              Edit Registration Details
+            </h2>
+
+            {/* Team Name */}
+            <div className="mb-4">
+              <label className="block text-white/80 mb-2 text-sm font-semibold">Team Name</label>
+              <input
+                type="text"
+                value={editData.teamName}
+                onChange={(e) => setEditData({ ...editData, teamName: e.target.value })}
+                className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+              />
+            </div>
+
+            {/* Hackerrank Username */}
+            <div className="mb-4">
+              <label className="block text-white/80 mb-2 text-sm font-semibold">Hackerrank Username</label>
+              <input
+                type="text"
+                value={editData.hackerrankUsername}
+                onChange={(e) => setEditData({ ...editData, hackerrankUsername: e.target.value })}
+                className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+              />
+            </div>
+
+            {/* Batch */}
+            <div className="mb-4">
+              <label className="block text-white/80 mb-2 text-sm font-semibold">Batch</label>
+              <select
+                value={editData.teamBatch}
+                onChange={(e) => {
+                  const newBatch = e.target.value;
+
+                  // Check if any index numbers don't match the new batch
+                  const mismatchedMembers = editData.members.filter((member) => {
+                    const indexNumber = member.indexNumber?.trim();
+                    if (!indexNumber || indexNumber.length < 2) return false;
+                    const indexBatch = indexNumber.substring(0, 2);
+                    return indexBatch !== newBatch;
+                  });
+
+                  if (mismatchedMembers.length > 0) {
+                    const membersList = mismatchedMembers.map((m) => {
+                      const memberIndex = editData.members.indexOf(m) + 1;
+                      const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
+                      return memberLabel;
+                    }).join(', ');
+
+                    showToast(`Batch changed to ${newBatch}. Update index numbers for: ${membersList}`, 'warning');
+                  }
+
+                  setEditData({ ...editData, teamBatch: newBatch });
+                }}
+                className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+              >
+                <option value="23" className="bg-[#0e243f]">Batch 23</option>
+                <option value="24" className="bg-[#0e243f]">Batch 24</option>
+              </select>
+            </div>
+
+            {/* Members */}
+            <div className="mb-6">
+              <h3 className="text-white/90 mb-3 text-lg font-semibold">Team Members</h3>
+              {editData.members.map((member, index) => (
+                <div key={index} className="mb-4 p-4 bg-white/5 rounded-lg border border-[#37c2cc]/20">
+                  <h4 className="text-[#37c2cc] mb-2 font-semibold">
+                    {index === 0 ? 'Team Leader' : `Member ${index + 1}`}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-white/60 mb-1 text-xs">Full Name</label>
+                      <input
+                        type="text"
+                        value={member.fullName}
+                        onChange={(e) => {
+                          const newMembers = [...editData.members];
+                          newMembers[index].fullName = e.target.value;
+                          setEditData({ ...editData, members: newMembers });
+                        }}
+                        className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/60 mb-1 text-xs">Index Number</label>
+                      <input
+                        type="text"
+                        value={member.indexNumber}
+                        onChange={(e) => {
+                          let newIndexNumber = e.target.value.toUpperCase();
+
+                          // Auto-correct batch prefix if user is typing and has at least 2 digits
+                          if (newIndexNumber.length >= 2 && /^\d{2}/.test(newIndexNumber)) {
+                            const currentBatchPrefix = newIndexNumber.substring(0, 2);
+
+                            // If the first 2 digits don't match the team batch, replace them
+                            if (currentBatchPrefix !== editData.teamBatch) {
+                              newIndexNumber = editData.teamBatch + newIndexNumber.substring(2);
+                            }
+                          }
+
+                          const newMembers = [...editData.members];
+                          newMembers[index].indexNumber = newIndexNumber;
+                          setEditData({ ...editData, members: newMembers });
+                        }}
+                        className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                        placeholder={`${editData.teamBatch}XXXXY (e.g., ${editData.teamBatch}4001T)`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white/60 mb-1 text-xs">Email</label>
+                      <input
+                        type="email"
+                        value={member.email}
+                        onChange={(e) => {
+                          const newMembers = [...editData.members];
+                          newMembers[index].email = e.target.value;
+                          setEditData({ ...editData, members: newMembers });
+                        }}
+                        className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={isSubmitting}
+                className={`px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl ${
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isSubmitting ? 'Submitting...' : 'Save & Submit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notifications */}
+      <div className="fixed top-4 right-4 z-[10000] flex flex-col gap-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`min-w-[300px] max-w-md px-6 py-4 rounded-lg shadow-2xl backdrop-blur-xl border-2 transform transition-all duration-300 animate-slide-in ${
+              toast.type === 'error'
+                ? 'bg-red-500/90 border-red-400 text-white'
+                : toast.type === 'warning'
+                ? 'bg-yellow-500/90 border-yellow-400 text-gray-900'
+                : 'bg-green-500/90 border-green-400 text-white'
+            }`}
+            style={{
+              animation: 'slideIn 0.3s ease-out',
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 text-2xl">
+                {toast.type === 'error' && '❌'}
+                {toast.type === 'warning' && '⚠️'}
+                {toast.type === 'success' && '✅'}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm leading-relaxed">{toast.message}</p>
+              </div>
+              <button
+                onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                className="flex-shrink-0 text-xl hover:opacity-70 transition-opacity"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in {
+          animation: slideIn 0.3s ease-out;
+        }
+      `}</style>
+    </>
   );
 }
