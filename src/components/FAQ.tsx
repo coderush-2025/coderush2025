@@ -11,6 +11,7 @@ interface FAQItem {
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("Eligibility & Team Formation");
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -20,7 +21,7 @@ const FAQ = () => {
     // Eligibility & Team Formation
     {
       question: "What are the eligibility criteria ?",
-      answer: "Only FIT undergraduates (B21, B22, B23, B24) from University of Moratuwa",
+      answer: "Only FIT undergraduates (B23, B24) from University of Moratuwa",
       category: "Eligibility & Team Formation",
     },
     {
@@ -53,6 +54,31 @@ const FAQ = () => {
     {
       question: "What information is needed during registration ?",
       answer: "Team name, member names, batch, index numbers, HackerRank usernames (format: teamname_CR)",
+      category: "Registration",
+    },
+    {
+      question: "How does the registration process work ?",
+      answer: "Registration is done through an interactive chatbot. You'll provide: team name, HackerRank username, select your batch, then enter details for all 4 members (full name, index number, email). After reviewing, you confirm and receive an email confirmation",
+      category: "Registration",
+    },
+    {
+      question: "Can I edit my registration after submission ?",
+      answer: "Yes! After successful registration, you can click 'Edit Details' to update any information. A new confirmation email will be sent automatically after editing",
+      category: "Registration",
+    },
+    {
+      question: "What happens if my team name or HackerRank username is already taken ?",
+      answer: "Team names and HackerRank usernames must be unique. If your choice is already registered, you'll be asked to choose a different name immediately during registration",
+      category: "Registration",
+    },
+    {
+      question: "Can the same index number or email be used for multiple teams ?",
+      answer: "No, each index number and email can only be registered once across all teams. All members must have unique index numbers and email addresses",
+      category: "Registration",
+    },
+    {
+      question: "Is there a maximum number of teams that can register ?",
+      answer: "Yes, registration is limited to 100 teams maximum. Register early to secure your spot!",
       category: "Registration",
     },
 
@@ -113,130 +139,150 @@ const FAQ = () => {
   const categories = Array.from(new Set(faqData.map((item) => item.category)));
 
   return (
-    <section className="relative py-20 px-4 bg-slate-900 overflow-hidden">
+    <section className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 overflow-hidden" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
       {/* Background pattern/gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0e243f] via-[#204168] to-[#0e243f]"></div>
 
       <div className="relative max-w-7xl mx-auto">
         {/* Title */}
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-12 md:mb-16"
           initial={{ opacity: 0, y: -40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-wider">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500 drop-shadow-lg">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 tracking-wider px-2">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#37c2cc] via-white to-[#37c2cc] drop-shadow-lg">
               FREQUENTLY ASKED QUESTIONS
             </span>
           </h2>
-          <p className="text-gray-400 text-lg mt-4">
+          <p className="text-gray-300 text-sm sm:text-base md:text-lg mt-3 sm:mt-4 px-2">
             Everything you need to know about CodeRush 2025
           </p>
         </motion.div>
 
-        {/* FAQ Accordion */}
-        <div className="max-w-4xl mx-auto space-y-8">
-          {categories.map((category, catIndex) => (
-            <div key={catIndex} className="space-y-4">
-              {/* Category Header */}
-              <motion.h3
-                className="text-2xl font-bold text-cyan-400 mb-4 flex items-center gap-2 py-2"
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
+        {/* Horizontal Tabs */}
+        <div className="max-w-6xl mx-auto mb-8 sm:mb-10 md:mb-12">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4">
+            {categories.map((category, index) => (
+              <motion.button
+                key={index}
+                onClick={() => {
+                  setActiveTab(category);
+                  setOpenIndex(null); // Close any open FAQ when switching tabs
+                }}
+                className={`px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg md:rounded-xl font-semibold text-xs sm:text-sm md:text-base transition-all duration-300 border-2 ${
+                  activeTab === category
+                    ? "bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-[#0e243f] border-[#37c2cc] shadow-lg shadow-[#37c2cc]/40"
+                    : "bg-[#204168]/30 text-white border-[#37c2cc]/30 hover:border-[#37c2cc]/60 hover:bg-[#204168]/50"
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
               >
-                <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
-                {category}
-              </motion.h3>
+                <span className="hidden sm:inline">{category}</span>
+                <span className="sm:hidden">
+                  {category === "Eligibility & Team Formation" ? "Eligibility" :
+                   category === "Event Format & Logistics" ? "Event Info" :
+                   category}
+                </span>
+              </motion.button>
+            ))}
+          </div>
+        </div>
 
-              {/* Questions in this category */}
-              <div className="space-y-3">
-                {faqData
-                  .filter((item) => item.category === category)
-                  .map((faq, index) => {
-                    const globalIndex = faqData.indexOf(faq);
-                    const isOpen = openIndex === globalIndex;
+        {/* FAQ Accordion - Show only active tab content */}
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-3"
+          >
+            {faqData
+              .filter((item) => item.category === activeTab)
+              .map((faq, index) => {
+                const globalIndex = faqData.indexOf(faq);
+                const isOpen = openIndex === globalIndex;
 
-                    return (
-                      <motion.div
-                        key={globalIndex}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.3 }}
-                        transition={{
-                          duration: 0.5,
-                          delay: index * 0.1,
-                          ease: "easeOut"
-                        }}
-                        className="bg-gradient-to-r from-slate-800/50 to-slate-800/30 backdrop-blur-sm border-2 border-cyan-400/30 rounded-xl overflow-hidden transition-all duration-500 hover:border-cyan-400/80 hover:shadow-lg hover:shadow-cyan-400/20 hover:scale-[1.02] transform"
+                return (
+                  <motion.div
+                    key={globalIndex}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.5,
+                      delay: index * 0.1,
+                      ease: "easeOut"
+                    }}
+                    className="bg-gradient-to-r from-[#204168]/50 to-[#0e243f]/30 backdrop-blur-sm border-2 border-[#37c2cc]/30 rounded-lg md:rounded-xl overflow-hidden transition-all duration-500 hover:border-[#37c2cc]/80 hover:shadow-lg hover:shadow-[#37c2cc]/20 hover:scale-[1.02] transform"
+                  >
+                    {/* Question Button */}
+                    <button
+                      onClick={() => toggleFAQ(globalIndex)}
+                      className="w-full flex items-center justify-between p-4 sm:p-5 text-left group"
+                      aria-expanded={isOpen}
+                    >
+                      <span className="text-white font-medium text-sm sm:text-base md:text-lg pr-3 sm:pr-4 group-hover:text-[#37c2cc] transition-colors duration-300">
+                        {faq.question}
+                      </span>
+                      <div
+                        className={`flex-shrink-0 transition-transform duration-300 ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
                       >
-                        {/* Question Button */}
-                        <button
-                          onClick={() => toggleFAQ(globalIndex)}
-                          className="w-full flex items-center justify-between p-5 text-left group"
-                          aria-expanded={isOpen}
+                        <svg
+                          className="w-5 h-5 sm:w-6 sm:h-6 text-[#37c2cc] group-hover:text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          strokeWidth={3}
                         >
-                          <span className="text-white font-medium text-base md:text-lg pr-4 group-hover:text-cyan-300 transition-colors duration-300">
-                            {faq.question}
-                          </span>
-                          <div
-                            className={`flex-shrink-0 transition-transform duration-300 ${
-                              isOpen ? "rotate-180" : ""
-                            }`}
-                          >
-                            <svg
-                              className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              strokeWidth={3}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M19 9l-7 7-7-7"
-                              />
-                            </svg>
-                          </div>
-                        </button>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </button>
 
-                        {/* Answer - Animated Dropdown */}
-                        <div
-                          className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                            isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                          }`}
-                        >
-                          <div className={`px-5 pb-5 pt-0 transform transition-all duration-500 ${
-                            isOpen ? "translate-y-0" : "-translate-y-4"
-                          }`}>
-                            <div className="border-t border-cyan-400/30 pt-4 mt-2">
-                              <div className="bg-slate-700/30 rounded-lg p-4 border-l-4 border-cyan-400">
-                                <div className="flex items-start gap-3">
-                                  <p className="text-gray-200 text-base leading-relaxed">
-                                    {faq.answer}
-                                  </p>
-                                </div>
-                              </div>
+                    {/* Answer - Animated Dropdown */}
+                    <div
+                      className={`overflow-hidden transition-all duration-500 ease-in-out ${
+                        isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <div className={`px-4 sm:px-5 pb-4 sm:pb-5 pt-0 transform transition-all duration-500 ${
+                        isOpen ? "translate-y-0" : "-translate-y-4"
+                      }`}>
+                        <div className="border-t border-[#37c2cc]/30 pt-3 sm:pt-4 mt-2">
+                          <div className="bg-[#204168]/30 rounded-lg p-3 sm:p-4 border-l-2 sm:border-l-4 border-[#37c2cc]">
+                            <div className="flex items-start gap-2 sm:gap-3">
+                              <p className="text-gray-200 text-sm sm:text-base leading-relaxed">
+                                {faq.answer}
+                              </p>
                             </div>
                           </div>
                         </div>
-                      </motion.div>
-                    );
-                  })}
-              </div>
-            </div>
-          ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+          </motion.div>
         </div>
       </div>
 
       {/* Decorative elements */}
-      <div className="absolute top-20 left-10 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-      <div className="absolute top-40 right-20 w-1 h-1 bg-teal-400 rounded-full animate-pulse delay-1000"></div>
-      <div className="absolute bottom-32 left-20 w-1.5 h-1.5 bg-cyan-300 rounded-full animate-pulse delay-500"></div>
-      <div className="absolute bottom-20 right-32 w-2 h-2 bg-teal-300 rounded-full animate-pulse delay-700"></div>
+      <div className="absolute top-20 left-10 w-2 h-2 bg-[#37c2cc] rounded-full animate-pulse"></div>
+      <div className="absolute top-40 right-20 w-1 h-1 bg-[#2ba8b3] rounded-full animate-pulse delay-1000"></div>
+      <div className="absolute bottom-32 left-20 w-1.5 h-1.5 bg-[#37c2cc] rounded-full animate-pulse delay-500"></div>
+      <div className="absolute bottom-20 right-32 w-2 h-2 bg-[#2ba8b3] rounded-full animate-pulse delay-700"></div>
     </section>
   );
 };

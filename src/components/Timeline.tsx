@@ -87,7 +87,7 @@ export default function Timeline() {
       className="relative py-20 px-6 md:px-12 lg:px-20"
       style={{
         background:
-          "linear-gradient(180deg,#071826 0%, rgba(8,20,38,0.88) 50%, #041522 100%)",
+          "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)",
       }}
     >
       {/* decorative orbs */}
@@ -240,12 +240,12 @@ export default function Timeline() {
                   className="mt-10 px-5 py-3 rounded-2xl border transition-shadow duration-300 w-full h-full flex flex-col relative"
                   style={{
                     background:
-                      "linear-gradient(180deg, rgba(5,12,22,0.9), rgba(12,26,46,0.94))",
-                    borderColor: "rgba(55,194,204,0.04)",
+                      "linear-gradient(180deg, rgba(14,36,63,0.9), rgba(32,65,104,0.94))",
+                    borderColor: "rgba(55,194,204,0.3)",
                     minHeight: 128,
                     backdropFilter: "saturate(120%) blur(6px)",
                   }}
-                  whileHover={{ boxShadow: "0 22px 60px rgba(2,8,20,0.55)" }}
+                  whileHover={{ boxShadow: "0 22px 60px rgba(55,194,204,0.4)" }}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -367,8 +367,11 @@ export default function Timeline() {
 
               <div className="flex-1">
                 <div
-                  className="bg-[rgba(8,20,32,0.9)] p-4 rounded-2xl border"
-                  style={{ borderColor: "rgba(55,194,204,0.04)" }}
+                  className="p-4 rounded-2xl border"
+                  style={{
+                    background: "linear-gradient(180deg, rgba(14,36,63,0.9), rgba(32,65,104,0.8))",
+                    borderColor: "rgba(55,194,204,0.3)"
+                  }}
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-white">

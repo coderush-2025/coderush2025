@@ -11,6 +11,7 @@ export default function Home() {
   return (
     <>
       <Hero />
+      
       <Introduction />
       <Timeline />
       <HowItWorks />
