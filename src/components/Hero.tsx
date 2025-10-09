@@ -207,11 +207,11 @@ const Hero = () => {
       )}
 
       {/* Interactive Liquid Bubble Animation */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden">
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
         {isClient && [...Array(12)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full liquid-bubble cursor-pointer"
+            className="absolute rounded-full liquid-bubble cursor-pointer pointer-events-auto"
             style={{
               width: `${30 + (i % 4) * 15}px`,
               height: `${30 + (i % 4) * 15}px`,
@@ -521,7 +521,7 @@ const Hero = () => {
       </svg>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center text-white px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center text-white px-4 sm:px-6 lg:px-8 pointer-events-none">
         <motion.div
           ref={logoRef}
           className="mb-8"
@@ -649,7 +649,7 @@ const Hero = () => {
 
           <motion.button
             onClick={() => router.push("/register")}
-            className="px-8 py-4 md:px-12 md:py-6 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu"
+            className="px-8 py-4 md:px-12 md:py-6 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu pointer-events-auto"
             style={{
               fontFamily: "system-ui, -apple-system, sans-serif",
               letterSpacing: "1px",

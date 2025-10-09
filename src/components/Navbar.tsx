@@ -71,13 +71,15 @@ const Navbar = () => {
     setIsMobileMenuOpen(false);
 
     if (sectionId && isHomePage) {
-      // Smooth scroll to section on same page
-      const element = document.getElementById(sectionId);
-      if (element) {
-        const yOffset = -80;
-        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: "smooth" });
-      }
+      // Smooth scroll to section on same page - wait for menu to close
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const yOffset = -80;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: "smooth" });
+        }
+      }, 350); // Wait for menu close animation (300ms) + buffer
     } else {
       // Navigate to different page or home page with section
       router.push(href);
@@ -102,7 +104,7 @@ const Navbar = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
           isRegisterPage || isScrolled
             ? "bg-[#0e243f]/95 backdrop-blur-lg shadow-lg shadow-[#37c2cc]/10"
             : "bg-transparent"
@@ -198,27 +200,34 @@ const Navbar = () => {
             opacity: isMobileMenuOpen ? 1 : 0,
           }}
           transition={{ duration: 0.3 }}
-          className="lg:hidden overflow-hidden bg-[#0e243f]/98 backdrop-blur-lg border-t border-[#37c2cc]/20"
+          className="lg:hidden overflow-hidden bg-[#0e243f]/98 backdrop-blur-lg border-t border-[#37c2cc]/20 relative z-40"
+          style={{ pointerEvents: isMobileMenuOpen ? "auto" : "none" }}
         >
-          <div className="px-4 pt-2 pb-4 space-y-1">
+          <div className="px-4 pt-2 pb-4 space-y-1 relative z-40">
             {navItems.map((item) => {
               const isActive = item.sectionId
                 ? activeSection === item.sectionId
                 : pathname === item.href;
 
               return (
-                <motion.button
+                <button
                   key={item.name}
-                  onClick={() => handleNavClick(item.href, item.sectionId)}
-                  className={`block w-full text-left px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 ${
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Clicked:', item.name, item.href, item.sectionId);
+                    handleNavClick(item.href, item.sectionId);
+                  }}
+                  className={`block w-full text-left px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 cursor-pointer relative z-50 ${
                     isActive
                       ? "bg-[#37c2cc]/20 text-[#37c2cc] border-l-4 border-[#37c2cc]"
                       : "text-white hover:bg-[#204168]/50 hover:text-[#37c2cc]"
                   }`}
-                  whileTap={{ scale: 0.98 }}
+                  style={{ touchAction: 'manipulation' }}
                 >
                   {item.name}
-                </motion.button>
+                </button>
               );
             })}
             <motion.button
