@@ -47,10 +47,10 @@ const galleryImages = [
 
 const Memories = () => {
   return (
-    <section className="py-16 bg-gradient-to-b bg-slate-900">
-      <div className="container mx-auto px-6 lg:px-20 from-slate-900 via-slate-800 to-slate-900">
+    <section className="py-12 sm:py-14 md:py-16" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-20">
         <motion.h2
-          className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-center mb-16 text-gradient bg-gradient-to-r from-[#0e243f] to-cyan-200 bg-clip-text text-transparent drop-shadow-lg leading-snug overflow-visible"
+          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-center mb-10 sm:mb-12 md:mb-16 text-gradient bg-gradient-to-r from-white via-[#37c2cc] to-white bg-clip-text text-transparent drop-shadow-lg leading-snug overflow-visible"
           initial={{ opacity: 0, y: -40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
@@ -59,13 +59,13 @@ const Memories = () => {
           Memories
         </motion.h2>
         <motion.div
-                  className="text-center mb-12"
+                  className="text-center mb-8 sm:mb-10 md:mb-12"
                   initial={{ opacity: 0, y: -20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.3 }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
                 >
-                  <p className="text-lg sm:text-xl text-white  font-medium">
+                  <p className="text-base sm:text-lg md:text-xl text-white font-medium px-4 max-w-3xl mx-auto">
                     A collection of moments from our past events, showcasing the
                     energy, creativity, and community spirit that define CodeRush.
                   </p>
