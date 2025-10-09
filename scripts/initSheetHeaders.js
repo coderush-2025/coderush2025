@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // Script to initialize Google Sheets headers
 // Run this once: node scripts/initSheetHeaders.js
 

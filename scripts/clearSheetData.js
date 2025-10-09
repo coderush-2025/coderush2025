@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // Script to clear all data from Google Sheets (keep headers)
 // Run this: node scripts/clearSheetData.js
 
