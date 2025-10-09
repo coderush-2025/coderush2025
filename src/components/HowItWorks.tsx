@@ -18,9 +18,6 @@ const HowItWorks = () => {
 
   return (
     <section className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 overflow-hidden" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
-      {/* Background pattern/gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0e243f] via-[#204168] to-[#0e243f]"></div>
-
       <div className="relative max-w-7xl mx-auto">
         {/* Title */}
         <motion.div

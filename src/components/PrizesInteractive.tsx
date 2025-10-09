@@ -59,13 +59,7 @@ const PrizesInteractive = () => {
   ];
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#0e243f] via-[#204168] to-[#37c2cc] relative overflow-hidden">
-      {/* Hero-themed Background Effects */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0e243f]/20 via-[#204168]/15 to-[#37c2cc]/20"></div>
-        <div className="absolute top-20 right-20 w-48 h-48 bg-[#37c2cc]/8 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-40 h-40 bg-[#204168]/12 rounded-full blur-2xl"></div>
-      </div>
+    <div className="w-full relative overflow-hidden py-12 sm:py-16 md:py-20" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
 
       <div className="relative z-10 container mx-auto px-4 py-4 md:py-6">
         {/* Simplified Header */}

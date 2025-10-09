@@ -39,8 +39,6 @@ const organizers: Organizer[] = [
 const Contact: React.FC = () => {
   return (
     <section className="relative py-12 sm:py-14 md:py-16" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
-      {/* Decorative background effect */}
-      <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10 pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-20 relative z-10">
         {/* Heading with fixed descenders */}
