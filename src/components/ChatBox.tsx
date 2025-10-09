@@ -338,15 +338,15 @@ export default function ChatBot() {
 
   return (
     <>
-    <div className="w-full h-full p-6 bg-white/10 backdrop-blur-xl border border-[#37c2cc]/30 rounded-2xl shadow-2xl relative overflow-hidden">
+    <div className="w-full h-full p-3 sm:p-4 md:p-5 lg:p-6 bg-white/10 backdrop-blur-xl border border-[#37c2cc]/30 rounded-xl md:rounded-2xl shadow-2xl relative overflow-hidden">
       {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#37c2cc]/10 via-transparent to-[#0e243f]/20 pointer-events-none" />
 
       {/* Header */}
-      <div className="relative z-10 mb-4">
+      <div className="relative z-10 mb-3 md:mb-4">
         <div className="flex items-center justify-between mb-2">
           <h3
-            className="text-lg md:text-xl font-semibold text-white flex-1 text-center"
+            className="text-base sm:text-lg md:text-xl font-semibold text-white flex-1 text-center"
             style={{
               background: "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
               WebkitBackgroundClip: "text",
@@ -359,33 +359,33 @@ export default function ChatBot() {
           </h3>
           <button
             onClick={resetSession}
-            className="text-xs text-white/60 hover:text-white/90 px-2 py-1 rounded hover:bg-white/10 transition-all"
+            className="text-[10px] sm:text-xs text-white/60 hover:text-white/90 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded hover:bg-white/10 transition-all flex-shrink-0"
             title="Start new registration"
           >
-            🔄 Reset
+            🔄 <span className="hidden sm:inline">Reset</span>
           </button>
         </div>
         <div className="h-px bg-gradient-to-r from-transparent via-[#37c2cc]/50 to-transparent" />
       </div>
 
       {/* Messages Container */}
-      <div className="relative z-10 h-[400px] md:h-[450px] overflow-y-auto mb-4 bg-black/20 backdrop-blur-sm rounded-2xl border border-[#37c2cc]/20 p-4 space-y-3 scrollbar-thin scrollbar-thumb-[#37c2cc]/50 scrollbar-track-transparent">
+      <div className="relative z-10 h-[350px] sm:h-[400px] md:h-[450px] lg:h-[500px] overflow-y-auto mb-3 md:mb-4 bg-black/20 backdrop-blur-sm rounded-xl md:rounded-2xl border border-[#37c2cc]/20 p-2.5 sm:p-3 md:p-4 space-y-2 sm:space-y-2.5 md:space-y-3 scrollbar-thin scrollbar-thumb-[#37c2cc]/50 scrollbar-track-transparent">
         {messages.map((m, i) => (
           <div
             key={i}
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
             style={{ animationDelay: `${i * 0.05}s` }}
           >
-            <div className={`flex ${m.role === "user" ? "flex-row-reverse" : "flex-row"} items-start gap-2 max-w-[85%]`}>
+            <div className={`flex ${m.role === "user" ? "flex-row-reverse" : "flex-row"} items-start gap-1.5 sm:gap-2 max-w-[90%] sm:max-w-[85%]`}>
               {/* Avatar */}
               {m.role === "bot" && (
-                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-[#37c2cc] to-[#2ba8b3] flex items-center justify-center shadow-lg ring-2 ring-[#37c2cc]/30">
-                  <span className="text-lg">🤖</span>
+                <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-[#37c2cc] to-[#2ba8b3] flex items-center justify-center shadow-lg ring-2 ring-[#37c2cc]/30">
+                  <span className="text-sm sm:text-base md:text-lg">🤖</span>
                 </div>
               )}
               {m.role === "user" && (
-                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-[#0e243f] to-[#204168] flex items-center justify-center shadow-lg ring-2 ring-white/20">
-                  <span className="text-lg">👤</span>
+                <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-[#0e243f] to-[#204168] flex items-center justify-center shadow-lg ring-2 ring-white/20">
+                  <span className="text-sm sm:text-base md:text-lg">👤</span>
                 </div>
               )}
 
@@ -402,9 +402,9 @@ export default function ChatBot() {
                     : "0 8px 24px rgba(55, 194, 204, 0.2), 0 4px 12px rgba(55, 194, 204, 0.1)",
                 }}
               >
-                <div className="px-4 py-3">
+                <div className="px-2.5 py-2 sm:px-3 sm:py-2.5 md:px-4 md:py-3">
                   <div
-                    className={`text-[15px] leading-relaxed ${
+                    className={`text-xs sm:text-sm md:text-[15px] leading-relaxed ${
                       m.role === "user" ? "font-medium whitespace-pre-wrap" : ""
                     }`}
                     style={{
@@ -425,12 +425,12 @@ export default function ChatBot() {
                   
                   {/* Render buttons if they exist */}
                   {m.buttons && m.buttons.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-gray-200/50">
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-2.5 md:mt-3 pt-1.5 sm:pt-2 border-t border-gray-200/50">
                       {m.buttons.map((button, btnIndex) => (
                         <button
                           key={btnIndex}
                           onClick={() => handleButtonClick(button.value)}
-                          className="group/btn relative bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white font-semibold px-4 py-2 rounded-full text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95"
+                          className="group/btn relative bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white font-semibold px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95"
                           style={{
                             fontFamily: "system-ui, -apple-system, sans-serif",
                             boxShadow: "0 2px 8px rgba(55, 194, 204, 0.3)",
@@ -495,10 +495,10 @@ export default function ChatBot() {
       </div>
 
       {/* Input Container */}
-      <div className="relative z-10 flex gap-3">
+      <div className="relative z-10 flex gap-2 sm:gap-2.5 md:gap-3">
         <div className="flex-1 relative">
           <input
-            className="w-full bg-white/90 backdrop-blur-sm border-2 border-[#37c2cc]/30 rounded-xl p-3 text-base text-[#0e243f] placeholder-[#0e243f]/60 focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all duration-300 shadow-lg"
+            className="w-full bg-white/90 backdrop-blur-sm border-2 border-[#37c2cc]/30 rounded-lg md:rounded-xl p-2 sm:p-2.5 md:p-3 text-sm sm:text-base text-[#0e243f] placeholder-[#0e243f]/60 focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all duration-300 shadow-lg"
             placeholder="Type your message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -511,7 +511,7 @@ export default function ChatBot() {
         </div>
         <button
           onClick={sendMessage}
-          className="bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-[#0e243f] font-bold px-6 py-3 text-base rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 relative overflow-hidden group"
+          className="bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-[#0e243f] font-bold px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base rounded-lg md:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 relative overflow-hidden group"
           style={{
             fontFamily: "system-ui, -apple-system, sans-serif",
           }}
