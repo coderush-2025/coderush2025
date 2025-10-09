@@ -426,13 +426,14 @@ export default function ChatBot() {
       <div className="relative z-10 mb-3 md:mb-4">
         <div className="flex items-center justify-between mb-2">
           <h3
-            className="text-base sm:text-lg md:text-xl font-semibold text-white flex-1 text-center"
+            className="text-lg sm:text-xl md:text-2xl font-bold text-white flex-1 text-center"
             style={{
-              background: "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
+              backgroundImage: "linear-gradient(135deg, #37c2cc 0%, #ffffff 50%, #37c2cc 100%)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
               fontFamily: "system-ui, -apple-system, sans-serif",
+              textShadow: "0 0 20px rgba(55, 194, 204, 0.3)",
             }}
           >
             Team Registration Assistant
@@ -449,7 +450,7 @@ export default function ChatBot() {
       </div>
 
       {/* Messages Container */}
-      <div className="relative z-10 h-[350px] sm:h-[400px] md:h-[450px] lg:h-[500px] overflow-y-auto mb-3 md:mb-4 bg-black/20 backdrop-blur-sm rounded-xl md:rounded-2xl border border-[#37c2cc]/20 p-2.5 sm:p-3 md:p-4 space-y-2 sm:space-y-2.5 md:space-y-3 scrollbar-thin scrollbar-thumb-[#37c2cc]/50 scrollbar-track-transparent">
+      <div className="relative z-10 h-[320px] sm:h-[360px] md:h-[400px] lg:h-[440px] overflow-y-auto mb-3 md:mb-4 bg-black/20 backdrop-blur-sm rounded-xl md:rounded-2xl border border-[#37c2cc]/20 p-2.5 sm:p-3 md:p-4 space-y-2 sm:space-y-2.5 md:space-y-3 scrollbar-thin scrollbar-thumb-[#37c2cc]/50 scrollbar-track-transparent">
         {messages.map((m, i) => (
           <div
             key={i}

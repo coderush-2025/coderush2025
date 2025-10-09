@@ -47,7 +47,7 @@ const galleryImages = [
 
 const Memories = () => {
   return (
-    <section className="py-16 sm:py-20 md:py-24 min-h-screen" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
+    <section id="memories" className="py-16 sm:py-20 md:py-24 min-h-screen" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
       <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 md:px-6">
         <motion.div
           className="text-center mb-10 sm:mb-12 md:mb-16"

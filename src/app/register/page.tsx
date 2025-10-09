@@ -351,7 +351,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Content - Two Column Layout */}
-      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 min-h-screen flex items-center py-6 sm:py-8 md:py-8">
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 min-h-screen flex flex-col justify-center py-6 sm:py-8 md:py-8 space-y-8">
         <div className="w-full grid grid-cols-1 md:grid-cols-[35%_65%] gap-6 sm:gap-8 md:gap-10 lg:gap-12 items-center">
 
           {/* Left Side - Logo and Title */}
@@ -424,6 +424,95 @@ export default function RegisterPage() {
             <ChatBot />
           </motion.div>
 
+        </div>
+
+        {/* Rules and Registration Process Section */}
+        <div className="relative z-10 w-full pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8"
+        >
+          {/* Registration Process */}
+          <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-[#37c2cc]/20">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+              <span className="w-10 h-10 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] rounded-lg flex items-center justify-center text-[#0e243f] font-bold">1</span>
+              Registration Process
+            </h2>
+            <div className="space-y-4 text-white/80">
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-[#37c2cc]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-[#37c2cc] font-bold">1</span>
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold mb-1">Provide Team Information</h3>
+                  <p className="text-sm">Chat with the assistant to provide team name, HackerRank username (TeamName_CR), batch, and member details (names, index numbers, emails).</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-[#37c2cc]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-[#37c2cc] font-bold">2</span>
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold mb-1">Review & Edit</h3>
+                  <p className="text-sm">The assistant will show all your details. You can edit any information in the modal form before final submission.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="w-8 h-8 rounded-full bg-[#37c2cc]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                  <span className="text-[#37c2cc] font-bold">3</span>
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold mb-1">Submit & Confirm</h3>
+                  <p className="text-sm">Once you confirm, your registration is submitted. You&apos;ll see instant confirmation and receive further instructions via email.</p>
+                </div>
+              </div>
+              <div className="mt-6 p-4 bg-[#37c2cc]/10 border border-[#37c2cc]/30 rounded-lg">
+                <p className="text-xs text-[#37c2cc] font-semibold mb-1">💡 Important:</p>
+                <p className="text-xs">HackerRank username must be: YourTeamName_CR (with _CR suffix in uppercase)</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Rules and Guidelines */}
+          <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-[#37c2cc]/20">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+              <span className="w-10 h-10 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] rounded-lg flex items-center justify-center text-[#0e243f] font-bold">2</span>
+              Rules & Guidelines
+            </h2>
+            <div className="space-y-3 text-white/80 text-sm">
+              <div className="flex gap-3">
+                <span className="text-[#37c2cc] mt-1">•</span>
+                <p>Each team must have exactly 4 members from the same batch (23 or 24).</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-[#37c2cc] mt-1">•</span>
+                <p>All team members must be from University of Moratuwa - Faculty of IT.</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-[#37c2cc] mt-1">•</span>
+                <p>One person per team should complete the registration (team leader).</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-[#37c2cc] mt-1">•</span>
+                <p>Team names and HackerRank usernames must be unique (maximum 100 teams).</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-[#37c2cc] mt-1">•</span>
+                <p>Index numbers must match the team batch and cannot be duplicated.</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-[#37c2cc] mt-1">•</span>
+                <p>Email addresses must be unique across all teams.</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-[#37c2cc] mt-1">•</span>
+                <p>Registration data is securely stored with email confirmation sent.</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
         </div>
       </div>
     </div>

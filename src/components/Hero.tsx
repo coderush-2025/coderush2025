@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const Hero = () => {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -11,6 +12,7 @@ const Hero = () => {
   const backgroundRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
   
   // Generate consistent bubble positions for SSR (responsive percentages)
   const bubblePositions = useRef([
@@ -171,7 +173,7 @@ const Hero = () => {
   return (
     <div
       ref={heroRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden touch-none"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-14 sm:-mt-16"
     >
       {/* Animated Background */}
       <div
@@ -205,11 +207,11 @@ const Hero = () => {
       )}
 
       {/* Interactive Liquid Bubble Animation */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden">
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
         {isClient && [...Array(12)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full liquid-bubble cursor-pointer"
+            className="absolute rounded-full liquid-bubble cursor-pointer pointer-events-auto"
             style={{
               width: `${30 + (i % 4) * 15}px`,
               height: `${30 + (i % 4) * 15}px`,
@@ -519,7 +521,7 @@ const Hero = () => {
       </svg>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center text-white px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center text-white px-4 sm:px-6 lg:px-8 pointer-events-none">
         <motion.div
           ref={logoRef}
           className="mb-8"
@@ -646,27 +648,28 @@ const Hero = () => {
           ))}
 
           <motion.button
-            className="px-8 py-4 md:px-12 md:py-6 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu"
+            onClick={() => router.push("/register")}
+            className="px-8 py-4 md:px-12 md:py-6 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu pointer-events-auto"
             style={{
               fontFamily: "system-ui, -apple-system, sans-serif",
               letterSpacing: "1px",
               backgroundSize: "200% 100%",
             }}
-            initial={{ 
-              opacity: 0, 
-              y: 50, 
+            initial={{
+              opacity: 0,
+              y: 50,
               scale: 0.8,
-              rotateX: -30 
+              rotateX: -30
             }}
-            animate={{ 
-              opacity: 1, 
-              y: 0, 
+            animate={{
+              opacity: 1,
+              y: 0,
               scale: 1,
               rotateX: 0,
               backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
             }}
-            transition={{ 
-              duration: 1.2, 
+            transition={{
+              duration: 1.2,
               delay: 2,
               type: "spring",
               stiffness: 100,
@@ -693,7 +696,7 @@ const Hero = () => {
                 }
               }
             }}
-            whileTap={{ 
+            whileTap={{
               scale: 0.95,
               y: 0,
               transition: { duration: 0.1 }

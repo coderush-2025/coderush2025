@@ -17,7 +17,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 overflow-hidden" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
+    <section id="how-it-works" className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 overflow-hidden" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
       <div className="relative max-w-7xl mx-auto">
         {/* Title */}
         <motion.div

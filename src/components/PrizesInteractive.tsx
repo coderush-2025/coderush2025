@@ -55,7 +55,7 @@ const PrizesInteractive = () => {
   ];
 
   return (
-    <div className="w-full relative overflow-hidden py-12 sm:py-16 md:py-20" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
+    <div id="prizes" className="w-full relative overflow-hidden py-12 sm:py-16 md:py-20" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
 
       <div className="relative z-10 container mx-auto px-4 py-4 md:py-6">
         {/* Simplified Header */}
