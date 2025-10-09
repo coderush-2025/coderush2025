@@ -35,7 +35,12 @@ export default function ChatBot() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editData, setEditData] = useState<any>(null);
+  const [editData, setEditData] = useState<{
+    teamName: string;
+    hackerrankUsername: string;
+    teamBatch: string;
+    members: Array<{ fullName: string; indexNumber: string; email: string }>;
+  } | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -130,7 +135,7 @@ export default function ChatBot() {
     }
 
     // Validate all index numbers match the batch
-    const invalidMembers = editData.members.filter((member: any, index: number) => {
+    const invalidMembers = editData.members.filter((member) => {
       const indexNumber = member.indexNumber?.trim();
       if (!indexNumber || indexNumber.length < 2) {
         return true; // Invalid - too short
@@ -140,7 +145,7 @@ export default function ChatBot() {
     });
 
     if (invalidMembers.length > 0) {
-      const membersList = invalidMembers.map((m: any, i: number) => {
+      const membersList = invalidMembers.map((m) => {
         const memberIndex = editData.members.indexOf(m) + 1;
         const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
         return `${memberLabel}: ${m.indexNumber}`;
@@ -152,13 +157,13 @@ export default function ChatBot() {
 
     // Validate index number format (6 digits + letter)
     const indexRegex = /^[0-9]{6}[A-Z]$/;
-    const invalidFormats = editData.members.filter((member: any) => {
+    const invalidFormats = editData.members.filter((member) => {
       const indexNumber = member.indexNumber?.trim().toUpperCase();
       return !indexRegex.test(indexNumber);
     });
 
     if (invalidFormats.length > 0) {
-      const membersList = invalidFormats.map((m: any) => {
+      const membersList = invalidFormats.map((m) => {
         const memberIndex = editData.members.indexOf(m) + 1;
         const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
         return `${memberLabel}`;
@@ -170,12 +175,12 @@ export default function ChatBot() {
 
     // Validate emails
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const invalidEmails = editData.members.filter((member: any) => {
+    const invalidEmails = editData.members.filter((member) => {
       return !emailRegex.test(member.email?.trim());
     });
 
     if (invalidEmails.length > 0) {
-      const membersList = invalidEmails.map((m: any) => {
+      const membersList = invalidEmails.map((m) => {
         const memberIndex = editData.members.indexOf(m) + 1;
         const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
         return memberLabel;
@@ -513,7 +518,7 @@ export default function ChatBot() {
                   const newBatch = e.target.value;
 
                   // Check if any index numbers don't match the new batch
-                  const mismatchedMembers = editData.members.filter((member: any) => {
+                  const mismatchedMembers = editData.members.filter((member) => {
                     const indexNumber = member.indexNumber?.trim();
                     if (!indexNumber || indexNumber.length < 2) return false;
                     const indexBatch = indexNumber.substring(0, 2);
@@ -521,7 +526,7 @@ export default function ChatBot() {
                   });
 
                   if (mismatchedMembers.length > 0) {
-                    const membersList = mismatchedMembers.map((m: any) => {
+                    const membersList = mismatchedMembers.map((m) => {
                       const memberIndex = editData.members.indexOf(m) + 1;
                       const memberLabel = memberIndex === 1 ? 'Team Leader' : `Member ${memberIndex}`;
                       return memberLabel;
@@ -542,7 +547,7 @@ export default function ChatBot() {
             {/* Members */}
             <div className="mb-6">
               <h3 className="text-white/90 mb-3 text-lg font-semibold">Team Members</h3>
-              {editData.members.map((member: any, index: number) => (
+              {editData.members.map((member, index) => (
                 <div key={index} className="mb-4 p-4 bg-white/5 rounded-lg border border-[#37c2cc]/20">
                   <h4 className="text-[#37c2cc] mb-2 font-semibold">
                     {index === 0 ? 'Team Leader' : `Member ${index + 1}`}

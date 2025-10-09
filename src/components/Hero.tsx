@@ -28,7 +28,6 @@ const Hero = () => {
     { x: 35, y: 50, scale: 0.9 },   // 35% from left, 50% from top
     { x: 65, y: 75, scale: 1.2 }    // 65% from left, 75% from top
   ]);
-  const router = useRouter();
 
   useEffect(() => {
     // Set client-side flag to prevent hydration mismatch

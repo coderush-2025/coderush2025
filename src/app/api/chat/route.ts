@@ -4,8 +4,18 @@ import Registration from "@/models/Registration";
 import { states, validators, MEMBER_COUNT } from "@/lib/stateMachine";
 import { appendToGoogleSheets } from "@/lib/googleSheets";
 import { sendRegistrationEmail } from "@/lib/emailService";
+import { Member } from "@/types/registration";
 
-type ReqBody = { sessionId: string; message: string };
+type ReqBody = {
+  sessionId: string;
+  message: string;
+  editedData?: {
+    teamName: string;
+    hackerrankUsername: string;
+    teamBatch: string;
+    members: Member[];
+  };
+};
 
 const MAX_TEAMS = 100;
 // HackerRank username validation is now done with custom logic
@@ -83,7 +93,7 @@ export async function POST(req: Request) {
 
   // Handle save edited data
   if (message === "SAVE_EDITED_DATA") {
-    const { editedData } = body as any;
+    const { editedData } = body;
 
     if (!editedData) {
       return NextResponse.json({ reply: "❌ No edited data provided." }, { status: 400 });
@@ -121,7 +131,7 @@ export async function POST(req: Request) {
     }
 
     // Validate no duplicate index numbers within team
-    const indexNumbers = editedData.members.map((m: any) => m.indexNumber);
+    const indexNumbers = editedData.members.map((m) => m.indexNumber);
     const duplicateIndexes = indexNumbers.filter((item: string, index: number) => indexNumbers.indexOf(item) !== index);
     if (duplicateIndexes.length > 0) {
       return NextResponse.json({
@@ -130,7 +140,7 @@ export async function POST(req: Request) {
     }
 
     // Validate no duplicate emails within team
-    const emails = editedData.members.map((m: any) => m.email.toLowerCase());
+    const emails = editedData.members.map((m) => m.email.toLowerCase());
     const duplicateEmails = emails.filter((item: string, index: number) => emails.indexOf(item) !== index);
     if (duplicateEmails.length > 0) {
       return NextResponse.json({
@@ -172,7 +182,7 @@ export async function POST(req: Request) {
     reg.teamName = editedData.teamName;
     reg.hackerrankUsername = editedData.hackerrankUsername;
     reg.teamBatch = editedData.teamBatch;
-    reg.members = editedData.members.map((m: any) => ({
+    reg.members = editedData.members.map((m) => ({
       fullName: m.fullName,
       indexNumber: m.indexNumber,
       batch: editedData.teamBatch, // All members have same batch
