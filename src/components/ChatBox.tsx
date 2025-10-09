@@ -760,7 +760,7 @@ export default function ChatBot() {
       )}
 
       {/* Toast Notifications */}
-      <div className="fixed top-4 right-4 z-[10000] flex flex-col gap-2">
+      <div className="fixed top-20 right-4 z-[10001] flex flex-col gap-2">
         {toasts.map((toast) => (
           <div
             key={toast.id}
