@@ -136,7 +136,9 @@ const FAQ = () => {
   ];
 
   // Group FAQs by category
-  const categories = Array.from(new Set(faqData.map((item) => item.category)));
+  const categories = Array.from(
+    new Set(faqData.map((item) => item.category).filter((cat): cat is string => cat !== undefined))
+  );
 
   return (
     <section className="relative py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-8 overflow-hidden" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
