@@ -156,7 +156,7 @@ const PrizesInteractive = () => {
 
           {/* Certificate Images Showcase */}
           <motion.div
-            className="flex justify-center lg:justify-end items-center min-h-[400px] md:min-h-[500px]"
+            className="flex justify-center lg:justify-end items-center min-h-[400px] md:min-h-[500px] pr-4 md:pr-8 lg:pr-12"
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.3 }}
