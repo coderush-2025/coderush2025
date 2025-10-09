@@ -25,6 +25,21 @@ interface Toast {
   type: 'error' | 'warning' | 'success';
 }
 
+// Helper function to render text with bold quotes
+const renderTextWithBoldQuotes = (text: string) => {
+  const parts = text.split(/("([^"]+)")/g);
+  return parts.map((part, index) => {
+    // Skip empty strings and the captured group content (every 3rd element starting from index 2)
+    if (!part || (index > 0 && (index - 2) % 3 === 0)) {
+      return null;
+    }
+    if (part.startsWith('"') && part.endsWith('"')) {
+      return <strong key={index} style={{ fontWeight: 600, userSelect: "text" }}>{part.slice(1, -1)}</strong>;
+    }
+    return part;
+  }).filter(Boolean);
+};
+
 export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -45,6 +60,20 @@ export default function ChatBot() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Session ID must be declared before any useEffect that depends on it
+  const [sessionId, setSessionId] = useState(() => {
+    // Check if we're in the browser environment
+    if (typeof window === "undefined") {
+      return uuidv4(); // Generate a temporary ID for server-side rendering
+    }
+
+    const existing = localStorage.getItem("regSessionId");
+    if (existing) return existing;
+    const id = uuidv4();
+    localStorage.setItem("regSessionId", id);
+    return id;
+  });
+
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       // Scroll only within the messages container, not the whole page
@@ -62,6 +91,29 @@ export default function ChatBot() {
     scrollToBottom();
   }, [messages, isTyping]);
 
+  // Cleanup incomplete registrations on page load/refresh
+  useEffect(() => {
+    const cleanupIncompleteRegistration = async () => {
+      if (typeof window !== "undefined" && sessionId) {
+        try {
+          await fetch("/api/cleanup", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ sessionId }),
+          });
+          console.log("🧹 Cleanup check completed for session:", sessionId);
+        } catch (error) {
+          console.error("Cleanup error:", error);
+          // Non-blocking - don't show error to user
+        }
+      }
+    };
+
+    cleanupIncompleteRegistration();
+  }, [sessionId]);
+
   const showToast = (message: string, type: 'error' | 'warning' | 'success' = 'error') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -72,23 +124,25 @@ export default function ChatBot() {
     }, 5000);
   };
 
-  const [sessionId, setSessionId] = useState(() => {
-    // Check if we're in the browser environment
-    if (typeof window === "undefined") {
-      return uuidv4(); // Generate a temporary ID for server-side rendering
-    }
-
-    const existing = localStorage.getItem("regSessionId");
-    if (existing) return existing;
-    const id = uuidv4();
-    localStorage.setItem("regSessionId", id);
-    return id;
-  });
-
-  const resetSession = () => {
+  const resetSession = async () => {
     if (typeof window !== "undefined") {
       // Save current scroll position
       const currentScrollY = window.scrollY;
+
+      // Delete incomplete registration from MongoDB before resetting
+      try {
+        await fetch("/api/cleanup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sessionId }),
+        });
+        console.log("🗑️ Deleted registration for session:", sessionId);
+      } catch (error) {
+        console.error("Cleanup error during reset:", error);
+        // Continue with reset even if cleanup fails
+      }
 
       localStorage.removeItem("regSessionId");
       const newId = uuidv4();
@@ -110,7 +164,7 @@ export default function ChatBot() {
   const handleButtonClick = async (value: string) => {
     // Check if this is the reset trigger
     if (value === "RESET") {
-      resetSession();
+      await resetSession();
       return;
     }
 
@@ -238,7 +292,16 @@ export default function ChatBot() {
           content: data.reply,
           buttons: data.buttons || undefined
         };
-        setMessages((prev) => [...prev, botMessage]);
+
+        // Prevent duplicate messages by checking if this exact message already exists
+        setMessages((prev) => {
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage && lastMessage.role === "bot" && lastMessage.content === botMessage.content) {
+            console.log("⚠️ Duplicate message detected in handleSaveEdit, skipping...");
+            return prev;
+          }
+          return [...prev, botMessage];
+        });
 
         // Check if the reply is an error or success
         if (data.reply.includes('❌') || data.reply.toLowerCase().includes('error') || data.reply.toLowerCase().includes('invalid')) {
@@ -311,7 +374,24 @@ export default function ChatBot() {
           showEditForm: data.showEditForm || false,
           registrationData: data.registrationData || undefined
         };
-        setMessages((prev) => [...prev, botMessage]);
+
+        // Prevent duplicate messages by checking if this exact message already exists
+        setMessages((prev) => {
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage && lastMessage.role === "bot" && lastMessage.content === botMessage.content) {
+            console.log("⚠️ Duplicate message detected, skipping...");
+            return prev;
+          }
+          return [...prev, botMessage];
+        });
+
+        // Show toast notifications for success or error messages
+        if (data.reply.includes('🎉') && data.reply.toLowerCase().includes('registration successful')) {
+          showToast('Registration completed successfully!', 'success');
+        } else if (data.reply.includes('❌') || data.reply.toLowerCase().includes('error')) {
+          const cleanMessage = data.reply.split('\n')[0].replace(/❌/g, '').trim();
+          showToast(cleanMessage, 'error');
+        }
 
         // If server wants to show edit form, open modal
         if (data.showEditForm && data.registrationData) {
@@ -402,25 +482,23 @@ export default function ChatBot() {
                     : "0 8px 24px rgba(55, 194, 204, 0.2), 0 4px 12px rgba(55, 194, 204, 0.1)",
                 }}
               >
-                <div className="px-2.5 py-2 sm:px-3 sm:py-2.5 md:px-4 md:py-3">
+                <div className="px-2.5 py-2 sm:px-3 sm:py-2.5 md:px-4 md:py-3 relative z-10">
                   <div
                     className={`text-xs sm:text-sm md:text-[15px] leading-relaxed ${
-                      m.role === "user" ? "font-medium whitespace-pre-wrap" : ""
+                      m.role === "user" ? "font-medium" : ""
                     }`}
                     style={{
                       fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+                      userSelect: "text",
+                      WebkitUserSelect: "text",
+                      MozUserSelect: "text",
+                      msUserSelect: "text",
+                      cursor: "text",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
                     }}
-                    dangerouslySetInnerHTML={
-                      m.role === "bot"
-                        ? {
-                            __html: m.content
-                              .replace(/"([^"]+)"/g, '<strong>$1</strong>')
-                              .replace(/\n/g, '<br/>'),
-                          }
-                        : undefined
-                    }
                   >
-                    {m.role === "user" ? m.content : null}
+                    {m.role === "bot" ? renderTextWithBoldQuotes(m.content) : m.content}
                   </div>
                   
                   {/* Render buttons if they exist */}
@@ -527,36 +605,39 @@ export default function ChatBot() {
       {/* Edit Modal - Outside chat container */}
       {showEditModal && editData && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-          <div className="bg-gradient-to-br from-[#0e243f] to-[#204168] p-6 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-[#37c2cc]/30 relative">
-            <h2 className="text-2xl font-bold text-white mb-4 text-center bg-gradient-to-r from-[#37c2cc] to-white bg-clip-text text-transparent">
+          <div className="bg-gradient-to-br from-[#0e243f] via-[#1a3a5f] to-[#204168] p-6 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-[#37c2cc]/40 relative ring-1 ring-[#37c2cc]/20">
+            {/* Decorative gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#37c2cc]/5 via-transparent to-[#37c2cc]/5 rounded-2xl pointer-events-none" />
+
+            <h2 className="relative text-2xl font-bold text-white mb-6 text-center bg-gradient-to-r from-[#37c2cc] via-white to-[#37c2cc] bg-clip-text text-transparent">
               Edit Registration Details
             </h2>
 
             {/* Team Name */}
-            <div className="mb-4">
-              <label className="block text-white/80 mb-2 text-sm font-semibold">Team Name</label>
+            <div className="mb-4 relative">
+              <label className="block text-[#37c2cc] mb-2 text-sm font-semibold">Team Name</label>
               <input
                 type="text"
                 value={editData.teamName}
                 onChange={(e) => setEditData({ ...editData, teamName: e.target.value })}
-                className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                className="w-full bg-gradient-to-br from-[#0a1929] to-[#0e243f] border border-[#37c2cc]/40 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all placeholder-white/30"
               />
             </div>
 
             {/* Hackerrank Username */}
-            <div className="mb-4">
-              <label className="block text-white/80 mb-2 text-sm font-semibold">Hackerrank Username</label>
+            <div className="mb-4 relative">
+              <label className="block text-[#37c2cc] mb-2 text-sm font-semibold">Hackerrank Username</label>
               <input
                 type="text"
                 value={editData.hackerrankUsername}
                 onChange={(e) => setEditData({ ...editData, hackerrankUsername: e.target.value })}
-                className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                className="w-full bg-gradient-to-br from-[#0a1929] to-[#0e243f] border border-[#37c2cc]/40 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all placeholder-white/30"
               />
             </div>
 
             {/* Batch */}
-            <div className="mb-4">
-              <label className="block text-white/80 mb-2 text-sm font-semibold">Batch</label>
+            <div className="mb-4 relative">
+              <label className="block text-[#37c2cc] mb-2 text-sm font-semibold">Batch</label>
               <select
                 value={editData.teamBatch}
                 onChange={(e) => {
@@ -582,7 +663,7 @@ export default function ChatBot() {
 
                   setEditData({ ...editData, teamBatch: newBatch });
                 }}
-                className="w-full bg-white/10 border border-[#37c2cc]/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                className="w-full bg-gradient-to-br from-[#0a1929] to-[#0e243f] border border-[#37c2cc]/40 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all"
               >
                 <option value="23" className="bg-[#0e243f]">Batch 23</option>
                 <option value="24" className="bg-[#0e243f]">Batch 24</option>
@@ -590,16 +671,16 @@ export default function ChatBot() {
             </div>
 
             {/* Members */}
-            <div className="mb-6">
-              <h3 className="text-white/90 mb-3 text-lg font-semibold">Team Members</h3>
+            <div className="mb-6 relative">
+              <h3 className="text-[#37c2cc] mb-3 text-lg font-semibold">Team Members</h3>
               {editData.members.map((member, index) => (
-                <div key={index} className="mb-4 p-4 bg-white/5 rounded-lg border border-[#37c2cc]/20">
+                <div key={index} className="mb-4 p-4 bg-gradient-to-br from-[#0a1929]/50 to-[#0e243f]/50 rounded-lg border border-[#37c2cc]/30 backdrop-blur-sm">
                   <h4 className="text-[#37c2cc] mb-2 font-semibold">
                     {index === 0 ? 'Team Leader' : `Member ${index + 1}`}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-white/60 mb-1 text-xs">Full Name</label>
+                      <label className="block text-[#37c2cc]/80 mb-1 text-xs font-medium">Full Name</label>
                       <input
                         type="text"
                         value={member.fullName}
@@ -608,11 +689,11 @@ export default function ChatBot() {
                           newMembers[index].fullName = e.target.value;
                           setEditData({ ...editData, members: newMembers });
                         }}
-                        className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                        className="w-full bg-[#0a1929] border border-[#37c2cc]/30 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-white/60 mb-1 text-xs">Index Number</label>
+                      <label className="block text-[#37c2cc]/80 mb-1 text-xs font-medium">Index Number</label>
                       <input
                         type="text"
                         value={member.indexNumber}
@@ -633,12 +714,12 @@ export default function ChatBot() {
                           newMembers[index].indexNumber = newIndexNumber;
                           setEditData({ ...editData, members: newMembers });
                         }}
-                        className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                        className="w-full bg-[#0a1929] border border-[#37c2cc]/30 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all"
                         placeholder={`${editData.teamBatch}XXXXY (e.g., ${editData.teamBatch}4001T)`}
                       />
                     </div>
                     <div>
-                      <label className="block text-white/60 mb-1 text-xs">Email</label>
+                      <label className="block text-[#37c2cc]/80 mb-1 text-xs font-medium">Email</label>
                       <input
                         type="email"
                         value={member.email}
@@ -647,7 +728,7 @@ export default function ChatBot() {
                           newMembers[index].email = e.target.value;
                           setEditData({ ...editData, members: newMembers });
                         }}
-                        className="w-full bg-white/10 border border-[#37c2cc]/20 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc]"
+                        className="w-full bg-[#0a1929] border border-[#37c2cc]/30 rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all"
                       />
                     </div>
                   </div>
@@ -656,17 +737,17 @@ export default function ChatBot() {
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-3 justify-end relative">
               <button
                 onClick={() => setShowEditModal(false)}
-                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all font-semibold"
+                className="px-6 py-3 bg-gradient-to-br from-[#0a1929] to-[#0e243f] hover:from-[#0e243f] hover:to-[#1a3a5f] text-white rounded-lg transition-all font-semibold border border-[#37c2cc]/30 hover:border-[#37c2cc]/50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={isSubmitting}
-                className={`px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl ${
+                className={`px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl hover:shadow-[#37c2cc]/30 hover:scale-105 ${
                   isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
