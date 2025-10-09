@@ -605,7 +605,7 @@ export default function ChatBot() {
 
       {/* Edit Modal - Outside chat container */}
       {showEditModal && editData && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4" style={{ zIndex: 10002 }}>
           <div className="bg-gradient-to-br from-[#0e243f] via-[#1a3a5f] to-[#204168] p-6 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-[#37c2cc]/40 relative ring-1 ring-[#37c2cc]/20">
             {/* Decorative gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#37c2cc]/5 via-transparent to-[#37c2cc]/5 rounded-2xl pointer-events-none" />
