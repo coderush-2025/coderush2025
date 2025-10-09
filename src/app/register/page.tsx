@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import Image from "next/image";
@@ -9,9 +9,68 @@ import ChatBot from "@/components/ChatBox";
 
 export default function RegisterPage() {
   const backgroundRef = useRef<HTMLDivElement>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isClient, setIsClient] = useState(false);
+
+  // Generate consistent bubble positions for SSR (responsive percentages)
+  const bubblePositions = useRef([
+    { x: 15, y: 20, scale: 0.8 },
+    { x: 60, y: 15, scale: 1.2 },
+    { x: 25, y: 60, scale: 1.0 },
+    { x: 80, y: 40, scale: 0.9 },
+    { x: 10, y: 70, scale: 1.1 },
+    { x: 70, y: 65, scale: 0.7 },
+    { x: 40, y: 30, scale: 1.3 },
+    { x: 55, y: 80, scale: 0.8 },
+  ]);
 
   useEffect(() => {
-    // Morphing background with multiple gradients - same as Hero component
+    // Set client-side flag to prevent hydration mismatch
+    setIsClient(true);
+
+    // Mouse and touch tracking for interactive bubbles
+    const handleInteraction = (clientX: number, clientY: number) => {
+      setMousePosition({ x: clientX, y: clientY });
+
+      // Magnetic effect for bubbles near cursor/touch
+      const bubbles = document.querySelectorAll('.liquid-bubble');
+      bubbles.forEach((bubble) => {
+        const rect = bubble.getBoundingClientRect();
+        const bubbleCenterX = rect.left + rect.width / 2;
+        const bubbleCenterY = rect.top + rect.height / 2;
+        const distance = Math.sqrt(
+          Math.pow(clientX - bubbleCenterX, 2) + Math.pow(clientY - bubbleCenterY, 2)
+        );
+
+        const interactionRadius = window.innerWidth < 768 ? 100 : 150;
+
+        if (distance < interactionRadius) {
+          const strength = (interactionRadius - distance) / interactionRadius;
+          const moveX = (clientX - bubbleCenterX) * strength * 0.2;
+          const moveY = (clientY - bubbleCenterY) * strength * 0.2;
+
+          gsap.to(bubble, {
+            x: moveX,
+            y: moveY,
+            scale: 1 + strength * 0.3,
+            duration: 0.3,
+            ease: "power2.out"
+          });
+        }
+      });
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      handleInteraction(e.clientX, e.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    // Morphing background with multiple gradients
     const gradients = [
       "linear-gradient(135deg, #0e243f 0%, #204168 50%, #37c2cc 100%)",
       "linear-gradient(225deg, #37c2cc 0%, #0e243f 50%, #204168 100%)",
@@ -35,35 +94,52 @@ export default function RegisterPage() {
     };
     changeGradient();
 
-    // Liquid bubble animations - same as Hero component
-    const bubbles = document.querySelectorAll(".liquid-bubble");
-    bubbles.forEach((bubble, index) => {
-      // Random floating motion
-      gsap.to(bubble, {
-        x: `random(-100, 100)`,
-        y: `random(-80, 80)`,
-        scale: `random(0.8, 1.3)`,
-        duration: `random(4, 8)`,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
-        delay: index * 0.5,
-      });
+    // Liquid bubble animations with responsive positioning
+    setTimeout(() => {
+      const bubbles = document.querySelectorAll(".liquid-bubble");
+      bubbles.forEach((bubble, index) => {
+        const position = bubblePositions.current[index];
+        if (position) {
+          const vw = window.innerWidth / 100;
+          const vh = window.innerHeight / 100;
 
-      // Pulsing effect
-      gsap.to(bubble, {
-        opacity: `random(0.3, 0.8)`,
-        duration: `random(2, 4)`,
-        ease: "power2.inOut",
-        repeat: -1,
-        yoyo: true,
-        delay: index * 0.3,
+          // Consistent floating motion based on viewport units
+          gsap.to(bubble, {
+            x: position.x * vw + (index % 2 === 0 ? 3 * vw : -3 * vw),
+            y: position.y * vh + (index % 3 === 0 ? -2 * vh : 2 * vh),
+            scale: position.scale,
+            duration: 4 + (index * 0.5),
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+            delay: index * 0.5,
+          });
+
+          // Pulsing effect with consistent timing
+          gsap.to(bubble, {
+            opacity: 0.3 + (index % 5) * 0.1,
+            duration: 2 + (index % 3),
+            ease: "power2.inOut",
+            repeat: -1,
+            yoyo: true,
+            delay: index * 0.3,
+          });
+        }
       });
-    });
+    }, 100);
+
+    // Add event listeners
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
   }, []);
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden touch-none">
       {/* Animated Background */}
       <div
         ref={backgroundRef}
@@ -74,207 +150,278 @@ export default function RegisterPage() {
         }}
       />
 
-      {/* Liquid Bubble Animation - Same as Hero */}
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        viewBox="0 0 1200 800"
-      >
-        <defs>
-          <radialGradient id="bubbleGradient1" cx="30%" cy="30%">
-            <stop offset="0%" stopColor="#37c2cc" stopOpacity="0.8" />
-            <stop offset="70%" stopColor="#204168" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#0e243f" stopOpacity="0.1" />
-          </radialGradient>
-          <radialGradient id="bubbleGradient2" cx="70%" cy="70%">
-            <stop offset="0%" stopColor="#37c2cc" stopOpacity="0.6" />
-            <stop offset="60%" stopColor="#204168" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="#0e243f" stopOpacity="0.05" />
-          </radialGradient>
-          <radialGradient id="bubbleGradient3" cx="50%" cy="50%">
-            <stop offset="0%" stopColor="#37c2cc" stopOpacity="0.7" />
-            <stop offset="80%" stopColor="#204168" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#0e243f" stopOpacity="0.02" />
-          </radialGradient>
-          <filter id="liquidBlur">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Large Liquid Bubbles */}
-        <circle
-          className="liquid-bubble"
-          cx="200"
-          cy="150"
-          r="80"
-          fill="url(#bubbleGradient1)"
-          filter="url(#liquidBlur)"
-          opacity="0.6"
-        />
-        <circle
-          className="liquid-bubble"
-          cx="1000"
-          cy="200"
-          r="60"
-          fill="url(#bubbleGradient2)"
-          filter="url(#liquidBlur)"
-          opacity="0.5"
-        />
-        <circle
-          className="liquid-bubble"
-          cx="150"
-          cy="600"
-          r="70"
-          fill="url(#bubbleGradient3)"
-          filter="url(#liquidBlur)"
-          opacity="0.4"
-        />
-        <circle
-          className="liquid-bubble"
-          cx="950"
-          cy="550"
-          r="50"
-          fill="url(#bubbleGradient1)"
-          filter="url(#liquidBlur)"
-          opacity="0.5"
-        />
-
-        {/* Medium Liquid Bubbles */}
-        <circle
-          className="liquid-bubble"
-          cx="400"
-          cy="100"
-          r="40"
-          fill="url(#bubbleGradient2)"
-          filter="url(#liquidBlur)"
-          opacity="0.4"
-        />
-        <circle
-          className="liquid-bubble"
-          cx="800"
-          cy="400"
-          r="35"
-          fill="url(#bubbleGradient3)"
-          filter="url(#liquidBlur)"
-          opacity="0.3"
-        />
-        <circle
-          className="liquid-bubble"
-          cx="300"
-          cy="500"
-          r="45"
-          fill="url(#bubbleGradient1)"
-          filter="url(#liquidBlur)"
-          opacity="0.4"
-        />
-        <circle
-          className="liquid-bubble"
-          cx="700"
-          cy="650"
-          r="38"
-          fill="url(#bubbleGradient2)"
-          filter="url(#liquidBlur)"
-          opacity="0.3"
-        />
-
-        {/* Small Liquid Bubbles */}
-        <circle
-          className="liquid-bubble"
-          cx="600"
-          cy="250"
-          r="25"
-          fill="url(#bubbleGradient3)"
-          filter="url(#liquidBlur)"
-          opacity="0.3"
-        />
-        <circle
-          className="liquid-bubble"
-          cx="500"
-          cy="700"
-          r="20"
-          fill="url(#bubbleGradient1)"
-          filter="url(#liquidBlur)"
-          opacity="0.2"
-        />
-        <circle
-          className="liquid-bubble"
-          cx="900"
-          cy="100"
-          r="30"
-          fill="url(#bubbleGradient2)"
-          filter="url(#liquidBlur)"
-          opacity="0.3"
-        />
-        <circle
-          className="liquid-bubble"
-          cx="100"
-          cy="350"
-          r="28"
-          fill="url(#bubbleGradient3)"
-          filter="url(#liquidBlur)"
-          opacity="0.2"
-        />
-      </svg>
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center text-white px-4">
-        {/* Logo */}
-        <motion.div
-          className="mb-8"
-          initial={{ opacity: 0, scale: 0.5, rotateX: -90 }}
-          animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-          transition={{
-            duration: 1.5,
-            ease: "easeOut",
-            type: "spring",
-            stiffness: 100,
-          }}
-        >
-          <Image
-            src="/Coderush.png"
-            alt="CodeRush 2025"
-            width={4000}
-            height={2000}
-            className="w-auto h-auto max-w-full max-h-32"
-            priority
+      {/* Mouse Cursor Trail Effect */}
+      {isClient && (
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+          <motion.div
+            className="absolute w-4 h-4 rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(55, 194, 204, 0.6) 0%, transparent 70%)',
+              boxShadow: '0 0 20px rgba(55, 194, 204, 0.8)'
+            }}
+            animate={{
+              x: mousePosition.x - 8,
+              y: mousePosition.y - 8,
+            }}
+            transition={{
+              duration: 0.1,
+              ease: "easeOut"
+            }}
           />
-        </motion.div>
+        </div>
+      )}
 
-        {/* Registration Title */}
-        <motion.h1
-          className="text-2xl md:text-4xl mb-8 font-light tracking-wide leading-relaxed"
-          style={{
-            background:
-              "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            textShadow: "0 0 20px rgba(55, 194, 204, 0.3)",
-            fontFamily: "system-ui, -apple-system, sans-serif",
-          }}
-          initial={{ opacity: 0, y: 50, skewX: -10 }}
-          animate={{ opacity: 1, y: 0, skewX: 0 }}
-          transition={{
-            duration: 1,
-            delay: 0.5,
-            ease: "easeOut",
-          }}
-        >
-          Team Registration
-        </motion.h1>
+      {/* Interactive Liquid Bubble Animation */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        {isClient && bubblePositions.current.map((pos, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full liquid-bubble cursor-pointer"
+            style={{
+              width: `${30 + (i % 4) * 15}px`,
+              height: `${30 + (i % 4) * 15}px`,
+              background: `radial-gradient(circle at ${30 + (i % 3) * 20}% ${30 + (i % 3) * 20}%,
+                rgba(55, 194, 204, 0.8) 0%,
+                rgba(32, 65, 104, 0.4) 70%,
+                rgba(14, 36, 63, 0.1) 100%)`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(55, 194, 204, 0.3)',
+              boxShadow: '0 0 20px rgba(55, 194, 204, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1)'
+            }}
+            initial={{
+              x: isClient ? `${pos.x}vw` : 0,
+              y: isClient ? `${pos.y}vh` : 0,
+              scale: 0,
+              opacity: 0,
+            }}
+            animate={isClient ? {
+              x: [
+                `${pos.x}vw`,
+                `${pos.x + 10}vw`,
+                `${pos.x - 5}vw`,
+              ],
+              y: [
+                `${pos.y}vh`,
+                `${pos.y - 8}vh`,
+                `${pos.y + 6}vh`,
+              ],
+              scale: [pos.scale, pos.scale * 1.2, pos.scale],
+              opacity: [0.3, 0.8, 0.6, 0.9, 0.5],
+              rotate: [0, 180, 360],
+            } : {}}
+            transition={{
+              duration: 8 + i * 0.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 0.3,
+            }}
+            whileHover={{
+              scale: 1.8,
+              opacity: 1,
+              rotate: 360,
+              transition: {
+                duration: 0.3,
+                type: "spring",
+                stiffness: 300,
+              }
+            }}
+            whileTap={{
+              scale: 0.5,
+              opacity: 0.2,
+              transition: { duration: 0.1 }
+            }}
+            onHoverStart={() => {
+              // Ripple effect on nearby bubbles
+              const nearbyBubbles = document.querySelectorAll('.liquid-bubble');
+              nearbyBubbles.forEach((bubble, index) => {
+                if (Math.abs(index - i) <= 2) {
+                  gsap.to(bubble, {
+                    scale: 1.3,
+                    duration: 0.3,
+                    ease: "back.out(1.7)",
+                    yoyo: true,
+                    repeat: 1
+                  });
+                }
+              });
+            }}
+            onClick={() => {
+              // Burst effect when clicked
+              const clickedBubble = document.querySelectorAll('.liquid-bubble')[i];
+              if (clickedBubble) {
+                gsap.to(clickedBubble, {
+                  scale: 2.5,
+                  opacity: 0,
+                  rotation: 720,
+                  duration: 0.6,
+                  ease: "power2.out",
+                  onComplete: () => {
+                    const vw = window.innerWidth / 100;
+                    const vh = window.innerHeight / 100;
+                    gsap.set(clickedBubble, {
+                      scale: 1,
+                      opacity: 0.6,
+                      rotation: 0,
+                      x: pos.x * vw,
+                      y: pos.y * vh,
+                    });
+                  }
+                });
 
-        {/* ChatBot */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 1 }}
-          className="w-full max-w-lg"
-        >
-          <ChatBot />
-        </motion.div>
+                // Create ripple effect on all other bubbles
+                const allBubbles = document.querySelectorAll('.liquid-bubble');
+                allBubbles.forEach((bubble, index) => {
+                  if (index !== i) {
+                    gsap.to(bubble, {
+                      scale: 1.4,
+                      duration: 0.2,
+                      ease: "power2.out",
+                      yoyo: true,
+                      repeat: 1,
+                      delay: index * 0.05
+                    });
+                  }
+                });
+              }
+            }}
+          >
+            {/* Dynamic Inner glow effect */}
+            <motion.div
+              className="absolute inset-2 rounded-full"
+              style={{
+                background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 70%)'
+              }}
+              animate={{
+                opacity: [0.2, 0.6, 0.3, 0.8],
+                scale: [0.8, 1.2, 0.9, 1.1],
+              }}
+              transition={{
+                duration: 3 + i * 0.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: i * 0.1,
+              }}
+            />
+
+            {/* Interactive Color Ring */}
+            <motion.div
+              className="absolute inset-0 rounded-full opacity-0 pointer-events-none"
+              style={{
+                background: `conic-gradient(from ${i * 30}deg, rgba(55, 194, 204, 0.8), rgba(255, 255, 255, 0.6), rgba(55, 194, 204, 0.8))`,
+                filter: 'blur(2px)'
+              }}
+              whileHover={{
+                opacity: 0.7,
+                scale: 1.2,
+                rotate: 360,
+                transition: {
+                  duration: 2,
+                  ease: "linear"
+                }
+              }}
+            />
+
+            {/* Floating particles inside bubble */}
+            {[...Array(3)].map((_, pi) => (
+              <motion.div
+                key={pi}
+                className="absolute w-1 h-1 bg-white rounded-full opacity-60"
+                style={{
+                  left: `${20 + pi * 25}%`,
+                  top: `${30 + pi * 20}%`,
+                }}
+                animate={{
+                  x: [0, 10, -5, 8, 0],
+                  y: [0, -8, 5, -10, 0],
+                  opacity: [0.3, 0.8, 0.5, 0.9, 0.4],
+                }}
+                transition={{
+                  duration: 4 + pi * 0.5,
+                  repeat: Infinity,
+                  delay: pi * 0.2,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Content - Two Column Layout */}
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 md:px-8 lg:px-12 min-h-screen flex items-center py-8">
+        <div className="w-full grid md:grid-cols-[35%_65%] gap-8 lg:gap-12 items-center">
+
+          {/* Left Side - Logo and Title */}
+          <motion.div
+            className="flex flex-col items-center justify-center space-y-6 p-4 md:p-6"
+            initial={{ opacity: 0, x: -100 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+          >
+            {/* Logo */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5, rotateX: -90 }}
+              animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+              transition={{
+                duration: 1.5,
+                ease: "easeOut",
+                type: "spring",
+                stiffness: 100,
+              }}
+            >
+              <Image
+                src="/Coderush.png"
+                alt="CodeRush 2025"
+                width={4000}
+                height={2000}
+                className="w-auto h-auto max-w-full max-h-40 md:max-h-52 lg:max-h-60"
+                priority
+              />
+            </motion.div>
+
+            {/* Event Title */}
+            <div className="text-center space-y-3 text-white">
+              <motion.h1
+                className="text-3xl md:text-5xl lg:text-6xl font-bold"
+                style={{
+                  background: "linear-gradient(135deg, #37c2cc 0%, #ffffff 50%, #37c2cc 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                  fontFamily: "system-ui, -apple-system, sans-serif",
+                }}
+                initial={{ opacity: 0, y: 50, skewX: -10 }}
+                animate={{ opacity: 1, y: 0, skewX: 0 }}
+                transition={{
+                  duration: 1,
+                  delay: 0.5,
+                  ease: "easeOut",
+                }}
+              >
+                CodeRush 2025
+              </motion.h1>
+              <p className="text-white/80 text-base md:text-lg">
+                Team Registration Portal
+              </p>
+              <div className="flex items-center justify-center gap-2 text-[#37c2cc] flex-wrap">
+                <div className="hidden md:block w-8 h-px bg-gradient-to-r from-transparent to-[#37c2cc]" />
+                <span className="text-xs md:text-sm font-semibold">University of Moratuwa - Faculty of IT</span>
+                <div className="hidden md:block w-8 h-px bg-gradient-to-l from-transparent to-[#37c2cc]" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Right Side - ChatBot */}
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+            className="w-full p-4 md:p-6 lg:p-8"
+          >
+            <ChatBot />
+          </motion.div>
+
+        </div>
       </div>
     </div>
   );

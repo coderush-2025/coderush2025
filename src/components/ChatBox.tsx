@@ -321,15 +321,15 @@ export default function ChatBot() {
 
   return (
     <>
-    <div className="w-full max-w-lg mx-auto p-8 bg-white/10 backdrop-blur-xl border border-[#37c2cc]/30 rounded-2xl shadow-2xl relative overflow-hidden">
+    <div className="w-full h-full p-6 bg-white/10 backdrop-blur-xl border border-[#37c2cc]/30 rounded-2xl shadow-2xl relative overflow-hidden">
       {/* Background gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#37c2cc]/10 via-transparent to-[#0e243f]/20 pointer-events-none" />
-      
+
       {/* Header */}
-      <div className="relative z-10 mb-6">
+      <div className="relative z-10 mb-4">
         <div className="flex items-center justify-between mb-2">
           <h3
-            className="text-xl font-semibold text-white flex-1 text-center"
+            className="text-lg md:text-xl font-semibold text-white flex-1 text-center"
             style={{
               background: "linear-gradient(135deg, #ffffff 0%, #37c2cc 50%, #ffffff 100%)",
               WebkitBackgroundClip: "text",
@@ -352,7 +352,7 @@ export default function ChatBot() {
       </div>
 
       {/* Messages Container */}
-      <div className="relative z-10 h-80 overflow-y-auto mb-6 bg-black/20 backdrop-blur-sm rounded-2xl border border-[#37c2cc]/20 p-4 space-y-3 scrollbar-thin scrollbar-thumb-[#37c2cc]/50 scrollbar-track-transparent">
+      <div className="relative z-10 h-[400px] md:h-[450px] overflow-y-auto mb-4 bg-black/20 backdrop-blur-sm rounded-2xl border border-[#37c2cc]/20 p-4 space-y-3 scrollbar-thin scrollbar-thumb-[#37c2cc]/50 scrollbar-track-transparent">
         {messages.map((m, i) => (
           <div
             key={i}
@@ -362,13 +362,13 @@ export default function ChatBot() {
             <div className={`flex ${m.role === "user" ? "flex-row-reverse" : "flex-row"} items-start gap-2 max-w-[85%]`}>
               {/* Avatar */}
               {m.role === "bot" && (
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#37c2cc] to-[#2ba8b3] flex items-center justify-center shadow-lg ring-2 ring-[#37c2cc]/30">
-                  <span className="text-base">🤖</span>
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-[#37c2cc] to-[#2ba8b3] flex items-center justify-center shadow-lg ring-2 ring-[#37c2cc]/30">
+                  <span className="text-lg">🤖</span>
                 </div>
               )}
               {m.role === "user" && (
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#0e243f] to-[#204168] flex items-center justify-center shadow-lg ring-2 ring-white/20">
-                  <span className="text-base">👤</span>
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-[#0e243f] to-[#204168] flex items-center justify-center shadow-lg ring-2 ring-white/20">
+                  <span className="text-lg">👤</span>
                 </div>
               )}
 
@@ -481,7 +481,7 @@ export default function ChatBot() {
       <div className="relative z-10 flex gap-3">
         <div className="flex-1 relative">
           <input
-            className="w-full bg-white/90 backdrop-blur-sm border-2 border-[#37c2cc]/30 rounded-xl p-4 text-[#0e243f] placeholder-[#0e243f]/60 focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all duration-300 shadow-lg"
+            className="w-full bg-white/90 backdrop-blur-sm border-2 border-[#37c2cc]/30 rounded-xl p-3 text-base text-[#0e243f] placeholder-[#0e243f]/60 focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all duration-300 shadow-lg"
             placeholder="Type your message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -494,7 +494,7 @@ export default function ChatBot() {
         </div>
         <button
           onClick={sendMessage}
-          className="bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-[#0e243f] font-bold px-6 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 relative overflow-hidden group"
+          className="bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-[#0e243f] font-bold px-6 py-3 text-base rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 relative overflow-hidden group"
           style={{
             fontFamily: "system-ui, -apple-system, sans-serif",
           }}
