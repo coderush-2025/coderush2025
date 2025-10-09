@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const Hero = () => {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -11,6 +12,7 @@ const Hero = () => {
   const backgroundRef = useRef<HTMLDivElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
   
   // Generate consistent bubble positions for SSR (responsive percentages)
   const bubblePositions = useRef([
@@ -171,7 +173,7 @@ const Hero = () => {
   return (
     <div
       ref={heroRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden touch-none"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-14 sm:-mt-16"
     >
       {/* Animated Background */}
       <div
@@ -646,27 +648,28 @@ const Hero = () => {
           ))}
 
           <motion.button
+            onClick={() => router.push("/register")}
             className="px-8 py-4 md:px-12 md:py-6 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu"
             style={{
               fontFamily: "system-ui, -apple-system, sans-serif",
               letterSpacing: "1px",
               backgroundSize: "200% 100%",
             }}
-            initial={{ 
-              opacity: 0, 
-              y: 50, 
+            initial={{
+              opacity: 0,
+              y: 50,
               scale: 0.8,
-              rotateX: -30 
+              rotateX: -30
             }}
-            animate={{ 
-              opacity: 1, 
-              y: 0, 
+            animate={{
+              opacity: 1,
+              y: 0,
               scale: 1,
               rotateX: 0,
               backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
             }}
-            transition={{ 
-              duration: 1.2, 
+            transition={{
+              duration: 1.2,
               delay: 2,
               type: "spring",
               stiffness: 100,
@@ -693,7 +696,7 @@ const Hero = () => {
                 }
               }
             }}
-            whileTap={{ 
+            whileTap={{
               scale: 0.95,
               y: 0,
               transition: { duration: 0.1 }

@@ -83,6 +83,7 @@ export default function Timeline() {
 
   return (
     <section
+      id="timeline"
       aria-label="Event timeline"
       className="relative py-20 px-6 md:px-12 lg:px-20"
       style={{

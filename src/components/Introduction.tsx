@@ -54,7 +54,8 @@ export default function Introduction() {
 
   return (
     <section
-      className="relative min-h-screen w-full overflow-hidden -mt-1"
+      id="introduction"
+      className="relative min-h-screen w-full overflow-hidden"
       style={{
         background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)"
       }}
