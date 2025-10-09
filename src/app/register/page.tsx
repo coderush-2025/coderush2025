@@ -25,6 +25,9 @@ export default function RegisterPage() {
   ]);
 
   useEffect(() => {
+    // Scroll to top on page load/refresh
+    window.scrollTo(0, 0);
+
     // Set client-side flag to prevent hydration mismatch
     setIsClient(true);
 
@@ -139,7 +142,7 @@ export default function RegisterPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden touch-none">
+    <div className="relative min-h-screen flex items-start justify-center overflow-hidden touch-none">
       {/* Animated Background */}
       <div
         ref={backgroundRef}
@@ -348,7 +351,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Content - Two Column Layout */}
-      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 md:px-8 lg:px-12 min-h-screen flex items-center py-8">
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 md:px-8 lg:px-12 min-h-screen flex items-start md:items-center py-8">
         <div className="w-full grid md:grid-cols-[35%_65%] gap-8 lg:gap-12 items-center">
 
           {/* Left Side - Logo and Title */}

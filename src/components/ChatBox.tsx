@@ -46,7 +46,16 @@ export default function ChatBot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      // Scroll only within the messages container, not the whole page
+      const container = messagesEndRef.current.parentElement;
+      if (container) {
+        messagesEndRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest"
+        });
+      }
+    }
   };
 
   useEffect(() => {
@@ -78,6 +87,9 @@ export default function ChatBot() {
 
   const resetSession = () => {
     if (typeof window !== "undefined") {
+      // Save current scroll position
+      const currentScrollY = window.scrollY;
+
       localStorage.removeItem("regSessionId");
       const newId = uuidv4();
       localStorage.setItem("regSessionId", newId);
@@ -87,6 +99,11 @@ export default function ChatBot() {
         content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
       }]);
       setInput("");
+
+      // Restore scroll position after a brief delay
+      setTimeout(() => {
+        window.scrollTo(0, currentScrollY);
+      }, 0);
     }
   };
 
