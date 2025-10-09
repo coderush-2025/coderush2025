@@ -91,6 +91,12 @@ export default function ChatBot() {
   };
 
   const handleButtonClick = async (value: string) => {
+    // Check if this is the reset trigger
+    if (value === "RESET") {
+      resetSession();
+      return;
+    }
+
     // Check if this is the edit form trigger
     if (value === "OPEN_EDIT_FORM") {
       // Find the last message with registration data
@@ -210,8 +216,21 @@ export default function ChatBot() {
       const data = await res.json();
 
       if (data.reply) {
-        setMessages((prev) => [...prev, { role: "bot", content: data.reply }]);
-        showToast('Registration submitted successfully!', 'success');
+        const botMessage: Message = {
+          role: "bot",
+          content: data.reply,
+          buttons: data.buttons || undefined
+        };
+        setMessages((prev) => [...prev, botMessage]);
+
+        // Check if the reply is an error or success
+        if (data.reply.includes('❌') || data.reply.toLowerCase().includes('error') || data.reply.toLowerCase().includes('invalid')) {
+          // Remove emoji from message since toast already has an icon
+          const cleanMessage = data.reply.split('\n')[0].replace(/❌/g, '').trim();
+          showToast(cleanMessage, 'error');
+        } else if (data.reply.includes('🎉') || data.reply.toLowerCase().includes('successful')) {
+          showToast('Registration submitted successfully!', 'success');
+        }
       }
     } catch (error) {
       console.error("Error saving edited data:", error);

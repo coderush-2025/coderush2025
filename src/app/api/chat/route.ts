@@ -91,19 +91,44 @@ export async function POST(req: Request) {
   
   console.log("📋 Found existing registration, state:", reg.state);
 
+  // If registration is already complete, allow only specific actions
+  if (reg.state === "DONE" && message !== "SAVE_EDITED_DATA") {
+    // Allow "edit" command to open edit form
+    if (message && message.toLowerCase().includes("edit")) {
+      return NextResponse.json({
+        reply: "📝 Click the button below to edit your registration details.\n\n⚠️ Note: Editing will update your registration and send a new confirmation email.",
+        buttons: [
+          { text: "📝 Edit Details", value: "OPEN_EDIT_FORM" }
+        ],
+        showEditForm: true,
+        registrationData: {
+          teamName: reg.teamName,
+          hackerrankUsername: reg.hackerrankUsername,
+          teamBatch: reg.teamBatch,
+          members: reg.members.map(m => ({
+            fullName: m.fullName,
+            indexNumber: m.indexNumber,
+            email: m.email
+          }))
+        }
+      });
+    }
+
+    return NextResponse.json({
+      reply: "✅ This registration has already been submitted.",
+      buttons: [
+        { text: "📝 Edit Details", value: "edit" },
+        { text: "🔄 Reset & Register New Team", value: "RESET" }
+      ]
+    });
+  }
+
   // Handle save edited data
   if (message === "SAVE_EDITED_DATA") {
     const { editedData } = body;
 
     if (!editedData) {
       return NextResponse.json({ reply: "❌ No edited data provided." }, { status: 400 });
-    }
-
-    // Check if already in DONE state (prevent duplicate submission)
-    if (reg.state === "DONE") {
-      return NextResponse.json({
-        reply: "✅ This registration has already been submitted. To register another team, click the 🔄 Reset button."
-      });
     }
 
     // Check if team name is already taken by another completed team
@@ -193,6 +218,9 @@ export async function POST(req: Request) {
     const isComplete = reg.members.length === MEMBER_COUNT;
 
     if (isComplete) {
+      // Check if this is an update to existing registration
+      const isUpdate = reg.state === "DONE";
+
       // Complete registration
       reg.state = "DONE";
       await reg.save();
@@ -244,9 +272,23 @@ export async function POST(req: Request) {
         console.error('⚠️ Email error (non-blocking):', emailError);
       }
 
-      return NextResponse.json({
-        reply: `🎉 Registration Successful!\n\nYour team "${reg.teamName}" has been registered for CodeRush 2025!\n\n✅ Registration confirmed\n📧 Confirmation email sent to ${reg.members[0]?.email}\n📊 Team data saved\n\n🏆 Good luck and may the best team win!`
-      });
+      if (isUpdate) {
+        return NextResponse.json({
+          reply: `✅ Registration Updated Successfully!\n\nYour team "${reg.teamName}" details have been updated for CodeRush 2025!\n\n📧 New confirmation email sent to ${reg.members[0]?.email}\n📊 Team data updated`,
+          buttons: [
+            { text: "📝 Edit Details", value: "edit" },
+            { text: "🔄 Reset & Register New Team", value: "RESET" }
+          ]
+        });
+      } else {
+        return NextResponse.json({
+          reply: `🎉 Registration Successful!\n\nYour team "${reg.teamName}" has been registered for CodeRush 2025!\n\n✅ Registration confirmed\n📧 Confirmation email sent to ${reg.members[0]?.email}\n📊 Team data saved\n\n🏆 Good luck and may the best team win!`,
+          buttons: [
+            { text: "📝 Edit Details", value: "edit" },
+            { text: "🔄 Reset & Register New Team", value: "RESET" }
+          ]
+        });
+      }
     } else {
       // Continue registration - ask for next member
       reg.currentMember = reg.members.length + 1;
@@ -549,9 +591,9 @@ export async function POST(req: Request) {
     if (trimmedMessage === "no") {
       // User wants to edit - send edit form data with a button
       return NextResponse.json({
-        reply: "Click the button below to edit your registration details:",
+        reply: "💡 Click the button below to edit your registration details.\n\n📝 When you save your changes, a new confirmation email will be sent automatically.",
         buttons: [
-          { text: "📝 Open Edit Form", value: "OPEN_EDIT_FORM" }
+          { text: "📝 Edit Details", value: "OPEN_EDIT_FORM" }
         ],
         showEditForm: true,
         registrationData: {
@@ -567,24 +609,64 @@ export async function POST(req: Request) {
       });
     }
 
-    // User said "yes" - show edit form popup to confirm before final submission
+    // User said "yes" - directly complete the registration
     if (trimmedMessage === "yes") {
-      return NextResponse.json({
-        reply: "Please review your details one final time before submission:",
-        buttons: [
-          { text: "📝 Review & Submit", value: "OPEN_EDIT_FORM" }
-        ],
-        showEditForm: true,
-        registrationData: {
-          teamName: reg.teamName,
-          hackerrankUsername: reg.hackerrankUsername,
-          teamBatch: reg.teamBatch,
-          members: reg.members.map(m => ({
+      reg.state = "DONE";
+      await reg.save();
+
+      console.log('📊 Saving to Google Sheets for team:', reg.teamName);
+
+      // Save to Google Sheets
+      try {
+        const sheetsResult = await appendToGoogleSheets({
+          teamName: reg.teamName || '',
+          hackerrankUsername: reg.hackerrankUsername || '',
+          teamBatch: reg.teamBatch || '',
+          members: reg.members || [],
+          timestamp: new Date(),
+        });
+
+        if (sheetsResult.success) {
+          console.log('✅ Registration saved to Google Sheets');
+        } else {
+          console.error('⚠️ Failed to save to Google Sheets:', sheetsResult.error);
+        }
+      } catch (sheetsError) {
+        console.error('⚠️ Google Sheets error (non-blocking):', sheetsError);
+      }
+
+      // Send confirmation email to team leader
+      console.log('📧 Sending confirmation email to:', reg.members[0]?.email);
+      try {
+        const emailResult = await sendRegistrationEmail({
+          teamName: reg.teamName || '',
+          hackerrankUsername: reg.hackerrankUsername || '',
+          teamBatch: reg.teamBatch || '',
+          leaderName: reg.members[0]?.fullName || '',
+          leaderEmail: reg.members[0]?.email || '',
+          leaderIndex: reg.members[0]?.indexNumber || '',
+          members: reg.members.slice(1).map(m => ({
             fullName: m.fullName,
             indexNumber: m.indexNumber,
-            email: m.email
-          }))
+            email: m.email,
+          })),
+        });
+
+        if (emailResult.success) {
+          console.log('✅ Confirmation email sent successfully');
+        } else {
+          console.error('⚠️ Failed to send email:', emailResult.error);
         }
+      } catch (emailError) {
+        console.error('⚠️ Email error (non-blocking):', emailError);
+      }
+
+      return NextResponse.json({
+        reply: `🎉 Registration Successful!\n\nYour team "${reg.teamName}" has been registered for CodeRush 2025!\n\n✅ Registration confirmed\n📧 Confirmation email sent to ${reg.members[0]?.email}\n📊 Team data saved\n\n🏆 Good luck and may the best team win!`,
+        buttons: [
+          { text: "📝 Edit Details", value: "edit" },
+          { text: "🔄 Reset & Register New Team", value: "RESET" }
+        ]
       });
     }
   } else {
