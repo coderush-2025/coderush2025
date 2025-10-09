@@ -465,7 +465,7 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <h3 className="text-white font-semibold mb-1">Submit & Confirm</h3>
-                  <p className="text-sm">Once you confirm, your registration is submitted. You'll see instant confirmation and receive further instructions via email.</p>
+                  <p className="text-sm">Once you confirm, your registration is submitted. You&apos;ll see instant confirmation and receive further instructions via email.</p>
                 </div>
               </div>
               <div className="mt-6 p-4 bg-[#37c2cc]/10 border border-[#37c2cc]/30 rounded-lg">
