@@ -1,14 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 
 const PrizesInteractive = () => {
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
 
   const prizes = [
     {
@@ -63,22 +59,22 @@ const PrizesInteractive = () => {
 
       <div className="relative z-10 container mx-auto px-4 py-4 md:py-6">
         {/* Simplified Header */}
-        <div className={`text-center mb-6 md:mb-8 transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
-          <div className="relative inline-block">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-[#37c2cc] to-white mb-3 tracking-wider
-                         animate-pulse hover:scale-105 transition-all duration-300 cursor-default
-                         drop-shadow-[0_0_20px_rgba(55,194,204,0.5)] hover:drop-shadow-[0_0_30px_rgba(55,194,204,0.8)]">
+        <motion.div
+          className="text-center mb-10 sm:mb-12 md:mb-16"
+          initial={{ opacity: 0, y: -40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-3 sm:mb-4 tracking-wider px-2">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#37c2cc] to-white drop-shadow-lg">
               PRIZES
-            </h1>
-            
-            <div className="w-24 md:w-32 h-0.5 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] mx-auto rounded-full 
-                          animate-pulse"></div>
-          </div>
-          
-          <p className="text-white text-xs md:text-sm lg:text-base mt-3 max-w-xl mx-auto leading-relaxed font-light opacity-90">
+            </span>
+          </h2>
+          <p className="text-gray-300 text-sm sm:text-base md:text-lg mt-3 sm:mt-4 px-2">
             Rewards await the most innovative teams in <span className="text-[#37c2cc] font-medium">CodeRush 2025</span>
           </p>
-        </div>
+        </motion.div>
 
         {/* Interactive Prize Cards Grid */}
         <div className="grid lg:grid-cols-2 gap-4 lg:gap-6 items-start max-w-6xl mx-auto">
@@ -88,16 +84,14 @@ const PrizesInteractive = () => {
             {prizes.map((prize, index) => (
               <div
                 key={index}
-                className={`group relative overflow-hidden p-4 md:p-5 rounded-xl border-2 ${prize.borderColor} 
+                className={`group relative overflow-hidden p-4 md:p-5 rounded-xl border-2 ${prize.borderColor}
                           bg-gradient-to-br ${prize.bgGradient} backdrop-blur-lg
                           hover:shadow-lg ${prize.glowColor} transition-all duration-500
                           hover:scale-[1.02] hover:border-opacity-100 transform-gpu cursor-pointer
                           ${selectedCard === index ? 'ring-2 ring-white/20 scale-[1.02]' : ''}
-                          ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}
                           ${index === 0 ? 'border-[#37c2cc]/95 hover:shadow-[#37c2cc]/60 hover:shadow-2xl ring-2 ring-[#37c2cc]/30' : ''}
                           ${index === 1 ? 'border-[#37c2cc]/90 hover:shadow-[#37c2cc]/50 hover:shadow-2xl ring-1 ring-[#37c2cc]/20' : ''}
                           ${index === 2 ? 'border-[#37c2cc]/85 hover:shadow-[#37c2cc]/45 hover:shadow-2xl ring-1 ring-[#37c2cc]/15' : ''}`}
-                style={{transitionDelay: `${index * 200}ms`}}
                 onClick={() => setSelectedCard(selectedCard === index ? null : index)}
                 onMouseEnter={() => setSelectedCard(index)}
                 onMouseLeave={() => setSelectedCard(null)}
@@ -161,9 +155,13 @@ const PrizesInteractive = () => {
           </div>
 
           {/* Certificate Images Showcase */}
-          <div className={`flex justify-center lg:justify-end items-center min-h-[400px] md:min-h-[500px] transition-all duration-1000 ${
-            isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
-          }`} style={{transitionDelay: '600ms'}}>
+          <motion.div
+            className="flex justify-center lg:justify-end items-center min-h-[400px] md:min-h-[500px]"
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+          >
             <div className="relative flex items-center justify-center h-full">
               {/* Certificate images stack - matching uploaded layout */}
               <div className="relative w-80 h-64 md:w-96 md:h-80">
@@ -213,13 +211,17 @@ const PrizesInteractive = () => {
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Simplified Footer */}
-        <div className={`text-center mt-8 md:mt-10 transition-all duration-1000 ${
-          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        }`} style={{transitionDelay: '800ms'}}>
+        <motion.div
+          className="text-center mt-8 md:mt-10"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
+        >
           <div className="flex justify-center space-x-2 mb-3">
             {[...Array(5)].map((_, i) => (
               <div
@@ -236,7 +238,7 @@ const PrizesInteractive = () => {
               🚀 <span className="text-[#37c2cc]">CodeRush 2025</span> - Where champions are made! 🚀
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

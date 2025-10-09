@@ -42,23 +42,19 @@ const Contact: React.FC = () => {
 
       <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-20 relative z-10">
         {/* Heading with fixed descenders */}
-        <motion.h2
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-center mb-2 text-gradient bg-gradient-to-r from-[#37c2cc] via-white to-[#37c2cc] bg-clip-text text-transparent drop-shadow-lg leading-snug overflow-visible"
+        <motion.div
+          className="text-center mb-10 sm:mb-12 md:mb-16"
           initial={{ opacity: 0, y: -40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          CONTACT US
-        </motion.h2>
-        <motion.div
-          className="text-center mb-8 sm:mb-10 md:mb-12"
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <p className="text-base sm:text-lg md:text-xl text-white font-medium px-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-3 sm:mb-4 tracking-wider px-2">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#37c2cc] to-white drop-shadow-lg">
+              CONTACT US
+            </span>
+          </h2>
+          <p className="text-gray-300 text-sm sm:text-base md:text-lg mt-3 sm:mt-4 px-2">
             Have Questions? Reach Out to Our Team
           </p>
         </motion.div>

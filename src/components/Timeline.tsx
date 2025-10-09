@@ -131,23 +131,22 @@ export default function Timeline() {
       />
 
       <div className="max-w-6xl mx-auto relative z-10">
-        <div className="text-center mb-16 lg:mb-24">
-          <h2
-            className="text-3xl md:text-4xl font-extrabold"
-            style={{
-              background:
-                "linear-gradient(90deg,#ffffff 0%, #37c2cc 45%, #ffffff 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            Key Dates & Timeline
+        <motion.div
+          className="text-center mb-10 sm:mb-12 md:mb-16"
+          initial={{ opacity: 0, y: -40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-3 sm:mb-4 tracking-wider px-2">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#37c2cc] to-white drop-shadow-lg">
+              TIMELINE
+            </span>
           </h2>
-          <p className="mt-3 text-sm md:text-base text-slate-200 max-w-2xl mx-auto">
-            Important deadlines and event days - plan ahead and don&apos;t miss
-            out.
+          <p className="text-gray-300 text-sm sm:text-base md:text-lg mt-3 sm:mt-4 px-2">
+            Important deadlines and event days - plan ahead and don&apos;t miss out.
           </p>
-        </div>
+        </motion.div>
 
         {/* Desktop horizontal timeline */}
         <motion.div

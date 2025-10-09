@@ -47,29 +47,25 @@ const galleryImages = [
 
 const Memories = () => {
   return (
-    <section className="py-12 sm:py-14 md:py-16" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-20">
-        <motion.h2
-          className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-center mb-10 sm:mb-12 md:mb-16 text-gradient bg-gradient-to-r from-white via-[#37c2cc] to-white bg-clip-text text-transparent drop-shadow-lg leading-snug overflow-visible"
+    <section className="py-16 sm:py-20 md:py-24 min-h-screen" style={{ background: "linear-gradient(180deg, #0e243f 0%, #204168 50%, #0e243f 100%)" }}>
+      <div className="w-full max-w-full mx-auto px-2 sm:px-4 md:px-6">
+        <motion.div
+          className="text-center mb-10 sm:mb-12 md:mb-16"
           initial={{ opacity: 0, y: -40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          Memories
-        </motion.h2>
-        <motion.div
-                  className="text-center mb-8 sm:mb-10 md:mb-12"
-                  initial={{ opacity: 0, y: -20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                >
-                  <p className="text-base sm:text-lg md:text-xl text-white font-medium px-4 max-w-3xl mx-auto">
-                    A collection of moments from our past events, showcasing the
-                    energy, creativity, and community spirit that define CodeRush.
-                  </p>
-                </motion.div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-3 sm:mb-4 tracking-wider px-2">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#37c2cc] to-white drop-shadow-lg">
+              MEMORIES
+            </span>
+          </h2>
+          <p className="text-gray-300 text-sm sm:text-base md:text-lg mt-3 sm:mt-4 px-4 max-w-4xl mx-auto">
+            A collection of moments from our past events, showcasing the
+            energy, creativity, and community spirit that define CodeRush.
+          </p>
+        </motion.div>
 
         {/* Parallax Scroll Gallery */}
         <ParallaxScroll images={galleryImages} />
