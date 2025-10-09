@@ -387,14 +387,23 @@ export default function ChatBot() {
               >
                 <div className="px-4 py-3">
                   <div
-                    className={`text-[15px] leading-relaxed whitespace-pre-wrap ${
-                      m.role === "user" ? "font-medium" : ""
+                    className={`text-[15px] leading-relaxed ${
+                      m.role === "user" ? "font-medium whitespace-pre-wrap" : ""
                     }`}
                     style={{
                       fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
                     }}
+                    dangerouslySetInnerHTML={
+                      m.role === "bot"
+                        ? {
+                            __html: m.content
+                              .replace(/"([^"]+)"/g, '<strong>$1</strong>')
+                              .replace(/\n/g, '<br/>'),
+                          }
+                        : undefined
+                    }
                   >
-                    {m.content}
+                    {m.role === "user" ? m.content : null}
                   </div>
                   
                   {/* Render buttons if they exist */}
