@@ -351,12 +351,12 @@ export default function RegisterPage() {
       </div>
 
       {/* Content - Two Column Layout */}
-      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-3 sm:px-4 md:px-6 lg:px-12 min-h-screen flex items-start md:items-center py-4 sm:py-6 md:py-8">
-        <div className="w-full grid grid-cols-1 md:grid-cols-[35%_65%] gap-4 sm:gap-6 md:gap-8 lg:gap-12 items-center">
+      <div className="relative z-10 w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 min-h-screen flex items-center py-6 sm:py-8 md:py-8">
+        <div className="w-full grid grid-cols-1 md:grid-cols-[35%_65%] gap-6 sm:gap-8 md:gap-10 lg:gap-12 items-center">
 
           {/* Left Side - Logo and Title */}
           <motion.div
-            className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 md:space-y-6 p-2 sm:p-3 md:p-4 lg:p-6 order-1"
+            className="flex flex-col items-center justify-center space-y-4 sm:space-y-5 md:space-y-6 p-3 sm:p-4 md:p-5 lg:p-6 order-1"
             initial={{ opacity: 0, x: -100 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, ease: "easeOut" }}
@@ -377,15 +377,15 @@ export default function RegisterPage() {
                 alt="CodeRush 2025"
                 width={4000}
                 height={2000}
-                className="w-auto h-auto max-w-full max-h-28 sm:max-h-32 md:max-h-40 lg:max-h-52 xl:max-h-60"
+                className="w-auto h-auto max-w-full max-h-32 sm:max-h-36 md:max-h-44 lg:max-h-52 xl:max-h-60"
                 priority
               />
             </motion.div>
 
             {/* Event Title */}
-            <div className="text-center space-y-2 sm:space-y-2.5 md:space-y-3 text-white">
+            <div className="text-center space-y-2.5 sm:space-y-3 md:space-y-3 text-white">
               <motion.h1
-                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold"
+                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight"
                 style={{
                   background: "linear-gradient(135deg, #37c2cc 0%, #ffffff 50%, #37c2cc 100%)",
                   WebkitBackgroundClip: "text",
@@ -403,13 +403,13 @@ export default function RegisterPage() {
               >
                 CodeRush 2025
               </motion.h1>
-              <p className="text-white/80 text-sm sm:text-base md:text-lg">
+              <p className="text-white/80 text-base sm:text-lg md:text-lg">
                 Team Registration Portal
               </p>
-              <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-[#37c2cc] flex-wrap px-2">
-                <div className="hidden sm:block w-6 md:w-8 h-px bg-gradient-to-r from-transparent to-[#37c2cc]" />
-                <span className="text-xs sm:text-xs md:text-sm font-semibold text-center">University of Moratuwa - Faculty of IT</span>
-                <div className="hidden sm:block w-6 md:w-8 h-px bg-gradient-to-l from-transparent to-[#37c2cc]" />
+              <div className="flex items-center justify-center gap-2 sm:gap-2 text-[#37c2cc] flex-wrap">
+                <div className="hidden sm:block w-8 md:w-8 h-px bg-gradient-to-r from-transparent to-[#37c2cc]" />
+                <span className="text-xs sm:text-sm md:text-sm font-semibold text-center px-1">University of Moratuwa - Faculty of IT</span>
+                <div className="hidden sm:block w-8 md:w-8 h-px bg-gradient-to-l from-transparent to-[#37c2cc]" />
               </div>
             </div>
           </motion.div>
@@ -419,7 +419,7 @@ export default function RegisterPage() {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-            className="w-full p-2 sm:p-3 md:p-4 lg:p-6 xl:p-8 order-2"
+            className="w-full px-4 sm:px-6 md:px-4 lg:pr-6 lg:pl-0 order-2"
           >
             <ChatBot />
           </motion.div>
