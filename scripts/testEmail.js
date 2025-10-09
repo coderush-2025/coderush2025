@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const nodemailer = require('nodemailer');
 require('dotenv').config({ path: '.env.local' });
 

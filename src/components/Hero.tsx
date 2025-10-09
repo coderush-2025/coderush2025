@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
 const Hero = () => {
   const heroRef = useRef<HTMLDivElement>(null);
