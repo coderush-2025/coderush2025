@@ -14,6 +14,7 @@ const Navbar = () => {
   const router = useRouter();
   const isHomePage = pathname === "/";
   const isRegisterPage = pathname.startsWith("/register");
+  const isTeamsPage = pathname === "/teams";
 
   // Navigation items
   const navItems = [
@@ -105,7 +106,7 @@ const Navbar = () => {
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-          isRegisterPage || isScrolled
+          isRegisterPage || isTeamsPage || isScrolled
             ? "bg-[#0e243f]/95 backdrop-blur-lg shadow-lg shadow-[#37c2cc]/10"
             : "bg-transparent"
         }`}
