@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { gsap } from "gsap";
 
 interface TeamsResponse {
   success: boolean;
@@ -14,8 +15,28 @@ export default function RegisteredTeamsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isClient, setIsClient] = useState(false);
+
+  // Generate consistent bubble positions for SSR (same as Hero)
+  const bubblePositions = useRef([
+    { x: 15, y: 20, scale: 0.8 },
+    { x: 60, y: 15, scale: 1.2 },
+    { x: 25, y: 60, scale: 1.0 },
+    { x: 80, y: 40, scale: 0.9 },
+    { x: 10, y: 70, scale: 1.1 },
+    { x: 70, y: 65, scale: 0.7 },
+    { x: 40, y: 30, scale: 1.3 },
+    { x: 55, y: 80, scale: 0.8 },
+    { x: 20, y: 35, scale: 1.0 },
+    { x: 85, y: 25, scale: 1.1 },
+    { x: 35, y: 50, scale: 0.9 },
+    { x: 65, y: 75, scale: 1.2 }
+  ]);
 
   useEffect(() => {
+    setIsClient(true);
+
     const fetchTeams = async () => {
       try {
         const response = await fetch("/api/teams");
@@ -35,6 +56,87 @@ export default function RegisteredTeamsPage() {
     };
 
     fetchTeams();
+
+    // Mouse and touch tracking for interactive bubbles (same as Hero)
+    const handleInteraction = (clientX: number, clientY: number) => {
+      setMousePosition({ x: clientX, y: clientY });
+
+      const bubbles = document.querySelectorAll('.liquid-bubble');
+      bubbles.forEach((bubble) => {
+        const rect = bubble.getBoundingClientRect();
+        const bubbleCenterX = rect.left + rect.width / 2;
+        const bubbleCenterY = rect.top + rect.height / 2;
+        const distance = Math.sqrt(
+          Math.pow(clientX - bubbleCenterX, 2) + Math.pow(clientY - bubbleCenterY, 2)
+        );
+
+        const interactionRadius = window.innerWidth < 768 ? 100 : 150;
+
+        if (distance < interactionRadius) {
+          const strength = (interactionRadius - distance) / interactionRadius;
+          const moveX = (clientX - bubbleCenterX) * strength * 0.2;
+          const moveY = (clientY - bubbleCenterY) * strength * 0.2;
+
+          gsap.to(bubble, {
+            x: moveX,
+            y: moveY,
+            scale: 1 + strength * 0.3,
+            duration: 0.3,
+            ease: "power2.out"
+          });
+        }
+      });
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      handleInteraction(e.clientX, e.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    // Liquid bubble animations
+    setTimeout(() => {
+      const bubbles = document.querySelectorAll(".liquid-bubble");
+      bubbles.forEach((bubble, index) => {
+        const position = bubblePositions.current[index];
+        if (position) {
+          const vw = window.innerWidth / 100;
+          const vh = window.innerHeight / 100;
+
+          gsap.to(bubble, {
+            x: position.x * vw + (index % 2 === 0 ? 3 * vw : -3 * vw),
+            y: position.y * vh + (index % 3 === 0 ? -2 * vh : 2 * vh),
+            scale: position.scale,
+            duration: 4 + (index * 0.5),
+            ease: "sine.inOut",
+            repeat: -1,
+            yoyo: true,
+            delay: index * 0.5,
+          });
+
+          gsap.to(bubble, {
+            opacity: 0.3 + (index % 5) * 0.1,
+            duration: 2 + (index % 3),
+            ease: "power2.inOut",
+            repeat: -1,
+            yoyo: true,
+            delay: index * 0.3,
+          });
+        }
+      });
+    }, 100);
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
   }, []);
 
   // Filter teams based on search query
@@ -124,25 +226,70 @@ export default function RegisteredTeamsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0e243f] via-[#204168] to-[#37c2cc] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+      {/* Mouse Cursor Trail Effect */}
+      {isClient && (
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
           <motion.div
-            key={`particle-${i}`}
-            className="absolute w-2 h-2 bg-[#37c2cc] rounded-full opacity-40"
+            className="absolute w-4 h-4 rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              background: 'radial-gradient(circle, rgba(55, 194, 204, 0.6) 0%, transparent 70%)',
+              boxShadow: '0 0 20px rgba(55, 194, 204, 0.8)'
             }}
             animate={{
-              y: [0, -100, 0],
-              opacity: [0, 0.6, 0],
+              x: mousePosition.x - 8,
+              y: mousePosition.y - 8,
             }}
             transition={{
-              duration: Math.random() * 5 + 3,
+              duration: 0.1,
+              ease: "easeOut"
+            }}
+          />
+        </div>
+      )}
+
+      {/* Interactive Liquid Bubble Animation (same as Hero) */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+        {isClient && [...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute rounded-full liquid-bubble cursor-pointer pointer-events-auto"
+            style={{
+              width: `${30 + (i % 4) * 15}px`,
+              height: `${30 + (i % 4) * 15}px`,
+              background: `radial-gradient(circle at ${30 + (i % 3) * 20}% ${30 + (i % 3) * 20}%, 
+                rgba(55, 194, 204, 0.8) 0%, 
+                rgba(32, 65, 104, 0.4) 70%, 
+                rgba(14, 36, 63, 0.1) 100%)`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(55, 194, 204, 0.3)',
+              boxShadow: '0 0 20px rgba(55, 194, 204, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1)'
+            }}
+            initial={{
+              x: isClient ? `${bubblePositions.current[i].x}vw` : 0,
+              y: isClient ? `${bubblePositions.current[i].y}vh` : 0,
+              scale: 0,
+              opacity: 0,
+            }}
+            animate={isClient ? {
+              x: [
+                `${bubblePositions.current[i].x}vw`,
+                `${bubblePositions.current[i].x + 10}vw`,
+                `${bubblePositions.current[i].x - 5}vw`,
+              ],
+              y: [
+                `${bubblePositions.current[i].y}vh`,
+                `${bubblePositions.current[i].y - 8}vh`,
+                `${bubblePositions.current[i].y + 6}vh`,
+              ],
+              scale: [bubblePositions.current[i].scale, bubblePositions.current[i].scale * 1.2, bubblePositions.current[i].scale],
+              opacity: [0.3, 0.8, 0.6, 0.9, 0.5],
+              rotate: [0, 180, 360],
+            } : {}}
+            transition={{
+              duration: 8 + i * 0.5,
               repeat: Infinity,
-              delay: Math.random() * 3,
               ease: "easeInOut",
+              delay: i * 0.2,
             }}
           />
         ))}
