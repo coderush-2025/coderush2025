@@ -28,13 +28,13 @@ export async function GET() {
             .project({ teamName: 1, _id: 0 })
             .toArray();
           teamNames = teams
-            .map((team: any) => team.teamName)
-            .filter((name: string) => name);
+            .map((team: { teamName?: string }) => team.teamName)
+            .filter((name): name is string => !!name);
           console.log(`✅ Found ${teamNames.length} teams in 'teams' collection`);
         }
       }
-    } catch (err) {
-      console.log("⚠️ Could not access 'teams' collection, trying registrations...");
+    } catch (collectionErr) {
+      console.log("⚠️ Could not access 'teams' collection, trying registrations...", collectionErr);
     }
 
     // If no teams found in "teams" collection, fetch from Registration model
@@ -60,8 +60,8 @@ export async function GET() {
       //   .lean();
 
       teamNames = registrations
-        .map((reg: any) => reg.teamName)
-        .filter((name: string) => name && name.trim() !== "");
+        .map((reg: { teamName?: string }) => reg.teamName)
+        .filter((name): name is string => !!name && name.trim() !== "");
       console.log(`✅ Found ${teamNames.length} teams in Registration collection`);
     }
 

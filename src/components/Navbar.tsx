@@ -64,7 +64,7 @@ const Navbar = () => {
     handleScroll();
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHomePage]);
+  }, [isHomePage, navItems]);
 
   // Handle navigation
   const handleNavClick = (href: string, sectionId: string | null) => {
