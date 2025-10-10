@@ -8,7 +8,7 @@ export default function Introduction() {
   const codeText = `function codeRush2025() {
   const event = {
     name: "CodeRush 2025",
-    duration: "24 hours",
+    duration: "10 hours",
     platform: "HackerRank",
     participants: "Teams of 4"
   };
@@ -142,7 +142,7 @@ export default function Introduction() {
                     transition={{ delay: 2.5 }}
                     className="text-white/70 mt-1 sm:mt-2"
                   >
-                    Event: CodeRush 2025 - 24h Hackathon
+                    Event: CodeRush 2025 - 10h Hackathon
                   </motion.div>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export default function Introduction() {
                   transition={{ delay: 1.6, duration: 0.8 }}
                   className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 font-light mb-4 sm:mb-6 leading-relaxed"
                 >
-                  The ultimate <span className="text-[#37c2cc] font-semibold">24-hour coding challenge</span> by <span className="text-[#37c2cc] font-bold">INTECS</span>, Faculty of Information Technology
+                  The ultimate <span className="text-[#37c2cc] font-semibold">10-hour coding challenge</span> by <span className="text-[#37c2cc] font-bold">INTECS</span>, Faculty of Information Technology
                 </motion.p>
 
                 <motion.div
@@ -207,7 +207,7 @@ export default function Introduction() {
                     >
                       <div className="flex-1">
                         <h3 className="text-[#37c2cc] font-semibold mb-1 text-sm sm:text-base font-mono">&gt; HackerRank Platform</h3>
-                        <p className="text-xs sm:text-sm text-white/70">24 hours of intensive coding challenges and innovation</p>
+                        <p className="text-xs sm:text-sm text-white/70">10 hours of intensive coding challenges and innovation</p>
                       </div>
                     </motion.div>
 

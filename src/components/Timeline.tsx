@@ -48,7 +48,7 @@ const events: TimelineEvent[] = [
     date: "Nov 15, 2025",
     time: "09:00 AM",
     description:
-      "24 hours of hacking with mentors and checkpoints. \nBring your A-game!",
+      "10 hours of intense coding with mentors and checkpoints. \nBring your A-game!",
     icon: <FaCalendarAlt />,
     accent: "#2f5f87",
   },
