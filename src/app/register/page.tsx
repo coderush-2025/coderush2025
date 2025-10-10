@@ -133,7 +133,7 @@ export default function RegisterPage() {
 
     // Add event listeners
     window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
@@ -142,7 +142,7 @@ export default function RegisterPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen flex items-start justify-center overflow-hidden touch-none">
+    <div className="relative min-h-screen flex items-start justify-center overflow-x-hidden overflow-y-auto">
       {/* Animated Background */}
       <div
         ref={backgroundRef}
