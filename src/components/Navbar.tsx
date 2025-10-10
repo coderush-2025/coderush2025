@@ -81,21 +81,13 @@ const Navbar = () => {
           window.scrollTo({ top: y, behavior: "smooth" });
         }
       }, 350); // Wait for menu close animation (300ms) + buffer
-    } else {
-      // Navigate to different page or home page with section
+    } else if (!sectionId) {
+      // Navigate to home page without section
       router.push(href);
-
-      // If navigating to a section from another page, scroll after navigation
-      if (sectionId && !isHomePage) {
-        setTimeout(() => {
-          const element = document.getElementById(sectionId);
-          if (element) {
-            const yOffset = -80;
-            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-            window.scrollTo({ top: y, behavior: "smooth" });
-          }
-        }, 100);
-      }
+    } else {
+      // Navigate to home page with section hash
+      // Using window.location for proper hash navigation
+      window.location.href = href;
     }
   };
 
