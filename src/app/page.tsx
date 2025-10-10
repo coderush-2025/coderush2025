@@ -12,9 +12,27 @@ import FAQ from "@/components/FAQ";
 
 export default function Home() {
   useEffect(() => {
-    // Scroll to top on initial load/refresh
-    window.history.scrollRestoration = 'manual';
-    window.scrollTo(0, 0);
+    // Handle hash navigation from other pages
+    const hash = window.location.hash;
+    
+    if (hash) {
+      // Remove the # from hash
+      const sectionId = hash.substring(1);
+      
+      // Wait for page to fully load and components to mount
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const yOffset = -80;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: "smooth" });
+        }
+      }, 100);
+    } else {
+      // Scroll to top on initial load/refresh
+      window.history.scrollRestoration = 'manual';
+      window.scrollTo(0, 0);
+    }
   }, []);
 
   return (
