@@ -605,17 +605,17 @@ export default function ChatBot() {
 
       {/* Edit Modal - Outside chat container */}
       {showEditModal && editData && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4" style={{ zIndex: 10002 }}>
-          <div className="bg-gradient-to-br from-[#0e243f] via-[#1a3a5f] to-[#204168] p-6 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-[#37c2cc]/40 relative ring-1 ring-[#37c2cc]/20">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-start sm:items-center justify-center p-4 pt-20 sm:pt-4 overflow-y-auto" style={{ zIndex: 10000 }}>
+          <div className="bg-gradient-to-br from-[#0e243f] via-[#1a3a5f] to-[#204168] p-4 sm:p-6 rounded-2xl shadow-2xl max-w-2xl w-full my-4 sm:my-0 max-h-[calc(100vh-6rem)] sm:max-h-[90vh] overflow-y-auto border-2 border-[#37c2cc]/40 relative ring-1 ring-[#37c2cc]/20">
             {/* Decorative gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#37c2cc]/5 via-transparent to-[#37c2cc]/5 rounded-2xl pointer-events-none" />
 
-            <h2 className="relative text-2xl font-bold text-white mb-6 text-center bg-gradient-to-r from-[#37c2cc] via-white to-[#37c2cc] bg-clip-text text-transparent">
+            <h2 className="relative text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 text-center bg-gradient-to-r from-[#37c2cc] via-white to-[#37c2cc] bg-clip-text text-transparent">
               Edit Registration Details
             </h2>
 
             {/* Team Name */}
-            <div className="mb-4 relative">
+            <div className="mb-3 sm:mb-4 relative">
               <label className="block text-[#37c2cc] mb-2 text-sm font-semibold">Team Name</label>
               <input
                 type="text"
@@ -626,7 +626,7 @@ export default function ChatBot() {
             </div>
 
             {/* Hackerrank Username */}
-            <div className="mb-4 relative">
+            <div className="mb-3 sm:mb-4 relative">
               <label className="block text-[#37c2cc] mb-2 text-sm font-semibold">Hackerrank Username</label>
               <input
                 type="text"
@@ -637,7 +637,7 @@ export default function ChatBot() {
             </div>
 
             {/* Batch */}
-            <div className="mb-4 relative">
+            <div className="mb-3 sm:mb-4 relative">
               <label className="block text-[#37c2cc] mb-2 text-sm font-semibold">Batch</label>
               <select
                 value={editData.teamBatch}
@@ -672,10 +672,10 @@ export default function ChatBot() {
             </div>
 
             {/* Members */}
-            <div className="mb-6 relative">
-              <h3 className="text-[#37c2cc] mb-3 text-lg font-semibold">Team Members</h3>
+            <div className="mb-4 sm:mb-6 relative">
+              <h3 className="text-[#37c2cc] mb-2 sm:mb-3 text-base sm:text-lg font-semibold">Team Members</h3>
               {editData.members.map((member, index) => (
-                <div key={index} className="mb-4 p-4 bg-gradient-to-br from-[#0a1929]/50 to-[#0e243f]/50 rounded-lg border border-[#37c2cc]/30 backdrop-blur-sm">
+                <div key={index} className="mb-3 sm:mb-4 p-3 sm:p-4 bg-gradient-to-br from-[#0a1929]/50 to-[#0e243f]/50 rounded-lg border border-[#37c2cc]/30 backdrop-blur-sm">
                   <h4 className="text-[#37c2cc] mb-2 font-semibold">
                     {index === 0 ? 'Team Leader' : `Member ${index + 1}`}
                   </h4>
@@ -738,17 +738,17 @@ export default function ChatBot() {
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-3 justify-end relative">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end relative">
               <button
                 onClick={() => setShowEditModal(false)}
-                className="px-6 py-3 bg-gradient-to-br from-[#0a1929] to-[#0e243f] hover:from-[#0e243f] hover:to-[#1a3a5f] text-white rounded-lg transition-all font-semibold border border-[#37c2cc]/30 hover:border-[#37c2cc]/50"
+                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-br from-[#0a1929] to-[#0e243f] hover:from-[#0e243f] hover:to-[#1a3a5f] text-white rounded-lg transition-all font-semibold border border-[#37c2cc]/30 hover:border-[#37c2cc]/50 text-sm sm:text-base order-2 sm:order-1"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
                 disabled={isSubmitting}
-                className={`px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl hover:shadow-[#37c2cc]/30 hover:scale-105 ${
+                className={`px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] hover:from-[#2ba8b3] hover:to-[#37c2cc] text-white rounded-lg transition-all font-semibold shadow-lg hover:shadow-xl hover:shadow-[#37c2cc]/30 hover:scale-105 text-sm sm:text-base order-1 sm:order-2 ${
                   isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
