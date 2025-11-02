@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     await dbConnect();
 
     const body = await req.json();
-    const { sessionId } = body;
+    const { sessionId, forceDelete } = body;
 
     if (!sessionId) {
       return NextResponse.json({ success: false, error: "Missing sessionId" }, { status: 400 });
@@ -16,14 +16,24 @@ export async function POST(req: Request) {
     // Find the registration for this session
     const reg = await Registration.findOne({ sessionId });
 
-    // If registration exists and is NOT completed, delete it
-    if (reg && reg.state !== "DONE") {
+    // If forceDelete is true (from reset button), delete immediately
+    if (forceDelete && reg && reg.state !== "DONE") {
       await Registration.deleteOne({ sessionId });
-      console.log(`🗑️ Deleted incomplete registration for session: ${sessionId}`);
+      console.log(`🗑️ Force deleted registration for session: ${sessionId}`);
       return NextResponse.json({
         success: true,
         deleted: true,
-        message: "Incomplete registration deleted"
+        message: "Registration deleted"
+      });
+    }
+
+    // Otherwise, preserve incomplete registrations (don't delete on page refresh/navigation)
+    if (reg && reg.state !== "DONE") {
+      console.log(`✅ Preserving incomplete registration for session: ${sessionId}`);
+      return NextResponse.json({
+        success: true,
+        deleted: false,
+        message: "Incomplete registration preserved"
       });
     }
 

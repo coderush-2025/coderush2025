@@ -48,22 +48,14 @@ export async function GET() {
     if (teamNames.length === 0) {
       console.log("📊 Fetching from Registration collection...");
 
-      // Fetch all registrations that have a teamName with full details
+      // Fetch only COMPLETED registrations (state: "DONE")
       const registrations = await Registration.find({
-        teamName: { $exists: true, $ne: null }
+        teamName: { $exists: true, $ne: null },
+        state: "DONE"
       })
         .select("teamName teamBatch members")
         .sort({ teamName: 1 })
         .lean();
-
-      // Option 2: Uncomment below to show only COMPLETED registrations
-      // const registrations = await Registration.find({
-      //   teamName: { $exists: true, $ne: null },
-      //   state: "DONE"
-      // })
-      //   .select("teamName teamBatch members")
-      //   .sort({ teamName: 1 })
-      //   .lean();
 
       teamDetails = registrations
         .map((reg: any) => ({
