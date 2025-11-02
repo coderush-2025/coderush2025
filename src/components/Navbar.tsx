@@ -14,6 +14,7 @@ const Navbar = () => {
   const router = useRouter();
   const isHomePage = pathname === "/";
   const isRegisterPage = pathname.startsWith("/register");
+  const isTeamsPage = pathname === "/teams";
 
   // Navigation items
   const navItems = [
@@ -64,7 +65,7 @@ const Navbar = () => {
     handleScroll();
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHomePage]);
+  }, [isHomePage, navItems]);
 
   // Handle navigation
   const handleNavClick = (href: string, sectionId: string | null) => {
@@ -80,21 +81,13 @@ const Navbar = () => {
           window.scrollTo({ top: y, behavior: "smooth" });
         }
       }, 350); // Wait for menu close animation (300ms) + buffer
-    } else {
-      // Navigate to different page or home page with section
+    } else if (!sectionId) {
+      // Navigate to home page without section
       router.push(href);
-
-      // If navigating to a section from another page, scroll after navigation
-      if (sectionId && !isHomePage) {
-        setTimeout(() => {
-          const element = document.getElementById(sectionId);
-          if (element) {
-            const yOffset = -80;
-            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-            window.scrollTo({ top: y, behavior: "smooth" });
-          }
-        }, 100);
-      }
+    } else {
+      // Navigate to home page with section hash
+      // Using window.location for proper hash navigation
+      window.location.href = href;
     }
   };
 
@@ -105,7 +98,7 @@ const Navbar = () => {
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
-          isRegisterPage || isScrolled
+          isRegisterPage || isTeamsPage || isScrolled
             ? "bg-[#0e243f]/95 backdrop-blur-lg shadow-lg shadow-[#37c2cc]/10"
             : "bg-transparent"
         }`}

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 const PrizesInteractive = () => {
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
@@ -200,10 +201,11 @@ const PrizesInteractive = () => {
                       zIndex: cert.zIndex,
                     }}
                   >
-                    <img
+                    <Image
                       src={cert.src}
                       alt={cert.alt}
-                      className="w-full h-full object-contain transition-all duration-500
+                      fill
+                      className="object-contain transition-all duration-500
                                filter drop-shadow-2xl group-hover:drop-shadow-[0_25px_50px_rgba(0,0,0,0.4)]
                                group-hover:brightness-110"
                     />
