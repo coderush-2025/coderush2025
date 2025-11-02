@@ -8,12 +8,13 @@ import { motion } from "framer-motion";
 const HowItWorks = () => {
   const router = useRouter();
   const steps = [
-    "CodeRush 2025 will be conducted entirely on the HackerRank platform.",
-    "Each team must consist of four registered participants.",
-    "Contest links and access instructions will be sent via email prior to the start of the competition.",
-    "The hackathon will feature a series of programming challenges to be solved within a limited time.",
-    "Scores will be calculated based on the correctness and speed of submissions.",
-    "Top-performing teams will be officially recognized and awarded.",
+    "CodeRush 2025 is a 10-hour Buildathon where teams build solutions to real-world scenarios.",
+    "Each team must consist of four registered participants from the same batch.",
+    "The problem scenario will be announced at the start of the event.",
+    "Teams have 10 hours to build a working solution using any technology stack.",
+    "Submit your GitHub repository link (must be public) and Google Drive folder link.",
+    "Google Drive folder must contain: Demo video and Report document (folder name: your team name, set to public view).",
+    "Top-performing teams will be evaluated and officially recognized at the awards ceremony.",
   ];
 
   return (
@@ -100,11 +101,11 @@ const HowItWorks = () => {
             transition={{ duration: 0.3 }}
           >
             <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#37c2cc] mb-2 sm:mb-3">
-              Ready to Join the Rush?
+              Ready to Build Something Amazing?
             </h3>
             <p className="text-gray-300 mb-5 sm:mb-6 max-w-lg mx-auto text-sm sm:text-base px-2">
-              Gather your team of four and prepare for the ultimate coding
-              challenge on HackerRank!
+              Gather your team of four and prepare to build innovative solutions
+              in our 10-hour Buildathon challenge!
             </p>
             <motion.button
               onClick={() => router.push("/register")}

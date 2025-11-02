@@ -53,12 +53,12 @@ const FAQ = () => {
     // Registration
     {
       question: "What information is needed during registration ?",
-      answer: "Team name, member names, batch, index numbers, HackerRank usernames (format: teamname_CR)",
+      answer: "Team name, member names, batch, index numbers, and email addresses for all 4 team members",
       category: "Registration",
     },
     {
       question: "How does the registration process work ?",
-      answer: "Registration is done through an interactive chatbot. You'll provide: team name, HackerRank username, select your batch, then enter details for all 4 members (full name, index number, email). After reviewing, you confirm and receive an email confirmation",
+      answer: "Registration is done through an interactive chatbot. You'll provide: team name, select your batch, then enter details for all 4 members (full name, index number, email). After reviewing, you confirm and receive an email confirmation",
       category: "Registration",
     },
     {
@@ -67,8 +67,8 @@ const FAQ = () => {
       category: "Registration",
     },
     {
-      question: "What happens if my team name or HackerRank username is already taken ?",
-      answer: "Team names and HackerRank usernames must be unique. If your choice is already registered, you'll be asked to choose a different name immediately during registration",
+      question: "What happens if my team name is already taken ?",
+      answer: "Team names must be unique. If your choice is already registered, you'll be asked to choose a different name immediately during registration",
       category: "Registration",
     },
     {
@@ -85,22 +85,22 @@ const FAQ = () => {
     // Event Format & Logistics
     {
       question: "What is the format / structure of the event ?",
-      answer: "Physical on-site competition at Faculty of IT, UoM",
+      answer: "10-hour Buildathon - physical on-site competition at Faculty of IT, UoM. Teams build solutions to a real-world scenario",
       category: "Event Format & Logistics",
     },
     {
-      question: "Which platforms will be used ?",
-      answer: "HackerRank",
+      question: "What technology stack can we use ?",
+      answer: "Any technology stack of your choice - web, mobile, desktop applications, etc.",
       category: "Event Format & Logistics",
     },
     {
-      question: "How to create a HackerRank account ?",
-      answer: "Visit hackerrank.com, sign up, use username format: teamname_CR",
+      question: "What do we need to submit ?",
+      answer: "1) GitHub repository link (public), 2) Google Drive folder link containing demo video and report document. Folder must be named with your team name and set to public view",
       category: "Event Format & Logistics",
     },
     {
       question: "Do we need to bring our own devices ?",
-      answer: "Yes, bring your own laptops and power cords",
+      answer: "Yes, bring your own laptops, power cords, and any necessary equipment",
       category: "Event Format & Logistics",
     },
     {
@@ -109,23 +109,13 @@ const FAQ = () => {
       category: "Event Format & Logistics",
     },
     {
-      question: "Are there any constraints on time / memory / languages ?",
-      answer: "Standard HackerRank constraints apply",
+      question: "Can we use AI / generative tools (ChatGPT, Copilot, etc.) ?",
+      answer: "Yes, AI tools and any online resources are allowed",
       category: "Event Format & Logistics",
     },
     {
-      question: "Can we use AI / generative tools (ChatGPT, Copilot) ?",
-      answer: "Yes, AI tools are allowed",
-      category: "Event Format & Logistics",
-    },
-    {
-      question: "What are the security / plagiarism / cheating policies ?",
-      answer: "Cannot join from different HackerRank accounts; must use registered account only",
-      category: "Event Format & Logistics",
-    },
-    {
-      question: "Will partial submissions / incremental submissions be allowed ?",
-      answer: "Yes, multiple submissions allowed on HackerRank",
+      question: "What are the evaluation criteria ?",
+      answer: "Solutions will be evaluated based on functionality, creativity, code quality, presentation (demo video), and documentation (report)",
       category: "Event Format & Logistics",
     },
     {

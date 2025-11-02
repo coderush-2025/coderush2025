@@ -25,9 +25,9 @@ const events: TimelineEvent[] = [
   {
     id: "reg-open",
     title: "Registration Opens",
-    date: "Oct 10, 2025",
+    date: "Nov 3, 2025",
     time: "10:00 AM",
-    description: "Sign-ups open. Head to the register page to join the rush.",
+    description: "Sign-ups open. Head to the register page to join the buildathon.",
     icon: <FaRegClock />,
     accent: "#37c2cc",
     ctaHref: "/register",
@@ -35,7 +35,7 @@ const events: TimelineEvent[] = [
   {
     id: "reg-close",
     title: "Registration Closes",
-    date: "Nov 7, 2025",
+    date: "Nov 10, 2025",
     time: "11:59 PM",
     description:
       "Final cut-off for team registrations. \nMake sure your team is listed.",
@@ -43,20 +43,20 @@ const events: TimelineEvent[] = [
     accent: "#2ba8b3",
   },
   {
-    id: "hack-day",
-    title: "Hackathon\nDay",
+    id: "buildathon-day",
+    title: "Buildathon\nDay",
     date: "Nov 15, 2025",
-    time: "09:00 AM",
+    time: "08:00 AM - 06:00 PM",
     description:
-      "10 hours of intense coding with mentors and checkpoints. \nBring your A-game!",
+      "10 hours of building innovative solutions. \nBring your creativity and A-game!",
     icon: <FaCalendarAlt />,
     accent: "#2f5f87",
   },
   {
     id: "awards",
     title: "Awards Ceremony",
-    date: "Nov 16, 2025",
-    time: "18:00 PM",
+    date: "Nov 25, 2025",
+    time: "08:00 AM",
     description: "Prizes, demos and closing remarks. \nCelebrate the winners.",
     icon: <FaTrophy />,
     accent: "#f5a623",
