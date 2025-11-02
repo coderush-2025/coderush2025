@@ -11,14 +11,12 @@ type ReqBody = {
   message: string;
   editedData?: {
     teamName: string;
-    hackerrankUsername: string;
     teamBatch: string;
     members: Member[];
   };
 };
 
 const MAX_TEAMS = 100;
-// HackerRank username validation is now done with custom logic
 
 function escapeRegExp(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

@@ -13,7 +13,6 @@ const memberSchema = new Schema<Member>({
 const registrationSchema = new Schema<RegistrationDocument>({
   sessionId: { type: String, unique: true, required: true },
   teamName: { type: String, required: false },
-  hackerrankUsername: { type: String, required: false },
   teamBatch: { type: String, required: false },
   members: { type: [memberSchema], default: [] },
   state: { type: String, default: "WELCOME" },

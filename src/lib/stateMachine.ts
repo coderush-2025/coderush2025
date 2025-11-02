@@ -14,12 +14,6 @@ const batchRegex = /^(23|24)$/;
 export const MEMBER_COUNT = 4;
 
 export const states: Record<string, StateConfig> = {
-  HACKERRANK: {
-    prompt:
-      "Please type your Hackerrank username (must end with _CR). Example: TeamName_CR",
-    next: "BATCH_SELECTION",
-  },
-
   BATCH_SELECTION: {
     prompt: "Select your team's batch (all members must be from the same batch):",
     next: "MEMBER_DETAILS",

@@ -16,7 +16,6 @@ const SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Sheet1'; // Sheet name (can
 
 export interface RegistrationData {
   teamName: string;
-  hackerrankUsername: string;
   teamBatch: string;
   members: {
     fullName: string;
@@ -48,7 +47,6 @@ export async function appendToGoogleSheets(data: RegistrationData) {
       // Team info only in first row
       index === 0 ? timestamp : '',
       index === 0 ? data.teamName : '',
-      index === 0 ? data.hackerrankUsername : '',
       index === 0 ? data.teamBatch : '',
       // Leader info only in first row
       index === 0 ? data.members[0]?.fullName || '' : '',
@@ -144,7 +142,6 @@ export async function initializeSheetHeaders() {
       [
         'Timestamp',
         'Team Name',
-        'Hackerrank Username',
         'Batch',
         'Leader Name',
         'Leader Index',

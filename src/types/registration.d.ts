@@ -8,7 +8,6 @@ export interface Member {
 export interface Registration {
   sessionId: string;
   teamName?: string;
-  hackerrankUsername?: string;
   teamBatch?: string;
   track?: string;
   members: Member[];
