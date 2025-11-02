@@ -41,7 +41,7 @@ async function initializeHeaders() {
       spreadsheetId: SPREADSHEET_ID,
     });
 
-    let sheet = spreadsheet.data.sheets.find(
+    const sheet = spreadsheet.data.sheets.find(
       (s: { properties: { title: string } }) => s.properties.title === SHEET_NAME
     );
 
