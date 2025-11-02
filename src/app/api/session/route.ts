@@ -39,7 +39,6 @@ export async function POST(req: Request) {
         ],
         data: {
           teamName: reg.teamName,
-          hackerrankUsername: reg.hackerrankUsername,
           teamBatch: reg.teamBatch,
           members: reg.members
         }
@@ -96,7 +95,6 @@ export async function POST(req: Request) {
       buttons,
       data: {
         teamName: reg.teamName,
-        hackerrankUsername: reg.hackerrankUsername,
         teamBatch: reg.teamBatch,
         members: reg.members,
         currentMember: reg.currentMember

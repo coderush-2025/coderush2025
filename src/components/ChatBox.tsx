@@ -9,7 +9,6 @@ interface Message {
   showEditForm?: boolean;
   registrationData?: {
     teamName: string;
-    hackerrankUsername: string;
     teamBatch: string;
     members: {
       fullName: string;
@@ -48,7 +47,6 @@ export default function ChatBot() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState<{
     teamName: string;
-    hackerrankUsername: string;
     teamBatch: string;
     members: Array<{ fullName: string; indexNumber: string; email: string }>;
   } | null>(null);
@@ -230,18 +228,6 @@ export default function ChatBot() {
     // Prevent double submission
     if (isSubmitting) {
       showToast('Submission in progress, please wait...', 'warning');
-      return;
-    }
-
-    // Validate team name and HackerRank username match
-    if (!editData.hackerrankUsername.endsWith('_CR')) {
-      showToast('HackerRank username must end with _CR (uppercase)', 'error');
-      return;
-    }
-
-    const extractedTeamName = editData.hackerrankUsername.slice(0, -3);
-    if (extractedTeamName.toLowerCase() !== editData.teamName.toLowerCase()) {
-      showToast(`Team name and HackerRank username mismatch! Expected: "${editData.teamName}_CR"`, 'error');
       return;
     }
 
@@ -676,17 +662,6 @@ export default function ChatBot() {
                 type="text"
                 value={editData.teamName}
                 onChange={(e) => setEditData({ ...editData, teamName: e.target.value })}
-                className="w-full bg-gradient-to-br from-[#0a1929] to-[#0e243f] border border-[#37c2cc]/40 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all placeholder-white/30"
-              />
-            </div>
-
-            {/* Hackerrank Username */}
-            <div className="mb-3 sm:mb-4 relative">
-              <label className="block text-[#37c2cc] mb-2 text-sm font-semibold">Hackerrank Username</label>
-              <input
-                type="text"
-                value={editData.hackerrankUsername}
-                onChange={(e) => setEditData({ ...editData, hackerrankUsername: e.target.value })}
                 className="w-full bg-gradient-to-br from-[#0a1929] to-[#0e243f] border border-[#37c2cc]/40 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all placeholder-white/30"
               />
             </div>

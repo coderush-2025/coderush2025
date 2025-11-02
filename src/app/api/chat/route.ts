@@ -134,7 +134,6 @@ export async function POST(req: Request) {
         showEditForm: true,
         registrationData: {
           teamName: reg.teamName,
-          hackerrankUsername: reg.hackerrankUsername,
           teamBatch: reg.teamBatch,
           members: reg.members.map(m => ({
             fullName: m.fullName,
@@ -174,17 +173,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // Check if HackerRank username is already taken by another completed team
-    const hackerrankExists = await Registration.findOne({
-      hackerrankUsername: { $regex: `^${escapeRegExp(editedData.hackerrankUsername)}$`, $options: "i" },
-      state: "DONE",
-      _id: { $ne: reg._id }
-    });
-    if (hackerrankExists) {
-      return NextResponse.json({
-        reply: `❌ HackerRank username "${editedData.hackerrankUsername}" is already registered. Please update your team name and HackerRank username.`
-      });
-    }
 
     // Validate no duplicate index numbers within team
     const indexNumbers = editedData.members.map((m) => m.indexNumber);
@@ -236,7 +224,6 @@ export async function POST(req: Request) {
 
     // Update registration with edited data
     reg.teamName = editedData.teamName;
-    reg.hackerrankUsername = editedData.hackerrankUsername;
     reg.teamBatch = editedData.teamBatch;
     reg.members = editedData.members.map((m) => ({
       fullName: m.fullName,
@@ -262,7 +249,6 @@ export async function POST(req: Request) {
       try {
         const sheetsResult = await appendToGoogleSheets({
           teamName: reg.teamName || '',
-          hackerrankUsername: reg.hackerrankUsername || '',
           teamBatch: reg.teamBatch || '',
           members: reg.members || [],
           timestamp: new Date(),
@@ -282,7 +268,6 @@ export async function POST(req: Request) {
       try {
         const emailResult = await sendRegistrationEmail({
           teamName: reg.teamName || '',
-          hackerrankUsername: reg.hackerrankUsername || '',
           teamBatch: reg.teamBatch || '',
           leaderName: reg.members[0]?.fullName || '',
           leaderEmail: reg.members[0]?.email || '',
@@ -566,7 +551,6 @@ export async function POST(req: Request) {
         showEditForm: true,
         registrationData: {
           teamName: reg.teamName,
-          hackerrankUsername: reg.hackerrankUsername,
           teamBatch: reg.teamBatch,
           members: reg.members.map(m => ({
             fullName: m.fullName,
@@ -588,7 +572,6 @@ export async function POST(req: Request) {
       try {
         const sheetsResult = await appendToGoogleSheets({
           teamName: reg.teamName || '',
-          hackerrankUsername: reg.hackerrankUsername || '',
           teamBatch: reg.teamBatch || '',
           members: reg.members || [],
           timestamp: new Date(),
@@ -608,7 +591,6 @@ export async function POST(req: Request) {
       try {
         const emailResult = await sendRegistrationEmail({
           teamName: reg.teamName || '',
-          hackerrankUsername: reg.hackerrankUsername || '',
           teamBatch: reg.teamBatch || '',
           leaderName: reg.members[0]?.fullName || '',
           leaderEmail: reg.members[0]?.email || '',

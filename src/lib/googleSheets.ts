@@ -60,8 +60,8 @@ export async function appendToGoogleSheets(data: RegistrationData) {
 
     // Wrap sheet name in quotes if it contains spaces or special characters
     const sheetRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
-      ? `'${SHEET_NAME}'!A:J`
-      : `${SHEET_NAME}!A:J`;
+      ? `'${SHEET_NAME}'!A:I`
+      : `${SHEET_NAME}!A:I`;
 
     // Get all existing data to check if team already exists
     const existingData = await sheets.spreadsheets.values.get({
@@ -85,8 +85,8 @@ export async function appendToGoogleSheets(data: RegistrationData) {
       console.log(`📝 Updating existing team at row ${teamRowIndex + 1}`);
 
       const updateRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
-        ? `'${SHEET_NAME}'!A${teamRowIndex + 1}:J${teamRowIndex + 3}`
-        : `${SHEET_NAME}!A${teamRowIndex + 1}:J${teamRowIndex + 3}`;
+        ? `'${SHEET_NAME}'!A${teamRowIndex + 1}:I${teamRowIndex + 3}`
+        : `${SHEET_NAME}!A${teamRowIndex + 1}:I${teamRowIndex + 3}`;
 
       const response = await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,

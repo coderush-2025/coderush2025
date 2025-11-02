@@ -30,7 +30,6 @@ async function initializeHeaders() {
       [
         'Timestamp',
         'Team Name',
-        'Hackerrank Username',
         'Batch',
         'Leader Name',
         'Leader Index',
