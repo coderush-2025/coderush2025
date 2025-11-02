@@ -4,19 +4,29 @@ import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { gsap } from "gsap";
 
+interface TeamDetails {
+  teamName: string;
+  teamLeader?: string;
+  batch?: string;
+}
+
 interface TeamsResponse {
   success: boolean;
   count: number;
   teams: string[];
+  teamDetails?: TeamDetails[];
 }
 
 export default function RegisteredTeamsPage() {
   const [teams, setTeams] = useState<string[]>([]);
+  const [teamDetails, setTeamDetails] = useState<TeamDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isClient, setIsClient] = useState(false);
+  const backgroundRef = useRef<HTMLDivElement>(null);
 
   // Generate consistent bubble positions for SSR (same as Hero)
   const bubblePositions = useRef([
@@ -34,7 +44,22 @@ export default function RegisteredTeamsPage() {
     { x: 65, y: 75, scale: 1.2 }
   ]);
 
+  // Predefined bubble values for loading/error states to avoid hydration mismatch
+  const staticBubbles = [
+    { width: 250, height: 300, left: 15, top: 25, duration: 5 },
+    { width: 350, height: 280, left: 65, top: 10, duration: 4.5 },
+    { width: 200, height: 250, left: 30, top: 60, duration: 5.5 },
+    { width: 320, height: 300, left: 80, top: 45, duration: 4.2 },
+    { width: 280, height: 220, left: 10, top: 75, duration: 5.3 },
+    { width: 400, height: 350, left: 55, top: 30, duration: 4.8 },
+    { width: 180, height: 200, left: 40, top: 85, duration: 5.1 },
+    { width: 300, height: 280, left: 70, top: 15, duration: 4.6 }
+  ];
+
   useEffect(() => {
+    // Scroll to top on page load
+    window.scrollTo(0, 0);
+
     setIsClient(true);
 
     const fetchTeams = async () => {
@@ -44,6 +69,7 @@ export default function RegisteredTeamsPage() {
 
         if (data.success) {
           setTeams(data.teams);
+          setTeamDetails(data.teamDetails || []);
         } else {
           setError("Failed to load teams");
         }
@@ -98,6 +124,30 @@ export default function RegisteredTeamsPage() {
       }
     };
 
+    // Morphing background with multiple gradients (same as Register page)
+    const gradients = [
+      "linear-gradient(135deg, #0e243f 0%, #204168 50%, #37c2cc 100%)",
+      "linear-gradient(225deg, #37c2cc 0%, #0e243f 50%, #204168 100%)",
+      "linear-gradient(315deg, #204168 0%, #37c2cc 50%, #0e243f 100%)",
+      "radial-gradient(circle, #0e243f 0%, #204168 50%, #37c2cc 100%)",
+    ];
+
+    let gradientIndex = 0;
+    const changeGradient = () => {
+      if (backgroundRef.current) {
+        gsap.to(backgroundRef.current, {
+          background: gradients[gradientIndex],
+          duration: 3,
+          ease: "power2.inOut",
+          onComplete: () => {
+            gradientIndex = (gradientIndex + 1) % gradients.length;
+            changeGradient();
+          },
+        });
+      }
+    };
+    changeGradient();
+
     // Liquid bubble animations
     setTimeout(() => {
       const bubbles = document.querySelectorAll(".liquid-bubble");
@@ -139,25 +189,38 @@ export default function RegisteredTeamsPage() {
     };
   }, []);
 
-  // Filter teams based on search query
-  const filteredTeams = teams.filter((teamName) =>
-    teamName.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter team details based on search query (used for both grid and list view)
+  const filteredTeamDetails = teamDetails.filter((team) =>
+    team.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    team.teamLeader?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    team.batch?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // For backward compatibility with teams array
+  const filteredTeams = filteredTeamDetails.map(team => team.teamName);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0e243f] via-[#204168] to-[#37c2cc] flex items-center justify-center relative overflow-hidden">
-        {/* Animated background bubbles */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(8)].map((_, i) => (
+      <div className="relative min-h-screen flex items-center justify-center overflow-x-hidden overflow-y-auto">
+          {/* Morphing Background */}
+          <div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              background: "linear-gradient(135deg, #0e243f 0%, #204168 50%, #37c2cc 100%)",
+            }}
+          />
+
+          {/* Animated background bubbles */}
+          <div className="absolute inset-0 overflow-hidden">
+          {staticBubbles.map((bubble, i) => (
             <motion.div
               key={i}
               className="absolute rounded-full bg-[#37c2cc] opacity-10"
               style={{
-                width: Math.random() * 500 + 150,
-                height: Math.random() * 500 + 150,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() *100}%`,
+                width: bubble.width,
+                height: bubble.height,
+                left: `${bubble.left}%`,
+                top: `${bubble.top}%`,
               }}
               animate={{
                 y: [0, -30, 0],
@@ -165,7 +228,7 @@ export default function RegisteredTeamsPage() {
                 scale: [1, 1.1, 1],
               }}
               transition={{
-                duration: Math.random() * 3 + 3,
+                duration: bubble.duration,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
@@ -183,18 +246,26 @@ export default function RegisteredTeamsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0e243f] via-[#204168] to-[#37c2cc] flex items-center justify-center relative overflow-hidden">
-        {/* Animated background bubbles */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(8)].map((_, i) => (
+      <div className="relative min-h-screen flex items-center justify-center overflow-x-hidden overflow-y-auto">
+          {/* Morphing Background */}
+          <div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              background: "linear-gradient(135deg, #0e243f 0%, #204168 50%, #37c2cc 100%)",
+            }}
+          />
+
+          {/* Animated background bubbles */}
+          <div className="absolute inset-0 overflow-hidden">
+          {staticBubbles.map((bubble, i) => (
             <motion.div
               key={i}
               className="absolute rounded-full bg-[#37c2cc] opacity-10"
               style={{
-                width: Math.random() * 100 + 100,
-                height: Math.random() * 100 + 100,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
+                width: bubble.width,
+                height: bubble.height,
+                left: `${bubble.left}%`,
+                top: `${bubble.top}%`,
               }}
               animate={{
                 y: [0, -30, 0],
@@ -202,14 +273,14 @@ export default function RegisteredTeamsPage() {
                 scale: [1, 1.1, 1],
               }}
               transition={{
-                duration: Math.random() * 3 + 3,
+                duration: bubble.duration,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
             />
           ))}
         </div>
-        
+
         <div className="text-center relative z-10">
           <div className="text-red-400 text-6xl mb-4">⚠️</div>
           <p className="text-xl text-white">{error}</p>
@@ -225,8 +296,18 @@ export default function RegisteredTeamsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0e243f] via-[#204168] to-[#37c2cc] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Mouse Cursor Trail Effect */}
+    <div className="relative min-h-screen flex items-start justify-center overflow-x-hidden overflow-y-auto">
+        {/* Morphing Background */}
+        <div
+          ref={backgroundRef}
+          className="absolute inset-0 w-full h-full"
+          style={{
+            background:
+              "linear-gradient(135deg, #0e243f 0%, #204168 50%, #37c2cc 100%)",
+          }}
+        />
+
+        {/* Mouse Cursor Trail Effect */}
       {isClient && (
         <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
           <motion.div
@@ -291,12 +372,72 @@ export default function RegisteredTeamsPage() {
               ease: "easeInOut",
               delay: i * 0.2,
             }}
-          />
+          >
+            {/* Dynamic Inner glow effect */}
+            <motion.div
+              className="absolute inset-2 rounded-full"
+              style={{
+                background: 'radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 70%)'
+              }}
+              animate={{
+                opacity: [0.2, 0.6, 0.3, 0.8],
+                scale: [0.8, 1.2, 0.9, 1.1],
+              }}
+              transition={{
+                duration: 3 + i * 0.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: i * 0.1,
+              }}
+            />
+
+            {/* Interactive Color Ring */}
+            <motion.div
+              className="absolute inset-0 rounded-full opacity-0 pointer-events-none"
+              style={{
+                background: `conic-gradient(from ${i * 30}deg, rgba(55, 194, 204, 0.8), rgba(255, 255, 255, 0.6), rgba(55, 194, 204, 0.8))`,
+                filter: 'blur(2px)'
+              }}
+              whileHover={{
+                opacity: 0.7,
+                scale: 1.2,
+                rotate: 360,
+                transition: {
+                  duration: 2,
+                  ease: "linear"
+                }
+              }}
+            />
+
+            {/* Floating particles inside bubble */}
+            {[...Array(3)].map((_, pi) => (
+              <motion.div
+                key={pi}
+                className="absolute w-1 h-1 bg-white rounded-full opacity-60"
+                style={{
+                  left: `${20 + pi * 25}%`,
+                  top: `${30 + pi * 20}%`,
+                }}
+                animate={{
+                  x: [0, 10, -5, 8, 0],
+                  y: [0, -8, 5, -10, 0],
+                  opacity: [0.3, 0.8, 0.5, 0.9, 0.4],
+                }}
+                transition={{
+                  duration: 4 + pi * 0.5,
+                  repeat: Infinity,
+                  delay: pi * 0.2,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+          </motion.div>
         ))}
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
+        {/* Main Content Container */}
+        <div className="w-full max-w-7xl mx-auto relative z-10 py-12 px-4 sm:px-6 lg:px-8">
+          {/* Header */}
         <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: -50 }}
@@ -354,14 +495,16 @@ export default function RegisteredTeamsPage() {
           </motion.div>
         </motion.div>
 
-        {/* Search Bar */}
+        {/* Search Bar and View Toggle */}
         <motion.div
-          className="max-w-2xl mx-auto mb-12"
+          className="max-w-6xl mx-auto mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
         >
-          <div className="relative group">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            {/* Search Bar */}
+            <div className="relative group flex-1 w-full">
             {/* Glowing border animation */}
             <motion.div
               className="absolute -inset-0.5 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] rounded-full opacity-30 blur group-hover:opacity-60"
@@ -377,20 +520,35 @@ export default function RegisteredTeamsPage() {
             />
             <input
               type="text"
-              placeholder="Search teams..."
+              placeholder="Search by team name, leader, or batch..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="relative w-full px-6 py-4 pr-16 bg-[#0e243f]/80 backdrop-blur-md border-2 border-[#37c2cc]/30 rounded-full text-white placeholder-[#37c2cc]/50 focus:outline-none focus:border-[#37c2cc] focus:ring-2 focus:ring-[#37c2cc]/30 transition-all duration-300 text-lg"
+              className="relative w-full px-6 py-4 pr-24 bg-[#0e243f]/80 backdrop-blur-md border-2 border-[#37c2cc]/30 rounded-full text-white placeholder-[#37c2cc]/50 focus:outline-none focus:border-[#37c2cc] focus:ring-2 focus:ring-[#37c2cc]/30 transition-all duration-300 text-lg"
             />
+            {searchQuery && (
+              <motion.button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-14 top-4 text-white/60 hover:text-[#37c2cc] transition-colors duration-300"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </motion.button>
+            )}
             <motion.div
-              className="absolute right-6 top-4 text-[#37c2cc] flex items-center justify-center"
+              className="absolute right-6 top-4 text-[#37c2cc] flex items-center justify-center pointer-events-none"
               animate={{
-                rotate: [0, 10, -10, 0],
+                rotate: searchQuery ? [0, 360] : [0, 10, -10, 0],
                 scale: [1, 1.1, 1],
               }}
               transition={{
-                duration: 2,
-                repeat: Infinity,
+                duration: searchQuery ? 0.5 : 2,
+                repeat: searchQuery ? 0 : Infinity,
                 ease: "easeInOut",
               }}
             >
@@ -409,15 +567,77 @@ export default function RegisteredTeamsPage() {
                 />
               </svg>
             </motion.div>
+            </div>
+
+            {/* View Toggle Buttons */}
+            <div className="flex items-center gap-3">
+              <motion.button
+                onClick={() => setViewMode("grid")}
+                className={`px-5 py-3 rounded-full font-semibold transition-all duration-300 ${
+                  viewMode === "grid"
+                    ? "bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-white shadow-lg shadow-[#37c2cc]/50"
+                    : "bg-[#0e243f]/60 text-[#37c2cc] border-2 border-[#37c2cc]/30 hover:border-[#37c2cc]"
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                  <span className="hidden sm:inline">Grid</span>
+                </div>
+              </motion.button>
+              <motion.button
+                onClick={() => setViewMode("list")}
+                className={`px-5 py-3 rounded-full font-semibold transition-all duration-300 ${
+                  viewMode === "list"
+                    ? "bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-white shadow-lg shadow-[#37c2cc]/50"
+                    : "bg-[#0e243f]/60 text-[#37c2cc] border-2 border-[#37c2cc]/30 hover:border-[#37c2cc]"
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  <span className="hidden sm:inline">List</span>
+                </div>
+              </motion.button>
+            </div>
           </div>
+
           {searchQuery && (
-            <motion.p
-              className="text-center mt-4 text-[#37c2cc] font-semibold"
+            <motion.div
+              className="mt-4 text-center"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              Found {filteredTeams.length} team{filteredTeams.length !== 1 ? "s" : ""}
-            </motion.p>
+              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#37c2cc]/20 border border-[#37c2cc]/30">
+                <svg className="w-5 h-5 text-[#37c2cc]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span className="font-semibold text-[#37c2cc]">
+                  Found {filteredTeams.length} team{filteredTeams.length !== 1 ? "s" : ""}
+                </span>
+                {filteredTeams.length > 0 && (
+                  <span className="text-white/60 text-sm">
+                    matching "{searchQuery}"
+                  </span>
+                )}
+              </div>
+              {filteredTeams.length === 0 && (
+                <motion.button
+                  onClick={() => setSearchQuery("")}
+                  className="mt-3 px-4 py-2 text-sm bg-[#37c2cc]/10 hover:bg-[#37c2cc]/20 text-[#37c2cc] rounded-full border border-[#37c2cc]/30 transition-all duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Clear search
+                </motion.button>
+              )}
+            </motion.div>
           )}
         </motion.div>
 
@@ -431,10 +651,10 @@ export default function RegisteredTeamsPage() {
           >
             <div className="text-8xl mb-6">🏆</div>
             <p className="text-3xl text-white font-semibold">
-              No teams registered yet
+              No Teams Registered Yet
             </p>
             <p className="text-[#37c2cc] text-xl mt-2">
-              Be the first to register!
+              Registration is currently open. Be the first team to join!
             </p>
           </motion.div>
         ) : filteredTeams.length === 0 ? (
@@ -458,9 +678,9 @@ export default function RegisteredTeamsPage() {
               Clear Search
             </button>
           </motion.div>
-        ) : (
+        ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredTeams.map((teamName, index) => (
+            {filteredTeamDetails.map((team, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
@@ -511,7 +731,7 @@ export default function RegisteredTeamsPage() {
 
                   {/* Team Name */}
                   <motion.h3
-                    className="text-center text-white font-semibold text-lg break-words transition-colors duration-300 relative z-10"
+                    className="text-center text-white font-bold text-xl mb-4 break-words transition-colors duration-300 relative z-10"
                     whileHover={{
                       color: "#37c2cc",
                       scale: 1.05,
@@ -519,8 +739,30 @@ export default function RegisteredTeamsPage() {
                     }}
                     transition={{ duration: 0.3 }}
                   >
-                    {teamName}
+                    {team.teamName}
                   </motion.h3>
+
+                  {/* Team Details */}
+                  <div className="relative z-10 space-y-2 text-center">
+                    {team.teamLeader && (
+                      <div className="flex items-center justify-center gap-2 text-[#37c2cc]/80">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span className="text-sm font-medium">{team.teamLeader}</span>
+                      </div>
+                    )}
+                    {team.batch && (
+                      <div className="flex items-center justify-center">
+                        <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#37c2cc]/20 border border-[#37c2cc]/30">
+                          <svg className="w-3 h-3 text-[#37c2cc]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </svg>
+                          <span className="text-xs font-semibold text-[#37c2cc]">Batch {team.batch}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Animated particles on hover */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
@@ -558,6 +800,66 @@ export default function RegisteredTeamsPage() {
               </motion.div>
             ))}
           </div>
+        ) : (
+          <motion.div
+            className="max-w-6xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="relative bg-gradient-to-br from-[#0e243f]/80 to-[#204168]/80 backdrop-blur-md rounded-2xl border border-[#37c2cc]/30 overflow-hidden">
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#37c2cc]/30">
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#37c2cc] uppercase tracking-wider">
+                        Team Name
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#37c2cc] uppercase tracking-wider">
+                        Team Leader
+                      </th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-[#37c2cc] uppercase tracking-wider">
+                        Batch
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTeamDetails.map((team, index) => (
+                      <motion.tr
+                        key={index}
+                        className="border-b border-[#37c2cc]/10 hover:bg-[#37c2cc]/10 transition-all duration-300 group"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                          duration: 0.3,
+                          delay: index * 0.03,
+                        }}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="text-lg font-semibold text-white group-hover:text-[#37c2cc] transition-colors duration-300">
+                            {team.teamName}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-base text-white/80">
+                            {team.teamLeader || "-"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#37c2cc]/20 border border-[#37c2cc]/30">
+                            <span className="text-sm font-medium text-[#37c2cc]">
+                              {team.batch || "-"}
+                            </span>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </motion.div>
         )}
 
         {/* Footer */}

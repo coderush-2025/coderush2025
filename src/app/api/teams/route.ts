@@ -3,6 +3,12 @@ import dbConnect from "@/lib/dbConnect";
 import Registration from "@/models/Registration";
 import mongoose from "mongoose";
 
+interface TeamDetails {
+  teamName: string;
+  teamLeader?: string;
+  batch?: string;
+}
+
 export async function GET() {
   try {
     console.log("🔍 Attempting to fetch teams...");
@@ -10,6 +16,7 @@ export async function GET() {
     console.log("✅ Database connected");
 
     let teamNames: string[] = [];
+    let teamDetails: TeamDetails[] = [];
 
     // First, try to fetch from a "teams" collection if it exists
     try {
@@ -40,13 +47,12 @@ export async function GET() {
     // If no teams found in "teams" collection, fetch from Registration model
     if (teamNames.length === 0) {
       console.log("📊 Fetching from Registration collection...");
-      
-      // Fetch all registrations that have a teamName
-      // Option 1: Get all teams with a teamName (current)
+
+      // Fetch all registrations that have a teamName with full details
       const registrations = await Registration.find({
         teamName: { $exists: true, $ne: null }
       })
-        .select("teamName")
+        .select("teamName teamBatch members")
         .sort({ teamName: 1 })
         .lean();
 
@@ -55,13 +61,19 @@ export async function GET() {
       //   teamName: { $exists: true, $ne: null },
       //   state: "DONE"
       // })
-      //   .select("teamName")
+      //   .select("teamName teamBatch members")
       //   .sort({ teamName: 1 })
       //   .lean();
 
-      teamNames = registrations
-        .map((reg: { teamName?: string }) => reg.teamName)
-        .filter((name): name is string => !!name && name.trim() !== "");
+      teamDetails = registrations
+        .map((reg: any) => ({
+          teamName: reg.teamName || "",
+          teamLeader: reg.members && reg.members.length > 0 ? reg.members[0].fullName : undefined,
+          batch: reg.teamBatch || (reg.members && reg.members.length > 0 ? reg.members[0].batch : undefined)
+        }))
+        .filter((team) => team.teamName.trim() !== "");
+
+      teamNames = teamDetails.map(team => team.teamName);
       console.log(`✅ Found ${teamNames.length} teams in Registration collection`);
     }
 
@@ -71,6 +83,7 @@ export async function GET() {
       success: true,
       count: teamNames.length,
       teams: teamNames,
+      teamDetails: teamDetails,
     });
   } catch (error) {
     console.error("❌ Error fetching teams:", error);

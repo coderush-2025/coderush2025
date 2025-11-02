@@ -649,7 +649,7 @@ const Hero = () => {
 
           <motion.button
             onClick={() => router.push("/register")}
-            className="px-8 py-4 md:px-12 md:py-6 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu pointer-events-auto"
+            className="w-full sm:w-48 px-6 py-4 md:py-5 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu pointer-events-auto"
             style={{
               fontFamily: "system-ui, -apple-system, sans-serif",
               letterSpacing: "1px",
@@ -785,7 +785,7 @@ const Hero = () => {
           {/* View Teams Button */}
           <motion.button
             onClick={() => router.push("/teams")}
-            className="px-8 py-4 md:px-12 md:py-6 bg-gradient-to-r from-[#37c2cc80] via-[#2ba8b36a] to-[#37c2cc3f] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu pointer-events-auto"
+            className="w-full sm:w-48 px-6 py-4 md:py-5 bg-gradient-to-r from-[#37c2cc80] via-[#2ba8b36a] to-[#37c2cc3f] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu pointer-events-auto"
             style={{
               fontFamily: "system-ui, -apple-system, sans-serif",
               letterSpacing: "1px",
