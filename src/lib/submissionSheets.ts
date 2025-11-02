@@ -22,6 +22,14 @@ export interface SubmissionData {
   submittedAt: Date;
 }
 
+export interface SubmissionUpdateData {
+  originalTeamName?: string;
+  teamName: string;
+  githubLink: string;
+  googleDriveLink: string;
+  submittedAt: Date;
+}
+
 /**
  * Append submission data to Google Sheets (Submissions sheet)
  */
@@ -106,6 +114,154 @@ export async function appendSubmissionToSheets(data: SubmissionData) {
     }
   } catch (error) {
     console.error('❌ Error saving submission to Google Sheets:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Update submission data in Google Sheets by team name
+ */
+export async function updateSubmissionInSheets(data: SubmissionUpdateData) {
+  try {
+    if (!SPREADSHEET_ID) {
+      console.error('⚠️ GOOGLE_SHEET_ID not configured');
+      return { success: false, error: 'Sheet ID not configured' };
+    }
+
+    const sheetRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
+      ? `'${SHEET_NAME}'!A:D`
+      : `${SHEET_NAME}!A:D`;
+
+    // Get all existing data
+    const existingData = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: sheetRange,
+    });
+
+    const allRows = existingData.data.values || [];
+
+    // Find team row index using original team name if provided, otherwise use current team name
+    const searchTeamName = data.originalTeamName || data.teamName;
+    let teamRowIndex = -1;
+    for (let i = 1; i < allRows.length; i++) {
+      if (allRows[i][1] === searchTeamName) {
+        teamRowIndex = i;
+        break;
+      }
+    }
+
+    if (teamRowIndex === -1) {
+      console.log(`⚠️ Team submission not found in sheets for: ${searchTeamName}`);
+      return { success: false, error: 'Team submission not found in sheets' };
+    }
+
+    // Prepare updated row
+    const timestamp = new Date().toISOString();
+    const row = [
+      timestamp,
+      data.teamName,
+      data.githubLink,
+      data.googleDriveLink,
+    ];
+
+    const updateRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
+      ? `'${SHEET_NAME}'!A${teamRowIndex + 1}:D${teamRowIndex + 1}`
+      : `${SHEET_NAME}!A${teamRowIndex + 1}:D${teamRowIndex + 1}`;
+
+    const response = await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: updateRange,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: [row],
+      },
+    });
+
+    console.log('✅ Submission updated in Google Sheets');
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('❌ Error updating submission in Google Sheets:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
+ * Delete submission from Google Sheets by team name
+ */
+export async function deleteSubmissionFromSheets(teamName: string) {
+  try {
+    if (!SPREADSHEET_ID) {
+      console.error('⚠️ GOOGLE_SHEET_ID not configured');
+      return { success: false, error: 'Sheet ID not configured' };
+    }
+
+    const sheetRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
+      ? `'${SHEET_NAME}'!A:D`
+      : `${SHEET_NAME}!A:D`;
+
+    // Get all existing data
+    const existingData = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: sheetRange,
+    });
+
+    const allRows = existingData.data.values || [];
+
+    // Find team row index
+    let teamRowIndex = -1;
+    for (let i = 1; i < allRows.length; i++) {
+      if (allRows[i][1] === teamName) {
+        teamRowIndex = i;
+        break;
+      }
+    }
+
+    if (teamRowIndex === -1) {
+      return { success: false, error: 'Team submission not found in sheets' };
+    }
+
+    // Get sheet ID for batch delete
+    const spreadsheet = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
+
+    const sheet = spreadsheet.data.sheets?.find(
+      (s) => s.properties?.title === SHEET_NAME
+    );
+
+    if (!sheet || !sheet.properties?.sheetId) {
+      return { success: false, error: 'Sheet not found' };
+    }
+
+    // Delete 1 row (submission takes 1 row)
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: SPREADSHEET_ID,
+      requestBody: {
+        requests: [
+          {
+            deleteDimension: {
+              range: {
+                sheetId: sheet.properties.sheetId,
+                dimension: 'ROWS',
+                startIndex: teamRowIndex,
+                endIndex: teamRowIndex + 1,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    console.log('✅ Submission deleted from Google Sheets');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error deleting submission from Google Sheets:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

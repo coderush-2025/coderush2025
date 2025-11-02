@@ -412,78 +412,105 @@ export default function RegisterPage() {
                 <div className="hidden sm:block w-8 md:w-8 h-px bg-gradient-to-l from-transparent to-[#37c2cc]" />
               </div>
               
-              {/* View Teams Button */}
-              <motion.a
-                href="/teams"
-                className="inline-block mt-4 px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-white font-semibold text-sm rounded-full shadow-lg transition-all duration-300 relative overflow-hidden group"
-                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: 0,
-                  scale: 1
-                }}
-                transition={{ 
-                  duration: 0.8, 
-                  delay: 1,
-                  ease: "easeOut"
-                }}
-                whileHover={{ 
-                  scale: 1.08,
-                  y: -3,
-                  boxShadow: [
-                    "0 10px 40px rgba(55, 194, 204, 0.5)",
-                    "0 15px 50px rgba(55, 194, 204, 0.7)",
-                    "0 10px 40px rgba(55, 194, 204, 0.5)"
-                  ],
-                  transition: {
-                    duration: 0.3,
-                    boxShadow: {
-                      duration: 1.5,
-                      repeat: Infinity,
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 mt-4 items-center justify-center">
+                <motion.a
+                  href="/teams"
+                  className="inline-block px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-white font-semibold text-sm rounded-full shadow-lg transition-all duration-300 relative overflow-hidden group"
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: 1
+                  }}
+                  transition={{
+                    duration: 0.8,
+                    delay: 1,
+                    ease: "easeOut"
+                  }}
+                  whileHover={{
+                    scale: 1.08,
+                    y: -3,
+                    boxShadow: [
+                      "0 10px 40px rgba(55, 194, 204, 0.5)",
+                      "0 15px 50px rgba(55, 194, 204, 0.7)",
+                      "0 10px 40px rgba(55, 194, 204, 0.5)"
+                    ],
+                    transition: {
+                      duration: 0.3,
+                      boxShadow: {
+                        duration: 1.5,
+                        repeat: Infinity,
+                      }
                     }
-                  }
-                }}
-                whileTap={{ 
-                  scale: 0.95,
-                  y: 0,
-                  transition: { duration: 0.1 }
-                }}
-              >
-                {/* Animated gradient overlay */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-[#0e243f] via-[#37c2cc] to-[#0e243f] opacity-0"
+                  }}
+                  whileTap={{
+                    scale: 0.95,
+                    y: 0,
+                    transition: { duration: 0.1 }
+                  }}
+                >
+                  {/* Animated gradient overlay */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-[#0e243f] via-[#37c2cc] to-[#0e243f] opacity-0"
+                    animate={{
+                      opacity: [0, 0.3, 0],
+                      scale: [0.8, 1.2, 0.8],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+
+                  {/* Shimmer effect on hover */}
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+
+                  {/* Pulsing glow effect */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full bg-white/10"
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      opacity: [0.5, 0.8, 0.5],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  />
+
+                  <span className="relative z-10">
+                    View Registered Teams
+                  </span>
+                </motion.a>
+
+                <motion.a
+                  href="/report-issue"
+                  className="inline-block px-6 py-3 bg-white/10 border border-white/20 text-white font-semibold text-sm rounded-full hover:bg-white/20 transition-all duration-300"
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
                   animate={{
-                    opacity: [0, 0.3, 0],
-                    scale: [0.8, 1.2, 0.8],
+                    opacity: 1,
+                    y: 0,
+                    scale: 1
                   }}
                   transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut"
+                    duration: 0.8,
+                    delay: 1.1,
+                    ease: "easeOut"
                   }}
-                />
-                
-                {/* Shimmer effect on hover */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-                
-                {/* Pulsing glow effect */}
-                <motion.div
-                  className="absolute inset-0 rounded-full bg-white/10"
-                  animate={{
-                    scale: [1, 1.1, 1],
-                    opacity: [0.5, 0.8, 0.5],
+                  whileHover={{
+                    scale: 1.05,
+                    y: -2
                   }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
+                  whileTap={{
+                    scale: 0.95
                   }}
-                />
-                
-                <span className="relative z-10">
-                  View Registered Teams
-                </span>
-              </motion.a>
+                >
+                  Report an Issue
+                </motion.a>
+              </div>
             </div>
           </motion.div>
 
