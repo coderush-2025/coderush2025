@@ -9,7 +9,6 @@ interface Message {
   showEditForm?: boolean;
   registrationData?: {
     teamName: string;
-    hackerrankUsername: string;
     teamBatch: string;
     members: {
       fullName: string;
@@ -41,18 +40,13 @@ const renderTextWithBoldQuotes = (text: string) => {
 };
 
 export default function ChatBot() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "bot",
-      content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState<{
     teamName: string;
-    hackerrankUsername: string;
     teamBatch: string;
     members: Array<{ fullName: string; indexNumber: string; email: string }>;
   } | null>(null);
@@ -91,11 +85,14 @@ export default function ChatBot() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // Cleanup incomplete registrations on page load/refresh
+  // Load existing session or start fresh on page load
   useEffect(() => {
-    const cleanupIncompleteRegistration = async () => {
+    const loadSession = async () => {
       if (typeof window !== "undefined" && sessionId) {
         try {
+          setIsLoadingSession(true);
+
+          // First, run cleanup (will preserve incomplete registrations)
           await fetch("/api/cleanup", {
             method: "POST",
             headers: {
@@ -103,15 +100,56 @@ export default function ChatBot() {
             },
             body: JSON.stringify({ sessionId }),
           });
-          console.log("🧹 Cleanup check completed for session:", sessionId);
+          console.log("🧹 Cleanup check completed");
+
+          // Then, fetch the current session state
+          const response = await fetch("/api/session", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ sessionId }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            if (!data.exists) {
+              // No existing session, show initial message
+              setMessages([{
+                role: "bot",
+                content: data.initialMessage
+              }]);
+            } else {
+              // Existing session found, restore state
+              console.log("✅ Restored session in state:", data.state);
+              setMessages([{
+                role: "bot",
+                content: data.message,
+                buttons: data.buttons
+              }]);
+            }
+          } else {
+            // Error loading session, show default message
+            setMessages([{
+              role: "bot",
+              content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
+            }]);
+          }
         } catch (error) {
-          console.error("Cleanup error:", error);
-          // Non-blocking - don't show error to user
+          console.error("Session load error:", error);
+          // Fallback to initial message
+          setMessages([{
+            role: "bot",
+            content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
+          }]);
+        } finally {
+          setIsLoadingSession(false);
         }
       }
     };
 
-    cleanupIncompleteRegistration();
+    loadSession();
   }, [sessionId]);
 
   const showToast = (message: string, type: 'error' | 'warning' | 'success' = 'error') => {
@@ -129,16 +167,16 @@ export default function ChatBot() {
       // Save current scroll position
       const currentScrollY = window.scrollY;
 
-      // Delete incomplete registration from MongoDB before resetting
+      // Force delete the registration from MongoDB before resetting
       try {
         await fetch("/api/cleanup", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ sessionId }),
+          body: JSON.stringify({ sessionId, forceDelete: true }),
         });
-        console.log("🗑️ Deleted registration for session:", sessionId);
+        console.log("🗑️ Force deleted registration for session:", sessionId);
       } catch (error) {
         console.error("Cleanup error during reset:", error);
         // Continue with reset even if cleanup fails
@@ -190,18 +228,6 @@ export default function ChatBot() {
     // Prevent double submission
     if (isSubmitting) {
       showToast('Submission in progress, please wait...', 'warning');
-      return;
-    }
-
-    // Validate team name and HackerRank username match
-    if (!editData.hackerrankUsername.endsWith('_CR')) {
-      showToast('HackerRank username must end with _CR (uppercase)', 'error');
-      return;
-    }
-
-    const extractedTeamName = editData.hackerrankUsername.slice(0, -3);
-    if (extractedTeamName.toLowerCase() !== editData.teamName.toLowerCase()) {
-      showToast(`Team name and HackerRank username mismatch! Expected: "${editData.teamName}_CR"`, 'error');
       return;
     }
 
@@ -451,6 +477,19 @@ export default function ChatBot() {
 
       {/* Messages Container */}
       <div className="relative z-10 h-[320px] sm:h-[360px] md:h-[400px] lg:h-[440px] overflow-y-auto mb-3 md:mb-4 bg-black/20 backdrop-blur-sm rounded-xl md:rounded-2xl border border-[#37c2cc]/20 p-2.5 sm:p-3 md:p-4 space-y-2 sm:space-y-2.5 md:space-y-3 scrollbar-thin scrollbar-thumb-[#37c2cc]/50 scrollbar-track-transparent">
+        {isLoadingSession ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="flex items-center gap-2 mb-2 justify-center">
+                <div className="w-3 h-3 bg-[#37c2cc] rounded-full animate-bounce" style={{animationDelay: "0ms"}}></div>
+                <div className="w-3 h-3 bg-[#37c2cc] rounded-full animate-bounce" style={{animationDelay: "150ms"}}></div>
+                <div className="w-3 h-3 bg-[#37c2cc] rounded-full animate-bounce" style={{animationDelay: "300ms"}}></div>
+              </div>
+              <p className="text-white/60 text-sm">Loading session...</p>
+            </div>
+          </div>
+        ) : (
+          <>
         {messages.map((m, i) => (
           <div
             key={i}
@@ -568,9 +607,11 @@ export default function ChatBot() {
             </div>
           </div>
         )}
-        
+
         {/* Scroll anchor */}
         <div ref={messagesEndRef} />
+          </>
+        )}
       </div>
 
       {/* Input Container */}
@@ -621,17 +662,6 @@ export default function ChatBot() {
                 type="text"
                 value={editData.teamName}
                 onChange={(e) => setEditData({ ...editData, teamName: e.target.value })}
-                className="w-full bg-gradient-to-br from-[#0a1929] to-[#0e243f] border border-[#37c2cc]/40 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all placeholder-white/30"
-              />
-            </div>
-
-            {/* Hackerrank Username */}
-            <div className="mb-3 sm:mb-4 relative">
-              <label className="block text-[#37c2cc] mb-2 text-sm font-semibold">Hackerrank Username</label>
-              <input
-                type="text"
-                value={editData.hackerrankUsername}
-                onChange={(e) => setEditData({ ...editData, hackerrankUsername: e.target.value })}
                 className="w-full bg-gradient-to-br from-[#0a1929] to-[#0e243f] border border-[#37c2cc]/40 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#37c2cc] focus:border-[#37c2cc] transition-all placeholder-white/30"
               />
             </div>

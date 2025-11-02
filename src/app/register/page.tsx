@@ -411,6 +411,79 @@ export default function RegisterPage() {
                 <span className="text-xs sm:text-sm md:text-sm font-semibold text-center px-1">University of Moratuwa - Faculty of IT</span>
                 <div className="hidden sm:block w-8 md:w-8 h-px bg-gradient-to-l from-transparent to-[#37c2cc]" />
               </div>
+              
+              {/* View Teams Button */}
+              <motion.a
+                href="/teams"
+                className="inline-block mt-4 px-6 py-3 bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-white font-semibold text-sm rounded-full shadow-lg transition-all duration-300 relative overflow-hidden group"
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ 
+                  opacity: 1, 
+                  y: 0,
+                  scale: 1
+                }}
+                transition={{ 
+                  duration: 0.8, 
+                  delay: 1,
+                  ease: "easeOut"
+                }}
+                whileHover={{ 
+                  scale: 1.08,
+                  y: -3,
+                  boxShadow: [
+                    "0 10px 40px rgba(55, 194, 204, 0.5)",
+                    "0 15px 50px rgba(55, 194, 204, 0.7)",
+                    "0 10px 40px rgba(55, 194, 204, 0.5)"
+                  ],
+                  transition: {
+                    duration: 0.3,
+                    boxShadow: {
+                      duration: 1.5,
+                      repeat: Infinity,
+                    }
+                  }
+                }}
+                whileTap={{ 
+                  scale: 0.95,
+                  y: 0,
+                  transition: { duration: 0.1 }
+                }}
+              >
+                {/* Animated gradient overlay */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-[#0e243f] via-[#37c2cc] to-[#0e243f] opacity-0"
+                  animate={{
+                    opacity: [0, 0.3, 0],
+                    scale: [0.8, 1.2, 0.8],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+                
+                {/* Shimmer effect on hover */}
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                
+                {/* Pulsing glow effect */}
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-white/10"
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    opacity: [0.5, 0.8, 0.5],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+                
+                <span className="relative z-10">
+                  View Registered Teams
+                </span>
+              </motion.a>
             </div>
           </motion.div>
 
@@ -447,7 +520,7 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <h3 className="text-white font-semibold mb-1">Provide Team Information</h3>
-                  <p className="text-sm">Chat with the assistant to provide team name, HackerRank username (TeamName_CR), batch, and member details (names, index numbers, emails).</p>
+                  <p className="text-sm">Chat with the assistant to provide team name (3-10 characters), batch selection, and member details (names, index numbers, emails) for all 4 members.</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -455,8 +528,8 @@ export default function RegisterPage() {
                   <span className="text-[#37c2cc] font-bold">2</span>
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold mb-1">Review & Edit</h3>
-                  <p className="text-sm">The assistant will show all your details. You can edit any information in the modal form before final submission.</p>
+                  <h3 className="text-white font-semibold mb-1">Review & Confirm</h3>
+                  <p className="text-sm">Review your team information displayed by the assistant. You can edit details if needed before final submission.</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -464,13 +537,13 @@ export default function RegisterPage() {
                   <span className="text-[#37c2cc] font-bold">3</span>
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold mb-1">Submit & Confirm</h3>
-                  <p className="text-sm">Once you confirm, your registration is submitted. You&apos;ll see instant confirmation and receive further instructions via email.</p>
+                  <h3 className="text-white font-semibold mb-1">Submit & Get Confirmation</h3>
+                  <p className="text-sm">Once confirmed, your registration is complete! You&apos;ll receive an email confirmation with buildathon details and next steps.</p>
                 </div>
               </div>
               <div className="mt-6 p-4 bg-[#37c2cc]/10 border border-[#37c2cc]/30 rounded-lg">
-                <p className="text-xs text-[#37c2cc] font-semibold mb-1">💡 Important:</p>
-                <p className="text-xs">HackerRank username must be: YourTeamName_CR (with _CR suffix in uppercase)</p>
+                <p className="text-xs text-[#37c2cc] font-semibold mb-1">💡 About the Buildathon:</p>
+                <p className="text-xs">This is a 10-hour build challenge where teams create solutions to real-world scenarios. Submit your GitHub repo + demo video + report in a Google Drive folder.</p>
               </div>
             </div>
           </div>
@@ -492,23 +565,27 @@ export default function RegisterPage() {
               </div>
               <div className="flex gap-3">
                 <span className="text-[#37c2cc] mt-1">•</span>
-                <p>One person per team should complete the registration (team leader).</p>
+                <p>Team names must be unique, 3-10 characters (letters, numbers, spaces, hyphens, underscores only).</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-[#37c2cc] mt-1">•</span>
-                <p>Team names and HackerRank usernames must be unique (maximum 100 teams).</p>
+                <p>Maximum 100 teams can register. Registration is first-come, first-served.</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-[#37c2cc] mt-1">•</span>
-                <p>Index numbers must match the team batch and cannot be duplicated.</p>
+                <p>Index numbers must match the team batch and cannot be duplicated across teams.</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-[#37c2cc] mt-1">•</span>
-                <p>Email addresses must be unique across all teams.</p>
+                <p>Email addresses must be unique - one email cannot be used for multiple teams.</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-[#37c2cc] mt-1">•</span>
-                <p>Registration data is securely stored with email confirmation sent.</p>
+                <p>Build any solution with any tech stack. Submit GitHub link + Google Drive folder (video + report).</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-[#37c2cc] mt-1">•</span>
+                <p>Event: Nov 15, 2025 (8 AM - 6 PM). Awards: Nov 25, 2025 (8 AM).</p>
               </div>
             </div>
           </div>

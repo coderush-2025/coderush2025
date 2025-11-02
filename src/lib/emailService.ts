@@ -2,7 +2,6 @@ import nodemailer from 'nodemailer';
 
 interface TeamRegistrationData {
   teamName: string;
-  hackerrankUsername: string;
   teamBatch: string;
   leaderName: string;
   leaderEmail: string;
@@ -134,7 +133,7 @@ export async function sendRegistrationEmail(data: TeamRegistrationData) {
   <div class="content">
     <p>Dear <strong>${data.leaderName}</strong>,</p>
 
-    <p>Congratulations! Your team has been successfully registered for <strong>CodeRush 2025</strong>.</p>
+    <p>Congratulations! Your team has been successfully registered for <strong>CodeRush 2025 - 10-Hour Buildathon</strong>.</p>
 
     <div class="info-box">
       <h3 style="margin-top: 0; color: #37c2cc;">Team Details</h3>
@@ -143,16 +142,20 @@ export async function sendRegistrationEmail(data: TeamRegistrationData) {
         <span class="info-value">${data.teamName}</span>
       </div>
       <div class="info-row">
-        <span class="info-label">HackerRank Username:</span>
-        <span class="info-value">${data.hackerrankUsername}</span>
-      </div>
-      <div class="info-row">
         <span class="info-label">Batch:</span>
         <span class="info-value">Batch ${data.teamBatch}</span>
       </div>
       <div class="info-row">
         <span class="info-label">Team Size:</span>
         <span class="info-value">4 Members</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Event Date:</span>
+        <span class="info-value">November 15, 2025 (8:00 AM - 6:00 PM)</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Awards Ceremony:</span>
+        <span class="info-value">November 25, 2025 (8:00 AM)</span>
       </div>
     </div>
 
@@ -181,10 +184,23 @@ export async function sendRegistrationEmail(data: TeamRegistrationData) {
     <div style="background: #e8f5f7; padding: 20px; margin-top: 30px; border-radius: 8px; border-left: 4px solid #37c2cc;">
       <h3 style="margin-top: 0; color: #37c2cc;">📌 What's Next?</h3>
       <ul style="margin: 10px 0; padding-left: 20px;">
-        <li>Check your email regularly for updates</li>
+        <li><strong>Event Day:</strong> November 15, 2025 (8:00 AM - 6:00 PM) - 10-hour Buildathon</li>
+        <li><strong>Format:</strong> Build a solution to a real-world scenario using any tech stack</li>
+        <li><strong>Submission:</strong> GitHub repository link (public) + Google Drive folder (demo video + report)</li>
+        <li><strong>Awards:</strong> November 25, 2025 at 8:00 AM</li>
+        <li>Check your email regularly for problem statement and additional details</li>
         <li>Join our official communication channels (details will be shared soon)</li>
-        <li>Start preparing with your team!</li>
-        <li>Competition details and schedule will be announced shortly</li>
+      </ul>
+    </div>
+
+    <div style="background: #fff3cd; padding: 15px; margin-top: 20px; border-radius: 8px; border-left: 4px solid #ffc107;">
+      <h4 style="margin-top: 0; color: #856404;">💡 Important Submission Requirements:</h4>
+      <ul style="margin: 10px 0; padding-left: 20px; color: #856404;">
+        <li><strong>GitHub Repository:</strong> Must be public</li>
+        <li><strong>Google Drive Folder:</strong> Create a folder named "${data.teamName}"</li>
+        <li>Upload demo video and report document to the folder</li>
+        <li>Set folder to "Anyone with the link can view"</li>
+        <li>Submit both links on event day</li>
       </ul>
     </div>
 
@@ -208,17 +224,18 @@ export async function sendRegistrationEmail(data: TeamRegistrationData) {
 
     // Plain text version
     const textContent = `
-Registration Successful - CodeRush 2025
+Registration Successful - CodeRush 2025 Buildathon
 
 Dear ${data.leaderName},
 
-Congratulations! Your team has been successfully registered for CodeRush 2025.
+Congratulations! Your team has been successfully registered for CodeRush 2025 - 10-Hour Buildathon.
 
 Team Details:
 - Team Name: ${data.teamName}
-- HackerRank Username: ${data.hackerrankUsername}
 - Batch: Batch ${data.teamBatch}
 - Team Size: 4 Members
+- Event Date: November 15, 2025 (8:00 AM - 6:00 PM)
+- Awards Ceremony: November 25, 2025 (8:00 AM)
 
 Team Members:
 1. ${data.leaderName} (Team Leader)
@@ -230,10 +247,19 @@ ${data.members.map((member, index) => `${index + 2}. ${member.fullName}
    Index: ${member.indexNumber}`).join('\n\n')}
 
 What's Next?
-- Check your email regularly for updates
+- Event Day: November 15, 2025 (8:00 AM - 6:00 PM) - 10-hour Buildathon
+- Format: Build a solution to a real-world scenario using any tech stack
+- Submission: GitHub repository link (public) + Google Drive folder (demo video + report)
+- Awards: November 25, 2025 at 8:00 AM
+- Check your email regularly for problem statement and additional details
 - Join our official communication channels (details will be shared soon)
-- Start preparing with your team!
-- Competition details and schedule will be announced shortly
+
+Important Submission Requirements:
+- GitHub Repository: Must be public
+- Google Drive Folder: Create a folder named "${data.teamName}"
+- Upload demo video and report document to the folder
+- Set folder to "Anyone with the link can view"
+- Submit both links on event day
 
 If you have any questions or need assistance, feel free to reach out to us.
 

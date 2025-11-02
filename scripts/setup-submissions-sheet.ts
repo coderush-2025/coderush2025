@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-// Script to initialize Google Sheets headers
-// Run this once: node scripts/initSheetHeaders.js
+// Script to initialize Submissions Google Sheet headers
+// Run this once: npm run setup-submissions
 
 require('dotenv').config({ path: '.env.local' });
 
@@ -8,7 +8,11 @@ const { google } = require('googleapis');
 
 async function initializeHeaders() {
   try {
-    console.log('🔧 Initializing Google Sheets headers...');
+    console.log('🚀 Setting up Submissions Google Sheet...');
+
+    if (!process.env.GOOGLE_SHEET_ID) {
+      throw new Error('GOOGLE_SHEET_ID not found in .env.local');
+    }
 
     const auth = new google.auth.GoogleAuth({
       credentials: {
@@ -20,36 +24,57 @@ async function initializeHeaders() {
 
     const sheets = google.sheets({ version: 'v4', auth });
     const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
-    const SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Sheet1';
-
-    if (!SPREADSHEET_ID) {
-      throw new Error('❌ GOOGLE_SHEET_ID not configured in .env.local');
-    }
+    const SHEET_NAME = 'Submissions';
 
     const headers = [
       [
         'Timestamp',
         'Team Name',
-        'Batch',
-        'Leader Name',
-        'Leader Index',
-        'Leader Email',
-        'Member Name',
-        'Member Index',
-        'Member Email',
+        'GitHub Repository Link',
+        'Google Drive Folder Link',
       ],
     ];
 
-    // Wrap sheet name in quotes if it contains spaces or special characters
-    const sheetRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
-      ? `'${SHEET_NAME}'!A1`
-      : `${SHEET_NAME}!A1`;
+    // Get the spreadsheet to check if Submissions sheet exists
+    console.log('📋 Checking if Submissions sheet exists...');
+    const spreadsheet = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
 
-    console.log(`📋 Sheet: ${SHEET_NAME}`);
-    console.log(`📋 Range: ${sheetRange}`);
-    console.log(`📋 Headers: ${headers[0].join(', ')}`);
+    const sheet = spreadsheet.data.sheets.find(
+      (s: { properties: { title: string } }) => s.properties.title === SHEET_NAME
+    );
 
-    // First, add the header values
+    let sheetId;
+
+    if (!sheet) {
+      // Create the Submissions sheet
+      console.log('➕ Creating Submissions sheet...');
+      const addSheetResponse = await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: [
+            {
+              addSheet: {
+                properties: {
+                  title: SHEET_NAME,
+                },
+              },
+            },
+          ],
+        },
+      });
+
+      sheetId = addSheetResponse.data.replies[0].addSheet.properties.sheetId;
+      console.log('✅ Submissions sheet created');
+    } else {
+      sheetId = sheet.properties.sheetId;
+      console.log('✅ Submissions sheet already exists');
+    }
+
+    // Add headers
+    const sheetRange = `'${SHEET_NAME}'!A1`;
+
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
       range: sheetRange,
@@ -60,29 +85,13 @@ async function initializeHeaders() {
     });
 
     console.log('✅ Headers added');
-    console.log('🎨 Applying formatting (bold, background color, centered)...');
+    console.log('🎨 Applying formatting...');
 
-    // Get the sheet ID
-    const spreadsheet = await sheets.spreadsheets.get({
-      spreadsheetId: SPREADSHEET_ID,
-    });
-
-    const sheet = spreadsheet.data.sheets.find(
-      (s) => s.properties.title === SHEET_NAME
-    );
-
-    if (!sheet) {
-      throw new Error(`Sheet "${SHEET_NAME}" not found`);
-    }
-
-    const sheetId = sheet.properties.sheetId;
-
-    // Format headers: bold, background color, centered, frozen
+    // Format headers
     await sheets.spreadsheets.batchUpdate({
       spreadsheetId: SPREADSHEET_ID,
       requestBody: {
         requests: [
-          // Make header row bold
           {
             repeatCell: {
               range: {
@@ -110,7 +119,6 @@ async function initializeHeaders() {
               fields: 'userEnteredFormat(textFormat,backgroundColor,horizontalAlignment,verticalAlignment)',
             },
           },
-          // Freeze header row
           {
             updateSheetProperties: {
               properties: {
@@ -122,7 +130,6 @@ async function initializeHeaders() {
               fields: 'gridProperties.frozenRowCount',
             },
           },
-          // Auto-resize columns
           {
             autoResizeDimensions: {
               dimensions: {
@@ -137,16 +144,21 @@ async function initializeHeaders() {
       },
     });
 
-    console.log('✅ Sheet headers initialized successfully!');
-    console.log(`\n✨ Your Google Sheet now has ${headers[0].length} columns:`);
-    headers[0].forEach((header, index) => {
-      console.log(`   ${index + 1}. ${header}`);
-    });
+    console.log('✅ Submissions sheet setup complete!');
+    console.log('\n📋 Headers created:');
+    console.log('   1. Timestamp');
+    console.log('   2. Team Name');
+    console.log('   3. GitHub Repository Link');
+    console.log('   4. Google Drive Folder Link');
+
   } catch (error) {
-    console.error('❌ Error initializing sheet headers:', error);
-    if (error.message) {
-      console.error('Error message:', error.message);
-    }
+    console.error('❌ Setup failed:', error);
+    console.log('\nMake sure you have:');
+    console.log('1. Set GOOGLE_SERVICE_ACCOUNT_EMAIL in .env.local');
+    console.log('2. Set GOOGLE_PRIVATE_KEY in .env.local');
+    console.log('3. Set GOOGLE_SHEET_ID in .env.local');
+    console.log('4. Shared the Google Sheet with your service account email');
+    console.log('5. Created a sheet tab named "Submissions" in your Google Sheet');
     process.exit(1);
   }
 }

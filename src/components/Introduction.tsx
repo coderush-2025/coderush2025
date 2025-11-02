@@ -8,12 +8,12 @@ export default function Introduction() {
   const codeText = `function codeRush2025() {
   const event = {
     name: "CodeRush 2025",
+    type: "Buildathon",
     duration: "10 hours",
-    platform: "HackerRank",
     participants: "Teams of 4"
   };
 
-  return unleashYourPotential();
+  return buildYourSolution();
 }`;
 
   useEffect(() => {
@@ -142,7 +142,7 @@ export default function Introduction() {
                     transition={{ delay: 2.5 }}
                     className="text-white/70 mt-1 sm:mt-2"
                   >
-                    Event: CodeRush 2025 - 10h Hackathon
+                    Event: CodeRush 2025 - 10h Buildathon
                   </motion.div>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export default function Introduction() {
                   transition={{ delay: 1.6, duration: 0.8 }}
                   className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 font-light mb-4 sm:mb-6 leading-relaxed"
                 >
-                  The ultimate <span className="text-[#37c2cc] font-semibold">10-hour coding challenge</span> by <span className="text-[#37c2cc] font-bold">INTECS</span>, Faculty of Information Technology
+                  The ultimate <span className="text-[#37c2cc] font-semibold">10-hour Buildathon</span> by <span className="text-[#37c2cc] font-bold">INTECS</span>, Faculty of Information Technology
                 </motion.p>
 
                 <motion.div
@@ -197,7 +197,7 @@ export default function Introduction() {
                   transition={{ delay: 1.8, duration: 0.8 }}
                   className="space-y-3 sm:space-y-4 text-white/80 text-sm sm:text-base lg:text-lg leading-relaxed mb-6 sm:mb-8"
                 >
-                  <p className="text-justify sm:text-left">A celebration of innovation, teamwork, and problem-solving. Join the brightest minds to push the limits of creativity and technology in this exciting coding marathon.</p>
+                  <p className="text-justify sm:text-left">A celebration of innovation, teamwork, and problem-solving. Join the brightest minds to build creative solutions in this exciting 10-hour buildathon challenge.</p>
 
                   <div className="space-y-2 sm:space-y-3">
                     <motion.div
@@ -206,8 +206,8 @@ export default function Introduction() {
                       transition={{ duration: 0.3 }}
                     >
                       <div className="flex-1">
-                        <h3 className="text-[#37c2cc] font-semibold mb-1 text-sm sm:text-base font-mono">&gt; HackerRank Platform</h3>
-                        <p className="text-xs sm:text-sm text-white/70">10 hours of intensive coding challenges and innovation</p>
+                        <h3 className="text-[#37c2cc] font-semibold mb-1 text-sm sm:text-base font-mono">&gt; Scenario-Based Challenge</h3>
+                        <p className="text-xs sm:text-sm text-white/70">Build a real-world solution from a given scenario in 10 hours</p>
                       </div>
                     </motion.div>
 
@@ -218,7 +218,7 @@ export default function Introduction() {
                     >
                       <div className="flex-1">
                         <h3 className="text-[#37c2cc] font-semibold mb-1 text-sm sm:text-base font-mono">&gt; Open to All Levels</h3>
-                        <p className="text-xs sm:text-sm text-white/70">Showcase your skills and learn from peers, whether you&apos;re a beginner or expert</p>
+                        <p className="text-xs sm:text-sm text-white/70">Showcase your creativity and skills, whether you&apos;re a beginner or expert</p>
                       </div>
                     </motion.div>
                   </div>

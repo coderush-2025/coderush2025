@@ -622,7 +622,7 @@ const Hero = () => {
             />
           ))}
         </motion.div>
-        <motion.div className="relative group">
+        <motion.div className="relative group flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
           {/* Floating orbs around button */}
           {[...Array(6)].map((_, i) => (
             <motion.div
@@ -649,7 +649,7 @@ const Hero = () => {
 
           <motion.button
             onClick={() => router.push("/register")}
-            className="px-8 py-4 md:px-12 md:py-6 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu pointer-events-auto"
+            className="w-full sm:w-48 px-6 py-4 md:py-5 bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu pointer-events-auto"
             style={{
               fontFamily: "system-ui, -apple-system, sans-serif",
               letterSpacing: "1px",
@@ -770,6 +770,142 @@ const Hero = () => {
                   transition={{
                     duration: 0.3,
                     delay: 2.2 + i * 0.05,
+                  }}
+                  whileHover={{
+                    y: -2,
+                    transition: { duration: 0.1 }
+                  }}
+                >
+                  {char === " " ? "\u00A0" : char}
+                </motion.span>
+              ))}
+            </motion.span>
+          </motion.button>
+
+          {/* View Teams Button */}
+          <motion.button
+            onClick={() => router.push("/teams")}
+            className="w-full sm:w-48 px-6 py-4 md:py-5 bg-gradient-to-r from-[#37c2cc80] via-[#2ba8b36a] to-[#37c2cc3f] text-white font-bold text-lg md:text-xl rounded-2xl shadow-2xl relative overflow-hidden group transform-gpu pointer-events-auto"
+            style={{
+              fontFamily: "system-ui, -apple-system, sans-serif",
+              letterSpacing: "1px",
+              backgroundSize: "200% 100%",
+            }}
+            initial={{
+              opacity: 0,
+              y: 50,
+              scale: 0.8,
+              rotateX: -30
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              rotateX: 0,
+              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+            }}
+            transition={{
+              duration: 1.2,
+              delay: 2.3,
+              type: "spring",
+              stiffness: 100,
+              backgroundPosition: {
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }
+            }}
+            whileHover={{
+              scale: 1.08,
+              y: -5,
+              rotateY: 5,
+              boxShadow: [
+                "0 10px 40px rgba(55, 194, 204, 0.4)",
+                "0 15px 60px rgba(55, 194, 204, 0.6)",
+                "0 10px 40px rgba(55, 194, 204, 0.4)"
+              ],
+              transition: {
+                duration: 0.3,
+                boxShadow: {
+                  duration: 2,
+                  repeat: Infinity,
+                }
+              }
+            }}
+            whileTap={{
+              scale: 0.95,
+              y: 0,
+              transition: { duration: 0.1 }
+            }}
+          >
+            {/* Animated background layers */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-[#0e243f] via-[#37c2cc] to-[#0e243f] opacity-0"
+              animate={{
+                opacity: [0, 0.3, 0],
+                scale: [0.8, 1.2, 0.8],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                delay: 1.3,
+              }}
+            />
+
+            {/* Shimmer effect */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0"
+              style={{ transform: "skew(-12deg)" }}
+              animate={{
+                x: ["-200%", "200%"],
+                opacity: [0, 0.6, 0]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: 3.3,
+                ease: "easeInOut"
+              }}
+            />
+
+            {/* Pulsing border */}
+            <motion.div
+              className="absolute inset-0 rounded-2xl border-2 border-[#37c2cc]"
+              animate={{
+                borderColor: ["#37c2cc", "#ffffff", "#37c2cc"],
+                borderWidth: ["2px", "3px", "2px"],
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                delay: 0.8,
+              }}
+            />
+
+            <motion.span 
+              className="relative z-10 inline-block"
+              animate={{
+                textShadow: [
+                  "0 0 10px rgba(55, 194, 204, 0.5)",
+                  "0 0 20px rgba(55, 194, 204, 0.8)",
+                  "0 0 10px rgba(55, 194, 204, 0.5)"
+                ]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: 1.8
+              }}
+            >
+              {"View Teams".split("").map((char, i) => (
+                <motion.span
+                  key={i}
+                  className="inline-block"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: 2.5 + i * 0.05,
                   }}
                   whileHover={{
                     y: -2,

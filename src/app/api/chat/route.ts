@@ -11,14 +11,12 @@ type ReqBody = {
   message: string;
   editedData?: {
     teamName: string;
-    hackerrankUsername: string;
     teamBatch: string;
     members: Member[];
   };
 };
 
 const MAX_TEAMS = 100;
-// HackerRank username validation is now done with custom logic
 
 function escapeRegExp(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -52,9 +50,39 @@ export async function POST(req: Request) {
   let reg = await Registration.findOne({ sessionId });
   if (!reg) {
     console.log("✨ Creating new registration with team name");
-    // First message should be the team name
-    if (!message || message.trim().length <= 2) {
+
+    const trimmedTeamName = (message || "").trim();
+
+    // Validation 1: Empty or too short
+    if (!trimmedTeamName || trimmedTeamName.length < 3) {
       return NextResponse.json({ reply: "❌ Team name must be at least 3 characters. Try again." });
+    }
+
+    // Validation 2: Maximum length (10 characters)
+    if (trimmedTeamName.length > 10) {
+      return NextResponse.json({ reply: "❌ Team name must be 10 characters or less. Try again." });
+    }
+
+    // Validation 3: Special characters - only allow letters, numbers, spaces, hyphens, underscores
+    const validNamePattern = /^[a-zA-Z0-9\s\-_]+$/;
+    if (!validNamePattern.test(trimmedTeamName)) {
+      return NextResponse.json({ reply: "❌ Team name can only contain letters, numbers, spaces, hyphens (-), and underscores (_). Try again." });
+    }
+
+    // Validation 4: Cannot be only numbers
+    if (/^\d+$/.test(trimmedTeamName)) {
+      return NextResponse.json({ reply: "❌ Team name cannot be only numbers. Please include letters. Try again." });
+    }
+
+    // Validation 5: Cannot be only spaces/special characters
+    if (!/[a-zA-Z0-9]/.test(trimmedTeamName)) {
+      return NextResponse.json({ reply: "❌ Team name must contain at least one letter or number. Try again." });
+    }
+
+    // Validation 6: Reserved words
+    const reservedWords = ['admin', 'administrator', 'moderator', 'test', 'coderush', 'system', 'root', 'null', 'undefined'];
+    if (reservedWords.includes(trimmedTeamName.toLowerCase())) {
+      return NextResponse.json({ reply: "❌ This team name is reserved and cannot be used. Please choose another name." });
     }
 
     // Check team count (only count completed registrations)
@@ -66,26 +94,29 @@ export async function POST(req: Request) {
 
     // Check uniqueness (case-insensitive) - only check completed registrations
     const exists = await Registration.findOne({
-      teamName: { $regex: `^${escapeRegExp(message)}$`, $options: "i" },
+      teamName: { $regex: `^${escapeRegExp(trimmedTeamName)}$`, $options: "i" },
       state: "DONE"
     });
     if (exists) {
       return NextResponse.json({ reply: "❌ Team name already taken. Please choose another team name." });
     }
 
-    // Create registration with team name
-    reg = new Registration({ 
-      sessionId, 
-      state: "HACKERRANK", 
-      teamName: message.trim(),
-      members: [] 
+    // Create registration with team name and skip directly to batch selection
+    reg = new Registration({
+      sessionId,
+      state: "BATCH_SELECTION",
+      teamName: trimmedTeamName,
+      members: []
     });
     await reg.save();
     console.log("💾 New registration saved with team name:", reg.teamName);
-    
-    const slotsRemaining = MAX_TEAMS - teamCount;
+
     return NextResponse.json({
-      reply: `Team name saved as "${reg.teamName}". 🎉\n\n📊 ${slotsRemaining} slots remaining out of ${MAX_TEAMS} teams.\n\nNow enter your Hackerrank username. It should be "${reg.teamName}_CR" (team name can be any case, but _CR must be uppercase).`
+      reply: `Team name saved as "${reg.teamName}". 🎉\n\nSelect your team's batch (all 4 members must be from the same batch):`,
+      buttons: [
+        { text: "Batch 23", value: "23" },
+        { text: "Batch 24", value: "24" }
+      ]
     });
   }
   
@@ -103,7 +134,6 @@ export async function POST(req: Request) {
         showEditForm: true,
         registrationData: {
           teamName: reg.teamName,
-          hackerrankUsername: reg.hackerrankUsername,
           teamBatch: reg.teamBatch,
           members: reg.members.map(m => ({
             fullName: m.fullName,
@@ -143,17 +173,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // Check if HackerRank username is already taken by another completed team
-    const hackerrankExists = await Registration.findOne({
-      hackerrankUsername: { $regex: `^${escapeRegExp(editedData.hackerrankUsername)}$`, $options: "i" },
-      state: "DONE",
-      _id: { $ne: reg._id }
-    });
-    if (hackerrankExists) {
-      return NextResponse.json({
-        reply: `❌ HackerRank username "${editedData.hackerrankUsername}" is already registered. Please update your team name and HackerRank username.`
-      });
-    }
 
     // Validate no duplicate index numbers within team
     const indexNumbers = editedData.members.map((m) => m.indexNumber);
@@ -205,7 +224,6 @@ export async function POST(req: Request) {
 
     // Update registration with edited data
     reg.teamName = editedData.teamName;
-    reg.hackerrankUsername = editedData.hackerrankUsername;
     reg.teamBatch = editedData.teamBatch;
     reg.members = editedData.members.map((m) => ({
       fullName: m.fullName,
@@ -231,7 +249,6 @@ export async function POST(req: Request) {
       try {
         const sheetsResult = await appendToGoogleSheets({
           teamName: reg.teamName || '',
-          hackerrankUsername: reg.hackerrankUsername || '',
           teamBatch: reg.teamBatch || '',
           members: reg.members || [],
           timestamp: new Date(),
@@ -251,7 +268,6 @@ export async function POST(req: Request) {
       try {
         const emailResult = await sendRegistrationEmail({
           teamName: reg.teamName || '',
-          hackerrankUsername: reg.hackerrankUsername || '',
           teamBatch: reg.teamBatch || '',
           leaderName: reg.members[0]?.fullName || '',
           leaderEmail: reg.members[0]?.email || '',
@@ -461,7 +477,6 @@ export async function POST(req: Request) {
         await reg.save();
         const summaryLines = [
           `Team: ${reg.teamName}`,
-          `Hackerrank: ${reg.hackerrankUsername || "N/A"}`,
           `Batch: ${reg.teamBatch}`,
           `Members:`,
           ...(reg.members || []).map((m, i: number) => `${i + 1}. ${m.fullName} — ${m.indexNumber} — ${m.email}`),
@@ -493,68 +508,6 @@ export async function POST(req: Request) {
   // handle other states
   const cfg = states[reg.state];
   if (!cfg) return NextResponse.json({ reply: "Invalid state. Please start again." });
-
-  // HACKERRANK handling: must be teamname_CR (team name case insensitive, _CR case sensitive)
-  if (reg.state === "HACKERRANK") {
-    if (!reg.teamName) {
-      return NextResponse.json({ reply: "❌ Error: Team name not found. Please restart registration." });
-    }
-
-    if (!message) {
-      return NextResponse.json({ reply: `Please enter your Hackerrank username. It should be "${reg.teamName}_CR" (team name can be any case, but _CR must be uppercase).` });
-    }
-
-    const trimmedMessage = message.trim();
-    
-    // Check if it ends with _CR (case sensitive)
-    if (!trimmedMessage.endsWith('_CR')) {
-      return NextResponse.json({
-        reply:
-          `❌ Invalid Hackerrank username. It must end with _CR (uppercase).\n` +
-          `Examples: "${reg.teamName}_CR", "${reg.teamName.toLowerCase()}_CR", "${reg.teamName.toUpperCase()}_CR"\nPlease re-enter the username.`,
-      });
-    }
-
-    // Extract the team name part (everything before _CR)
-    const usernameTeamPart = trimmedMessage.slice(0, -3); // Remove '_CR' from end
-    
-    // Check if the team name part matches (case insensitive)
-    if (usernameTeamPart.toLowerCase() !== reg.teamName.toLowerCase()) {
-      return NextResponse.json({
-        reply:
-          `❌ Hackerrank username should start with your team name.\n` +
-          `Your team name is "${reg.teamName}". Valid examples:\n` +
-          `• "${reg.teamName}_CR"\n` +
-          `• "${reg.teamName.toLowerCase()}_CR"\n` +
-          `• "${reg.teamName.toUpperCase()}_CR"\n` +
-          `Please re-enter the correct username.`,
-      });
-    }
-
-    // Check hackerrank username uniqueness among completed registrations
-    const hrExists = await Registration.findOne({
-      hackerrankUsername: { $regex: `^${escapeRegExp(trimmedMessage)}$`, $options: "i" },
-      state: "DONE",
-      _id: { $ne: reg._id }
-    });
-    if (hrExists) {
-      return NextResponse.json({ reply: "❌ That Hackerrank username is already registered. Please choose another team name and try again." });
-    }
-
-    // Save entered username (preserve user case)
-    reg.hackerrankUsername = trimmedMessage;
-    // move to batch selection
-    reg.state = "BATCH_SELECTION";
-    await reg.save();
-
-    return NextResponse.json({
-      reply: `Hackerrank username saved as "${reg.hackerrankUsername}".\n\nSelect your team's batch (all 4 members must be from the same batch):`,
-      buttons: [
-        { text: "Batch 23", value: "23" },
-        { text: "Batch 24", value: "24" }
-      ]
-    });
-  }
 
   // BATCH_SELECTION handling
   if (reg.state === "BATCH_SELECTION") {
@@ -598,7 +551,6 @@ export async function POST(req: Request) {
         showEditForm: true,
         registrationData: {
           teamName: reg.teamName,
-          hackerrankUsername: reg.hackerrankUsername,
           teamBatch: reg.teamBatch,
           members: reg.members.map(m => ({
             fullName: m.fullName,
@@ -620,7 +572,6 @@ export async function POST(req: Request) {
       try {
         const sheetsResult = await appendToGoogleSheets({
           teamName: reg.teamName || '',
-          hackerrankUsername: reg.hackerrankUsername || '',
           teamBatch: reg.teamBatch || '',
           members: reg.members || [],
           timestamp: new Date(),
@@ -640,7 +591,6 @@ export async function POST(req: Request) {
       try {
         const emailResult = await sendRegistrationEmail({
           teamName: reg.teamName || '',
-          hackerrankUsername: reg.hackerrankUsername || '',
           teamBatch: reg.teamBatch || '',
           leaderName: reg.members[0]?.fullName || '',
           leaderEmail: reg.members[0]?.email || '',
@@ -686,7 +636,6 @@ export async function POST(req: Request) {
   if (reg.state === "CONFIRMATION") {
     const summaryLines = [
       `Team: ${reg.teamName}`,
-      `Hackerrank: ${reg.hackerrankUsername || "N/A"}`,
       `Batch: ${reg.teamBatch}`,
       `Members:`,
       ...(reg.members || []).map((m, i: number) => `${i + 1}. ${m.fullName} — ${m.indexNumber} — ${m.email}`),
@@ -716,7 +665,6 @@ export async function POST(req: Request) {
     try {
       const sheetsResult = await appendToGoogleSheets({
         teamName: reg.teamName || '',
-        hackerrankUsername: reg.hackerrankUsername || '',
         teamBatch: reg.teamBatch || '',
         members: reg.members || [],
         timestamp: new Date(),

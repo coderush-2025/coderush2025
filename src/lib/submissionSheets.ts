@@ -11,59 +11,43 @@ const auth = new google.auth.GoogleAuth({
 
 const sheets = google.sheets({ version: 'v4', auth });
 
-const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
-const SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Sheet1'; // Sheet name (can have spaces)
+// Use separate sheet for submissions
+const SPREADSHEET_ID = process.env.GOOGLE_SUBMISSIONS_SHEET_ID || process.env.GOOGLE_SHEET_ID;
+const SHEET_NAME = process.env.GOOGLE_SUBMISSIONS_SHEET_NAME || 'Submissions';
 
-export interface RegistrationData {
+export interface SubmissionData {
   teamName: string;
-  teamBatch: string;
-  members: {
-    fullName: string;
-    indexNumber: string;
-    batch: string;
-    email: string;
-  }[];
-  timestamp: Date;
+  githubLink: string;
+  googleDriveLink: string;
+  submittedAt: Date;
 }
 
 /**
- * Append or update registration data in Google Sheets
- * If team already exists, updates the existing rows
- * Otherwise, appends new rows
+ * Append submission data to Google Sheets (Submissions sheet)
  */
-export async function appendToGoogleSheets(data: RegistrationData) {
+export async function appendSubmissionToSheets(data: SubmissionData) {
   try {
     if (!SPREADSHEET_ID) {
       console.error('⚠️ GOOGLE_SHEET_ID not configured');
       return { success: false, error: 'Sheet ID not configured' };
     }
 
-    // Prepare row data
-    const timestamp = new Date().toISOString();
+    const timestamp = data.submittedAt.toISOString();
 
-    // Create rows - one per other member (excluding leader)
-    // First row includes team info + leader info, then other members follow
-    const rows = data.members.slice(1).map((member, index) => [
-      // Team info only in first row
-      index === 0 ? timestamp : '',
-      index === 0 ? data.teamName : '',
-      index === 0 ? data.teamBatch : '',
-      // Leader info only in first row
-      index === 0 ? data.members[0]?.fullName || '' : '',
-      index === 0 ? data.members[0]?.indexNumber || '' : '',
-      index === 0 ? data.members[0]?.email || '' : '',
-      // Other member info (appears in all 3 rows)
-      member.fullName,
-      member.indexNumber,
-      member.email,
-    ]);
+    // Create row data
+    const row = [
+      timestamp,
+      data.teamName,
+      data.githubLink,
+      data.googleDriveLink,
+    ];
 
     // Wrap sheet name in quotes if it contains spaces or special characters
     const sheetRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
-      ? `'${SHEET_NAME}'!A:I`
-      : `${SHEET_NAME}!A:I`;
+      ? `'${SHEET_NAME}'!A:D`
+      : `${SHEET_NAME}!A:D`;
 
-    // Get all existing data to check if team already exists
+    // Check if team already submitted
     const existingData = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: sheetRange,
@@ -81,27 +65,27 @@ export async function appendToGoogleSheets(data: RegistrationData) {
     }
 
     if (teamRowIndex !== -1) {
-      // Team exists - update the existing 3 rows
-      console.log(`📝 Updating existing team at row ${teamRowIndex + 1}`);
+      // Team exists - update the existing row
+      console.log(`📝 Updating existing submission for team at row ${teamRowIndex + 1}`);
 
       const updateRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
-        ? `'${SHEET_NAME}'!A${teamRowIndex + 1}:I${teamRowIndex + 3}`
-        : `${SHEET_NAME}!A${teamRowIndex + 1}:I${teamRowIndex + 3}`;
+        ? `'${SHEET_NAME}'!A${teamRowIndex + 1}:D${teamRowIndex + 1}`
+        : `${SHEET_NAME}!A${teamRowIndex + 1}:D${teamRowIndex + 1}`;
 
       const response = await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
         range: updateRange,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
-          values: rows,
+          values: [row],
         },
       });
 
-      console.log('✅ Data updated in Google Sheets:', response.data);
+      console.log('✅ Submission updated in Google Sheets:', response.data);
       return { success: true, data: response.data, updated: true };
     } else {
-      // Team doesn't exist - append new rows
-      console.log('➕ Appending new team to Google Sheets');
+      // Team doesn't exist - append new row
+      console.log('➕ Appending new submission to Google Sheets');
 
       const appendRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
         ? `'${SHEET_NAME}'!A1`
@@ -113,15 +97,15 @@ export async function appendToGoogleSheets(data: RegistrationData) {
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
         requestBody: {
-          values: rows,
+          values: [row],
         },
       });
 
-      console.log('✅ Data saved to Google Sheets:', response.data);
+      console.log('✅ Submission saved to Google Sheets:', response.data);
       return { success: true, data: response.data, updated: false };
     }
   } catch (error) {
-    console.error('❌ Error saving to Google Sheets:', error);
+    console.error('❌ Error saving submission to Google Sheets:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -130,9 +114,9 @@ export async function appendToGoogleSheets(data: RegistrationData) {
 }
 
 /**
- * Initialize Google Sheet with headers (run once)
+ * Initialize submissions sheet with headers (run once)
  */
-export async function initializeSheetHeaders() {
+export async function initializeSubmissionsSheet() {
   try {
     if (!SPREADSHEET_ID) {
       throw new Error('GOOGLE_SHEET_ID not configured');
@@ -142,19 +126,14 @@ export async function initializeSheetHeaders() {
       [
         'Timestamp',
         'Team Name',
-        'Batch',
-        'Leader Name',
-        'Leader Index',
-        'Leader Email',
-        'Member Name',
-        'Member Index',
-        'Member Email',
+        'GitHub Repository Link',
+        'Google Drive Folder Link',
       ],
     ];
 
     // Wrap sheet name in quotes if it contains spaces or special characters
-    const sheetRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-') 
-      ? `'${SHEET_NAME}'!A1` 
+    const sheetRange = SHEET_NAME.includes(' ') || SHEET_NAME.includes('-')
+      ? `'${SHEET_NAME}'!A1`
       : `${SHEET_NAME}!A1`;
 
     await sheets.spreadsheets.values.update({
@@ -166,10 +145,10 @@ export async function initializeSheetHeaders() {
       },
     });
 
-    console.log('✅ Sheet headers initialized');
+    console.log('✅ Submissions sheet headers initialized');
     return { success: true };
   } catch (error) {
-    console.error('❌ Error initializing sheet headers:', error);
+    console.error('❌ Error initializing submissions sheet headers:', error);
     throw error;
   }
 }
