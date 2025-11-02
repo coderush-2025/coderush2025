@@ -623,7 +623,7 @@ export default function RegisteredTeamsPage() {
                 </span>
                 {filteredTeams.length > 0 && (
                   <span className="text-white/60 text-sm">
-                    matching "{searchQuery}"
+                    matching &quot;{searchQuery}&quot;
                   </span>
                 )}
               </div>

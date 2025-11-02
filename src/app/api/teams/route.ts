@@ -58,7 +58,7 @@ export async function GET() {
         .lean();
 
       teamDetails = registrations
-        .map((reg: any) => ({
+        .map((reg: { teamName?: string; teamBatch?: string; members?: Array<{ fullName?: string; batch?: string }> }) => ({
           teamName: reg.teamName || "",
           teamLeader: reg.members && reg.members.length > 0 ? reg.members[0].fullName : undefined,
           batch: reg.teamBatch || (reg.members && reg.members.length > 0 ? reg.members[0].batch : undefined)
