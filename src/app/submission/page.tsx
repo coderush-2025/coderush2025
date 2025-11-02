@@ -126,9 +126,35 @@ export default function SubmissionPage() {
               Project Submission
             </span>
           </h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
+          <p className="text-xl text-white/80 max-w-2xl mx-auto mb-6">
             Submit your CodeRush 2025 project here. Make sure you&apos;re a registered team!
           </p>
+
+          {/* Report Issue Button */}
+          <motion.a
+            href="/report-issue"
+            className="inline-block px-6 py-3 bg-white/10 border border-white/20 text-white font-semibold text-sm rounded-full hover:bg-white/20 transition-all duration-300"
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1
+            }}
+            transition={{
+              duration: 0.6,
+              delay: 0.3,
+              ease: "easeOut"
+            }}
+            whileHover={{
+              scale: 1.05,
+              y: -2
+            }}
+            whileTap={{
+              scale: 0.95
+            }}
+          >
+            Report an Issue
+          </motion.a>
         </motion.div>
 
         {/* Submission Form */}
