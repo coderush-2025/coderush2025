@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "setup-sheets": "tsx scripts/setup-sheets.ts",
+    "setup-submissions": "tsx scripts/setup-submissions-sheet.ts",
     "check-teams": "tsx scripts/check-team-count.ts"
   },
   "dependencies": {

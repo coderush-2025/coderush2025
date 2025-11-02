@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 import { FaBars, FaTimes } from "react-icons/fa";
@@ -16,8 +16,8 @@ const Navbar = () => {
   const isRegisterPage = pathname.startsWith("/register");
   const isTeamsPage = pathname === "/teams";
 
-  // Navigation items
-  const navItems = [
+  // Navigation items - memoized to prevent re-creating on every render
+  const navItems = useMemo(() => [
     { name: "Home", href: "/", sectionId: null },
     { name: "About", href: "/#introduction", sectionId: "introduction" },
     { name: "Timeline", href: "/#timeline", sectionId: "timeline" },
@@ -26,7 +26,7 @@ const Navbar = () => {
     { name: "Memories", href: "/#memories", sectionId: "memories" },
     { name: "FAQ", href: "/#faq", sectionId: "faq" },
     { name: "Contact", href: "/#contact", sectionId: "contact" },
-  ];
+  ], []);
 
   // Track scroll position
   useMotionValueEvent(scrollY, "change", (latest) => {
