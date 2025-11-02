@@ -665,7 +665,6 @@ export async function POST(req: Request) {
     try {
       const sheetsResult = await appendToGoogleSheets({
         teamName: reg.teamName || '',
-        hackerrankUsername: reg.hackerrankUsername || '',
         teamBatch: reg.teamBatch || '',
         members: reg.members || [],
         timestamp: new Date(),
