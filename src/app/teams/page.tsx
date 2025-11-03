@@ -62,6 +62,11 @@ export default function RegisteredTeamsPage() {
 
     setIsClient(true);
 
+    // Show page immediately, hide loading after a short delay for smoother transition
+    const hideLoadingTimer = setTimeout(() => {
+      setLoading(false);
+    }, 300);
+
     const fetchTeams = async () => {
       try {
         const response = await fetch("/api/teams");
@@ -70,14 +75,18 @@ export default function RegisteredTeamsPage() {
         if (data.success) {
           setTeams(data.teams);
           setTeamDetails(data.teamDetails || []);
+          setLoading(false);
+          clearTimeout(hideLoadingTimer);
         } else {
           setError("Failed to load teams");
+          setLoading(false);
+          clearTimeout(hideLoadingTimer);
         }
       } catch (err) {
         setError("An error occurred while fetching teams");
         console.error(err);
-      } finally {
         setLoading(false);
+        clearTimeout(hideLoadingTimer);
       }
     };
 
@@ -184,6 +193,7 @@ export default function RegisteredTeamsPage() {
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     return () => {
+      clearTimeout(hideLoadingTimer);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
     };
@@ -439,13 +449,13 @@ export default function RegisteredTeamsPage() {
         <div className="w-full max-w-7xl mx-auto relative z-10 py-12 px-4 sm:px-6 lg:px-8">
           {/* Header */}
         <motion.div
-          className="text-center mb-12"
+          className="text-center mb-6"
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
           <motion.h1
-            className="text-5xl md:text-7xl font-bold text-white mb-4 drop-shadow-2xl"
+            className="text-3xl md:text-5xl font-bold text-white mb-3 drop-shadow-2xl"
             animate={{
               textShadow: [
                 "0 0 20px rgba(55, 194, 204, 0.3)",
@@ -464,7 +474,7 @@ export default function RegisteredTeamsPage() {
             </span>
           </motion.h1>
           <motion.div
-            className="inline-block bg-[#204168]/50 backdrop-blur-sm px-8 py-4 rounded-full border border-[#37c2cc]/30 relative overflow-hidden"
+            className="inline-block bg-[#204168]/50 backdrop-blur-sm px-5 py-2.5 rounded-full border border-[#37c2cc]/30 relative overflow-hidden"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
@@ -480,10 +490,10 @@ export default function RegisteredTeamsPage() {
                 ease: "easeInOut",
               }}
             />
-            <p className="text-2xl text-white relative z-10">
+            <p className="text-lg text-white relative z-10">
               Total Teams:{" "}
               <motion.span
-                className="font-bold text-[#37c2cc] text-3xl inline-block"
+                className="font-bold text-[#37c2cc] text-xl inline-block"
                 key={teams.length}
                 initial={{ scale: 1.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -497,7 +507,7 @@ export default function RegisteredTeamsPage() {
 
         {/* Search Bar and View Toggle */}
         <motion.div
-          className="max-w-6xl mx-auto mb-12"
+          className="max-w-6xl mx-auto mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15 }}
@@ -523,25 +533,25 @@ export default function RegisteredTeamsPage() {
               placeholder="Search by team name, leader, or batch..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="relative w-full px-6 py-4 pr-24 bg-[#0e243f]/80 backdrop-blur-md border-2 border-[#37c2cc]/30 rounded-full text-white placeholder-[#37c2cc]/50 focus:outline-none focus:border-[#37c2cc] focus:ring-2 focus:ring-[#37c2cc]/30 transition-all duration-300 text-lg"
+              className="relative w-full px-5 py-2.5 pr-20 bg-[#0e243f]/80 backdrop-blur-md border-2 border-[#37c2cc]/30 rounded-full text-white placeholder-[#37c2cc]/50 focus:outline-none focus:border-[#37c2cc] focus:ring-2 focus:ring-[#37c2cc]/30 transition-all duration-300 text-sm"
             />
             {searchQuery && (
               <motion.button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-14 top-4 text-white/60 hover:text-[#37c2cc] transition-colors duration-300"
+                className="absolute right-11 top-2.5 text-white/60 hover:text-[#37c2cc] transition-colors duration-300"
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </motion.button>
             )}
             <motion.div
-              className="absolute right-6 top-4 text-[#37c2cc] flex items-center justify-center pointer-events-none"
+              className="absolute right-4 top-2.5 text-[#37c2cc] flex items-center justify-center pointer-events-none"
               animate={{
                 rotate: searchQuery ? [0, 360] : [0, 10, -10, 0],
                 scale: [1, 1.1, 1],
@@ -554,7 +564,7 @@ export default function RegisteredTeamsPage() {
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-5 w-5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -570,10 +580,10 @@ export default function RegisteredTeamsPage() {
             </div>
 
             {/* View Toggle Buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <motion.button
                 onClick={() => setViewMode("grid")}
-                className={`px-5 py-3 rounded-full font-semibold transition-all duration-300 ${
+                className={`px-3 py-2 rounded-full font-semibold transition-all duration-300 text-sm ${
                   viewMode === "grid"
                     ? "bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-white shadow-lg shadow-[#37c2cc]/50"
                     : "bg-[#0e243f]/60 text-[#37c2cc] border-2 border-[#37c2cc]/30 hover:border-[#37c2cc]"
@@ -581,8 +591,8 @@ export default function RegisteredTeamsPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                   </svg>
                   <span className="hidden sm:inline">Grid</span>
@@ -590,7 +600,7 @@ export default function RegisteredTeamsPage() {
               </motion.button>
               <motion.button
                 onClick={() => setViewMode("list")}
-                className={`px-5 py-3 rounded-full font-semibold transition-all duration-300 ${
+                className={`px-3 py-2 rounded-full font-semibold transition-all duration-300 text-sm ${
                   viewMode === "list"
                     ? "bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-white shadow-lg shadow-[#37c2cc]/50"
                     : "bg-[#0e243f]/60 text-[#37c2cc] border-2 border-[#37c2cc]/30 hover:border-[#37c2cc]"
@@ -598,8 +608,8 @@ export default function RegisteredTeamsPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                   </svg>
                   <span className="hidden sm:inline">List</span>
@@ -639,6 +649,68 @@ export default function RegisteredTeamsPage() {
               )}
             </motion.div>
           )}
+
+          {/* Action Buttons */}
+          <motion.div
+            className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2 flex-wrap"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <motion.a
+              href="/"
+              className="inline-block bg-gradient-to-r from-[#37c2cc] to-[#2ba8b3] text-white font-semibold px-4 py-2 rounded-full shadow-md relative overflow-hidden group text-xs"
+              whileHover={{
+                scale: 1.05,
+                boxShadow: "0 8px 20px rgba(55, 194, 204, 0.4)",
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              <span className="relative z-10 flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Home
+              </span>
+            </motion.a>
+
+            <motion.a
+              href="/report-issue"
+              className="inline-block bg-white/5 border-2 border-white/30 text-white font-semibold px-4 py-2 rounded-full hover:bg-white/10 hover:border-white/50 transition-all duration-300 relative overflow-hidden group text-xs"
+              whileHover={{
+                scale: 1.05,
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              <span className="relative z-10 flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Report Issue
+              </span>
+            </motion.a>
+
+            <motion.a
+              href="/register"
+              className="inline-block bg-gradient-to-r from-[#204168] to-[#0e243f] text-white font-semibold px-4 py-2 rounded-full border-2 border-[#37c2cc] shadow-md relative overflow-hidden group text-xs"
+              whileHover={{
+                scale: 1.05,
+                borderColor: "#ffffff",
+                boxShadow: "0 8px 20px rgba(55, 194, 204, 0.3)",
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-[#37c2cc]/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              <span className="relative z-10 flex items-center gap-1.5">
+                Register Your Team
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </span>
+            </motion.a>
+          </motion.div>
         </motion.div>
 
         {/* Teams Grid */}
@@ -862,99 +934,6 @@ export default function RegisteredTeamsPage() {
           </motion.div>
         )}
 
-        {/* Footer */}
-        <motion.div
-          className="mt-16 text-center"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-        >
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <motion.a
-              href="/"
-              className="inline-block bg-gradient-to-r from-[#37c2cc] via-[#2ba8b3] to-[#37c2cc] text-white font-bold px-10 py-4 rounded-full shadow-xl shadow-[#37c2cc]/30 relative overflow-hidden group"
-              style={{ backgroundSize: "200% 100%" }}
-              whileHover={{
-                scale: 1.08,
-                y: -5,
-                boxShadow: "0 15px 50px rgba(55, 194, 204, 0.5)",
-                backgroundPosition: ["0% 50%", "100% 50%"],
-              }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Animated gradient layer */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-[#0e243f] via-[#37c2cc] to-[#0e243f] opacity-0"
-                animate={{
-                  opacity: [0, 0.3, 0],
-                  scale: [0.8, 1.2, 0.8],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              
-              {/* Shimmer effect */}
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              
-              <span className="relative z-10 flex items-center gap-2">
-                <motion.span
-                  animate={{ x: [0, -5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="text-2xl"
-                >
-                  ←
-                </motion.span>
-                Back to Home
-              </span>
-            </motion.a>
-            
-            <motion.a
-              href="/register"
-              className="inline-block bg-gradient-to-r from-[#204168] via-[#0e243f] to-[#204168] text-white font-bold px-10 py-4 rounded-full shadow-xl shadow-[#204168]/30 relative overflow-hidden group border-2 border-[#37c2cc]"
-              style={{ backgroundSize: "200% 100%" }}
-              whileHover={{
-                scale: 1.08,
-                y: -5,
-                boxShadow: "0 15px 50px rgba(55, 194, 204, 0.4)",
-                borderColor: "#ffffff",
-              }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Pulsing border */}
-              <motion.div
-                className="absolute inset-0 rounded-full border-2 border-[#37c2cc]"
-                animate={{
-                  borderColor: ["#37c2cc", "#ffffff", "#37c2cc"],
-                  scale: [1, 1.02, 1],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-
-              {/* Shimmer effect */}
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-[#37c2cc]/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              
-              <span className="relative z-10 flex items-center gap-2">
-                Register Your Team
-                <motion.span
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="text-2xl"
-                >
-                  →
-                </motion.span>
-              </span>
-            </motion.a>
-          </div>
-        </motion.div>
       </div>
     </div>
   );
