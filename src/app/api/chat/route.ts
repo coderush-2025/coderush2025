@@ -5,6 +5,7 @@ import { states, validators, MEMBER_COUNT } from "@/lib/stateMachine";
 import { appendToGoogleSheets } from "@/lib/googleSheets";
 import { sendRegistrationEmail } from "@/lib/emailService";
 import { Member } from "@/types/registration";
+import { globalRateLimiter, getDuplicateErrorMessage, isDuplicateKeyError } from "@/lib/concurrencyHelpers";
 
 type ReqBody = {
   sessionId: string;
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
     console.log("🚀 Starting chat API request");
     await dbConnect();
     console.log("✅ Database connected");
-    
+
     let body: ReqBody;
     try {
       body = await req.json();
@@ -36,13 +37,21 @@ export async function POST(req: Request) {
       console.error("Failed to parse request body:", error);
       return NextResponse.json({ reply: "Invalid request format" }, { status: 400 });
     }
-    
+
     const sessionId = body.sessionId;
     const message = (body.message || "").trim();
 
     if (!sessionId) {
       console.error("❌ Missing sessionId");
       return NextResponse.json({ reply: "Missing sessionId" }, { status: 400 });
+    }
+
+    // Rate limiting - prevent abuse
+    if (!globalRateLimiter.check(sessionId)) {
+      console.warn("⚠️ Rate limit exceeded for session:", sessionId);
+      return NextResponse.json({
+        reply: "⚠️ Too many requests. Please wait a moment before trying again."
+      }, { status: 429 });
     }
 
   // find or create session
@@ -687,17 +696,25 @@ export async function POST(req: Request) {
 
   // default fallback prompt
   return NextResponse.json({ reply: states[reg.state]?.prompt || "Okay." });
-  
-  } catch (error) {
-    console.error("❌ API error:", error);
+
+  } catch (error: unknown) {
+    // Handle MongoDB duplicate key errors (race conditions)
+    if (isDuplicateKeyError(error)) {
+      console.error("⚠️ Duplicate key error detected:", (error as { keyPattern?: Record<string, unknown> }).keyPattern);
+      return NextResponse.json({
+        reply: getDuplicateErrorMessage(error)
+      });
+    }
+
+    // Handle other errors
+    console.error("❌ API Error:", error);
     console.error("Error details:", {
       name: error instanceof Error ? error.name : 'Unknown',
-      message: error instanceof Error ? error.message : error,
+      message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : 'No stack trace'
     });
-    return NextResponse.json(
-      { reply: "Sorry, there was an error processing your request. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      reply: "❌ An error occurred while processing your request. Please try again."
+    }, { status: 500 });
   }
 }
