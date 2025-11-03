@@ -539,7 +539,7 @@ const Hero = () => {
             alt="CodeRush 2025"
             width={8000}
             height={4000}
-            className="w-auto h-auto max-w-full"
+            className="w-full max-w-[200px] sm:max-w-[250px] md:max-w-[300px] lg:max-w-[350px] h-auto"
             priority
           />
         </motion.div>
