@@ -1,5 +1,14 @@
 import mongoose from "mongoose";
 
+// Extend global type
+declare global {
+  // eslint-disable-next-line no-var
+  var mongoose: {
+    conn: typeof mongoose | null;
+    promise: Promise<typeof mongoose> | null;
+  } | undefined;
+}
+
 // Cache the MongoDB connection across hot reloads in development
 let cached = global.mongoose;
 
@@ -9,7 +18,7 @@ if (!cached) {
 
 export default async function dbConnect(): Promise<typeof mongoose> {
   // If we have a cached connection, return it
-  if (cached.conn) {
+  if (cached && cached.conn) {
     return cached.conn;
   }
 
@@ -20,7 +29,7 @@ export default async function dbConnect(): Promise<typeof mongoose> {
   }
 
   // If there's no cached promise, create a new connection
-  if (!cached.promise) {
+  if (!cached || !cached.promise) {
     const opts = {
       bufferCommands: false, // Disable buffering
       maxPoolSize: 10, // Maintain up to 10 socket connections
@@ -29,16 +38,26 @@ export default async function dbConnect(): Promise<typeof mongoose> {
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    const promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
       console.log("✅ MongoDB connected");
-      return mongoose;
+      return mongooseInstance;
     });
+
+    if (!cached) {
+      cached = global.mongoose = { conn: null, promise };
+    } else {
+      cached.promise = promise;
+    }
   }
 
   try {
-    cached.conn = await cached.promise;
+    if (!cached.conn) {
+      cached.conn = await cached.promise;
+    }
   } catch (error) {
-    cached.promise = null;
+    if (cached) {
+      cached.promise = null;
+    }
     console.error("❌ MongoDB connection failed", error);
     throw error;
   }
