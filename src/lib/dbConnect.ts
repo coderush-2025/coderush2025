@@ -25,10 +25,14 @@ export default async function dbConnect() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false, // Disable buffering
-      maxPoolSize: 10, // Maintain up to 10 socket connections
-      minPoolSize: 2, // Maintain at least 2 socket connections
-      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+      maxPoolSize: 100, // Handle up to 100 concurrent connections
+      minPoolSize: 10, // Maintain at least 10 connections ready
+      serverSelectionTimeoutMS: 10000, // 10 seconds timeout for server selection
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
+      retryWrites: true, // Automatically retry failed writes
+      retryReads: true, // Automatically retry failed reads
+      w: 'majority' as const, // Wait for majority of nodes to confirm writes
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
