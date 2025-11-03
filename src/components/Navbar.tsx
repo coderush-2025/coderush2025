@@ -18,6 +18,7 @@ const Navbar = () => {
   const isTeamsPage = pathname === "/teams";
   const isReportIssuePage = pathname === "/report-issue";
   const isSubmissionPage = pathname === "/submission";
+  const isAdminPage = pathname.startsWith("/admin");
 
   // Fix hydration mismatch by waiting for client mount
   useEffect(() => {
@@ -108,7 +109,7 @@ const Navbar = () => {
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
           !isMounted
             ? "bg-transparent"
-            : (isRegisterPage || isTeamsPage || isReportIssuePage || isSubmissionPage || isScrolled)
+            : (isRegisterPage || isTeamsPage || isReportIssuePage || isSubmissionPage || isAdminPage || isScrolled)
             ? "bg-[#0e243f]/95 backdrop-blur-lg shadow-lg shadow-[#37c2cc]/10"
             : "bg-transparent"
         }`}

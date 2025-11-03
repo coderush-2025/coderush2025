@@ -89,20 +89,24 @@ export default function ChatBot() {
   useEffect(() => {
     const loadSession = async () => {
       if (typeof window !== "undefined" && sessionId) {
-        try {
-          setIsLoadingSession(true);
+        // Show default message immediately for faster perceived loading
+        setMessages([{
+          role: "bot",
+          content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
+        }]);
+        setIsLoadingSession(false);
 
-          // First, run cleanup (will preserve incomplete registrations)
-          await fetch("/api/cleanup", {
+        try {
+          // Run cleanup in the background (non-blocking)
+          fetch("/api/cleanup", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ sessionId }),
-          });
-          console.log("🧹 Cleanup check completed");
+          }).then(() => console.log("🧹 Cleanup check completed")).catch(() => {});
 
-          // Then, fetch the current session state
+          // Fetch the current session state
           const response = await fetch("/api/session", {
             method: "POST",
             headers: {
@@ -113,38 +117,19 @@ export default function ChatBot() {
 
           const data = await response.json();
 
-          if (data.success) {
-            if (!data.exists) {
-              // No existing session, show initial message
-              setMessages([{
-                role: "bot",
-                content: data.initialMessage
-              }]);
-            } else {
-              // Existing session found, restore state
-              console.log("✅ Restored session in state:", data.state);
-              setMessages([{
-                role: "bot",
-                content: data.message,
-                buttons: data.buttons
-              }]);
-            }
-          } else {
-            // Error loading session, show default message
+          if (data.success && data.exists) {
+            // If there's an existing session, update the message
+            console.log("✅ Restored session in state:", data.state);
             setMessages([{
               role: "bot",
-              content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
+              content: data.message,
+              buttons: data.buttons
             }]);
           }
+          // If no existing session (data.exists === false), keep the default message already shown
         } catch (error) {
           console.error("Session load error:", error);
-          // Fallback to initial message
-          setMessages([{
-            role: "bot",
-            content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
-          }]);
-        } finally {
-          setIsLoadingSession(false);
+          // Keep the default message already shown
         }
       }
     };
