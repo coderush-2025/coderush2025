@@ -15,8 +15,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CodeRush 2025 - Registration",
-  description: "Register your team for CodeRush 2025 coding competition",
+  title: "CodeRush 2025",
+  description: "CodeRush 2025 - Where Ideas Ignite, Code Unites! Register your team for the ultimate coding competition.",
+  icons: {
+    icon: [
+      { url: '/Coderush.png', type: 'image/png' },
+      { url: '/Coderush.png', sizes: '32x32', type: 'image/png' },
+      { url: '/Coderush.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/Coderush.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: '/Coderush.png',
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({
