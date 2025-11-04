@@ -32,8 +32,9 @@ async function testTech() {
     try {
       const answer = await answerQuestionWithRAG(question, { state: 'IDLE' });
       console.log(`✅ A: ${answer}`);
-    } catch (error: any) {
-      console.log(`❌ Error: ${error.message}`);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.log(`❌ Error: ${err.message}`);
     }
 
     // Delay to avoid rate limits
