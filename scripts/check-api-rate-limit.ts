@@ -127,8 +127,9 @@ async function checkRateLimit() {
       console.log(`  ${i}. ✅ Success - ${result.response.text().trim()}`);
       successCount++;
       await new Promise(resolve => setTimeout(resolve, 500));
-    } catch (error: any) {
-      if (error.status === 429) {
+    } catch (error) {
+      const err = error as { status?: number };
+      if (err.status === 429) {
         console.log(`  ${i}. ❌ Rate Limited - Hit quota at request #${i}`);
         failCount++;
         break;

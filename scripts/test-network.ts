@@ -52,7 +52,7 @@ async function testConnections() {
   try {
     await fetch('https://www.google.com', {
       method: 'HEAD',
-      // @ts-ignore
+      // @ts-expect-error - Node-specific agent option not in standard fetch types
       agent: new https.Agent({ rejectUnauthorized: false })
     });
     console.log('   ✅ Internet: Connected\n');
