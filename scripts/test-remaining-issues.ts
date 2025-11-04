@@ -44,8 +44,9 @@ async function testRemaining() {
 
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-    } catch (error: any) {
-      console.log('❌ ERROR:', error.message);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.log('❌ ERROR:', err.message);
     }
   }
 }

@@ -123,8 +123,9 @@ async function testRealWorld() {
         if (answer.length > 20 && !answer.includes('having trouble')) {
           validAnswered++;
         }
-      } catch (error: any) {
-        console.log(`❌ Error: ${error.message}`);
+      } catch (error) {
+        const err = error as { message?: string };
+        console.log(`❌ Error: ${err.message}`);
       }
     }
 
