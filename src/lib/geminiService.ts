@@ -19,6 +19,18 @@ function getGenAI(): GoogleGenerativeAI {
 
 const MODEL_NAME = 'gemini-2.0-flash-exp'; // Gemini 2.0 Flash (experimental)
 
+// Conversational phrases that should not be treated as team names (includes common typos)
+const CONVERSATIONAL_PHRASES = [
+  // Correct spellings
+  'my name is', 'i am', 'this is', 'my team is', 'we are',
+  'our name is', 'our team is', 'our team name is', 'my team name is',
+  'the team name is', 'team name is', 'hello i am', 'hi i am', 'i\'m',
+  // Common typos
+  'my tema is', 'our tema is', 'our tema name is', 'my tema name is',
+  'the tema name is', 'tema name is', 'out team is', 'our team name',
+  'my team name', 'our name', 'team name', 'our team', 'my team'
+];
+
 // System prompt for the AI
 const SYSTEM_PROMPT = `You are a friendly and enthusiastic assistant for CodeRush 2025, a buildathon event at the University of Moratuwa - Faculty of IT.
 
@@ -306,7 +318,7 @@ export async function classifyIntent(
   }
 
   // Conversational/Social phrases (friendly chat)
-  const conversationalPhrases = [
+  const socialPhrases = [
     // Asking about bot
     'how are you', 'how r u', 'how are u', 'whats up', 'what\'s up', 'wassup',
     'how do you do', 'how is it going', 'how\'s it going', 'hows it going',
@@ -331,7 +343,7 @@ export async function classifyIntent(
   ];
 
   // Check if message is conversational
-  const isConversational = conversationalPhrases.some(phrase => {
+  const isConversational = socialPhrases.some(phrase => {
     // Exact match
     if (lowerMsg === phrase) return true;
     // Starts with phrase (followed by space or punctuation)
@@ -422,9 +434,33 @@ export async function classifyIntent(
     return 'QUESTION';
   }
 
-  // If IDLE and looks like a team name (3-10 chars, letters/numbers), treat as registration
-  if (registrationState === 'IDLE' && message.length >= 3 && message.length <= 10 && /^[a-zA-Z0-9\s\-_]+$/.test(message)) {
-    return 'REGISTRATION';
+  // If it's purely conversational (like "thanks", "bye") - check FIRST before registration
+  const pureConversationalPhrases = ['thank you', 'thanks', 'thankyou', 'thx', 'ty', 'bye', 'goodbye', 'see you', 'ok', 'okay', 'cool', 'nice', 'great', 'awesome', 'perfect', 'got it', 'understood', 'alright', 'sure'];
+  if (pureConversationalPhrases.some(phrase => lowerMsg === phrase || lowerMsg === phrase + '!' || lowerMsg === phrase + '.')) {
+    return 'CONVERSATIONAL';
+  }
+
+  // If IDLE and looks like potential registration (even with conversational phrases)
+  // Check if message contains valid team name pattern after potential extraction
+  if (registrationState === 'IDLE') {
+    // Extract potential team name from conversational input
+    let potentialTeamName = message.trim();
+    for (const phrase of CONVERSATIONAL_PHRASES) {
+      if (lowerMsg.includes(phrase)) {
+        const phraseIndex = lowerMsg.indexOf(phrase);
+        const afterPhrase = message.substring(phraseIndex + phrase.length).trim();
+        if (afterPhrase.length >= 3) {
+          potentialTeamName = afterPhrase;
+          break;
+        }
+      }
+    }
+
+    // Check if extracted/original message is valid team name format
+    if (potentialTeamName.length >= 3 && potentialTeamName.length <= 30 &&
+        /^[a-zA-Z0-9\s\-_]+$/.test(potentialTeamName)) {
+      return 'REGISTRATION';
+    }
   }
 
   // Default for IDLE: treat as question for better UX
