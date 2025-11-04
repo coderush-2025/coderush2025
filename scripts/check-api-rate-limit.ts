@@ -56,25 +56,27 @@ async function checkRateLimit() {
       console.log(`  Latency: ${duration}ms`);
       console.log('');
 
-    } catch (error: any) {
-      if (error.status === 429) {
+    } catch (error) {
+      const err = error as { status?: number; statusText?: string; message?: string; errorDetails?: Array<{ '@type': string; violations?: Array<{ quotaMetric: string; quotaValue: string }>; retryDelay?: string }> };
+
+      if (err.status === 429) {
         console.log(`  ❌ RATE LIMIT EXCEEDED`);
-        console.log(`  Status: ${error.status} ${error.statusText}`);
+        console.log(`  Status: ${err.status} ${err.statusText}`);
 
         // Extract rate limit info from error
-        if (error.errorDetails) {
-          const quotaFailure = error.errorDetails.find((d: any) =>
+        if (err.errorDetails) {
+          const quotaFailure = err.errorDetails.find((d) =>
             d['@type'] === 'type.googleapis.com/google.rpc.QuotaFailure'
           );
 
           if (quotaFailure?.violations) {
-            quotaFailure.violations.forEach((v: any) => {
+            quotaFailure.violations.forEach((v) => {
               console.log(`  Quota Metric: ${v.quotaMetric}`);
               console.log(`  Quota Value: ${v.quotaValue} requests per minute`);
             });
           }
 
-          const retryInfo = error.errorDetails.find((d: any) =>
+          const retryInfo = err.errorDetails.find((d) =>
             d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo'
           );
 
@@ -83,11 +85,11 @@ async function checkRateLimit() {
           }
         }
         console.log('');
-      } else if (error.status === 404) {
+      } else if (err.status === 404) {
         console.log(`  ⚠️  MODEL NOT AVAILABLE (may require different tier)`);
         console.log('');
       } else {
-        console.log(`  ❌ ERROR: ${error.message}`);
+        console.log(`  ❌ ERROR: ${err.message}`);
         console.log('');
       }
     }
