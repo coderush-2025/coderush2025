@@ -286,7 +286,7 @@ async function runTests() {
   const categories = [...new Set(testCases.map(t => t.category))];
   categories.forEach(cat => {
     const catTests = testCases.filter(t => t.category === cat);
-    const catPassed = catTests.filter((t, i) => {
+    const catPassed = catTests.filter((t) => {
       const globalIndex = testCases.indexOf(t);
       return globalIndex < passed + failed && !failedTests.some(f => f.question === t.question);
     }).length;
