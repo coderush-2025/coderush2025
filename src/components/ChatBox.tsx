@@ -24,18 +24,43 @@ interface Toast {
   type: 'error' | 'warning' | 'success';
 }
 
-// Helper function to render text with bold quotes
+// Helper function to render text with bold quotes and clickable links
 const renderTextWithBoldQuotes = (text: string) => {
+  // First, split by quoted text
   const parts = text.split(/("([^"]+)")/g);
+
   return parts.map((part, index) => {
     // Skip empty strings and the captured group content (every 3rd element starting from index 2)
     if (!part || (index > 0 && (index - 2) % 3 === 0)) {
       return null;
     }
+
+    // Handle quoted text (make it bold)
     if (part.startsWith('"') && part.endsWith('"')) {
       return <strong key={index} style={{ fontWeight: 600, userSelect: "text" }}>{part.slice(1, -1)}</strong>;
     }
-    return part;
+
+    // Handle URLs in non-quoted text
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const textParts = part.split(urlRegex);
+
+    return textParts.map((textPart, subIndex) => {
+      if (urlRegex.test(textPart)) {
+        return (
+          <a
+            key={`${index}-${subIndex}`}
+            href={textPart}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-[#37c2cc] transition-colors font-semibold"
+            style={{ userSelect: "text", cursor: "pointer" }}
+          >
+            {textPart}
+          </a>
+        );
+      }
+      return <span key={`${index}-${subIndex}`}>{textPart}</span>;
+    });
   }).filter(Boolean);
 };
 
@@ -89,12 +114,7 @@ export default function ChatBot() {
   useEffect(() => {
     const loadSession = async () => {
       if (typeof window !== "undefined" && sessionId) {
-        // Show default message immediately for faster perceived loading
-        setMessages([{
-          role: "bot",
-          content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
-        }]);
-        setIsLoadingSession(false);
+        setIsLoadingSession(true);
 
         try {
           // Run cleanup in the background (non-blocking)
@@ -118,18 +138,41 @@ export default function ChatBot() {
           const data = await response.json();
 
           if (data.success && data.exists) {
-            // If there's an existing session, update the message
+            // If there's an existing session, show "Welcome back" directly
             console.log("✅ Restored session in state:", data.state);
             setMessages([{
               role: "bot",
               content: data.message,
               buttons: data.buttons
             }]);
+          } else {
+            // Only show welcome message if no existing session
+            setMessages([{
+              role: "bot",
+              content: "👋 Welcome to CodeRush 2025! 🚀\n\n" +
+                       "I'm your registration assistant! I can help you:\n" +
+                       "• Register your team (right here in chat!)\n" +
+                       "• Answer event questions\n" +
+                       "• Provide guidelines & rules\n\n" +
+                       "Ready to register? Type your team name to begin! 😊\n" +
+                       "Or ask me anything about CodeRush 2025!"
+            }]);
           }
-          // If no existing session (data.exists === false), keep the default message already shown
+          setIsLoadingSession(false);
         } catch (error) {
           console.error("Session load error:", error);
-          // Keep the default message already shown
+          // Show default message on error
+          setMessages([{
+            role: "bot",
+            content: "👋 Welcome to CodeRush 2025! 🚀\n\n" +
+                     "I'm your registration assistant! I can help you:\n" +
+                     "• Register your team (right here in chat!)\n" +
+                     "• Answer event questions\n" +
+                     "• Provide guidelines & rules\n\n" +
+                     "Ready to register? Type your team name to begin! 😊\n" +
+                     "Or ask me anything about CodeRush 2025!"
+          }]);
+          setIsLoadingSession(false);
         }
       }
     };
@@ -147,33 +190,36 @@ export default function ChatBot() {
     }, 5000);
   };
 
-  const resetSession = async () => {
+  const resetSession = () => {
     if (typeof window !== "undefined") {
       // Save current scroll position
       const currentScrollY = window.scrollY;
 
-      // Force delete the registration from MongoDB before resetting
-      try {
-        await fetch("/api/cleanup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ sessionId, forceDelete: true }),
-        });
-        console.log("🗑️ Force deleted registration for session:", sessionId);
-      } catch (error) {
-        console.error("Cleanup error during reset:", error);
-        // Continue with reset even if cleanup fails
-      }
+      // Fire-and-forget cleanup (don't wait for it to complete - instant reset)
+      fetch("/api/cleanup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId, forceDelete: true }),
+      })
+        .then(() => console.log("🗑️ Force deleted registration for session:", sessionId))
+        .catch(error => console.error("Cleanup error during reset:", error));
 
+      // Instant reset - don't wait for cleanup
       localStorage.removeItem("regSessionId");
       const newId = uuidv4();
       localStorage.setItem("regSessionId", newId);
       setSessionId(newId);
       setMessages([{
         role: "bot",
-        content: "👋 Hi! I'll register your team for CodeRush 2025. What's your team name?"
+        content: "👋 Welcome to CodeRush 2025! 🚀\n\n" +
+                 "I'm your registration assistant! I can help you:\n" +
+                 "• Register your team (right here in chat!)\n" +
+                 "• Answer event questions\n" +
+                 "• Provide guidelines & rules\n\n" +
+                 "Ready to register? Type your team name to begin! 😊\n" +
+                 "Or ask me anything about CodeRush 2025!"
       }]);
       setInput("");
 
@@ -187,17 +233,20 @@ export default function ChatBot() {
   const handleButtonClick = async (value: string) => {
     // Check if this is the reset trigger
     if (value === "RESET") {
-      await resetSession();
+      resetSession(); // No await - instant reset
       return;
     }
 
     // Check if this is the edit form trigger
-    if (value === "OPEN_EDIT_FORM") {
+    if (value === "OPEN_EDIT_FORM" || value === "edit") {
       // Find the last message with registration data
       const lastMessageWithData = [...messages].reverse().find(m => m.registrationData);
       if (lastMessageWithData && lastMessageWithData.registrationData) {
         setEditData(lastMessageWithData.registrationData);
         setShowEditModal(true);
+      } else {
+        // If no registration data in messages, request it from the server
+        await sendMessageToAPI("edit");
       }
       return;
     }

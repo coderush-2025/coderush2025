@@ -25,13 +25,13 @@ export const states: Record<string, StateConfig> = {
   },
 
   CONFIRMATION: {
-    prompt: "Here is your summary. Confirm submission? (yes/no)",
+    prompt: "✨ Does everything look correct?\n\nReview your details carefully! You can update them later if needed (just don't click Reset!).\n\nReady to submit? (yes/no)",
     validate: (input) => ["yes", "no"].includes(input.toLowerCase()),
     next: "DONE",
   },
 
   DONE: {
-    prompt: "🎉 Registration Successful! Your team has been registered for CodeRush 2025. Check your email for confirmation details.",
+    prompt: "🎊 Congratulations! Your team is officially registered for CodeRush 2025! 🎉\n\n✅ Confirmation email sent to your team leader\n📅 Event Date: November 15, 2025\n⏰ Time: 8 AM - 6 PM\n\nSee you there! Get ready to build something amazing! 🚀",
   },
 };
 
