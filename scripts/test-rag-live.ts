@@ -6,7 +6,6 @@
 // Load environment variables from .env.local
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
 
 // Load .env.local
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
@@ -63,7 +62,7 @@ async function testRAGSystem() {
   console.log('');
 
   for (let i = 0; i < testQuestions.length; i++) {
-    const { q, expectedCategory } = testQuestions[i];
+    const { q } = testQuestions[i];
 
     log(`\n${'─'.repeat(70)}`, colors.blue);
     log(`Question ${i + 1}: "${q}"`, colors.blue + colors.bright);
