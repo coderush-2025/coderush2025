@@ -406,11 +406,6 @@ export default function ChatBot() {
         body: JSON.stringify({ sessionId, message }),
       });
 
-      // Check if the response is ok
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-
       // Check if response has content before parsing JSON
       const text = await res.text();
       if (!text) {
@@ -424,6 +419,21 @@ export default function ChatBot() {
         console.error("JSON parse error:", parseError);
         console.error("Response text:", text);
         throw new Error("Invalid JSON response from server");
+      }
+
+      // Handle rate limit error (429) with a nice toast
+      if (res.status === 429) {
+        showToast('Please slow down! Wait a moment before sending another message.', 'warning');
+        setIsTyping(false);
+        return;
+      }
+
+      // Check if the response is ok (after parsing to get error message)
+      if (!res.ok) {
+        const errorMessage = data.reply || `HTTP error! status: ${res.status}`;
+        showToast(errorMessage, 'error');
+        setIsTyping(false);
+        return;
       }
 
       if (data.reply) {

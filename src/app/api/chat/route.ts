@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     if (!globalRateLimiter.check(sessionId)) {
       console.warn("⚠️ Rate limit exceeded for session:", sessionId);
       return NextResponse.json({
-        reply: "⚠️ Too many requests. Please wait a moment before trying again."
+        reply: "Please slow down! You're sending messages too quickly. Wait a moment and try again. ⏱️"
       }, { status: 429 });
     }
 
