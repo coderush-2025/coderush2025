@@ -547,7 +547,7 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <h3 className="text-white font-semibold mb-1">Provide Team Information</h3>
-                  <p className="text-sm">Chat with the assistant to provide team name (3-10 characters), batch selection, and member details (names, index numbers, emails) for all 4 members.</p>
+                  <p className="text-sm">Chat with the assistant to provide team name (3-30 characters), batch selection, and member details (names, index numbers, emails) for all 4 members.</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -592,7 +592,7 @@ export default function RegisterPage() {
               </div>
               <div className="flex gap-3">
                 <span className="text-[#37c2cc] mt-1">•</span>
-                <p>Team names must be unique, 3-10 characters (letters, numbers, spaces, hyphens, underscores only).</p>
+                <p>Team names must be unique, 3-30 characters (letters, numbers, spaces, hyphens, underscores only).</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-[#37c2cc] mt-1">•</span>
