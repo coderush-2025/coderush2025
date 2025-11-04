@@ -172,5 +172,6 @@ export class RateLimiter {
   }
 }
 
-// Global rate limiter instance (10 requests per minute per session)
-export const globalRateLimiter = new RateLimiter(10, 60000);
+// Global rate limiter instance (30 requests per minute per session)
+// Registration flow needs ~15-20 requests (4 members × 3 fields + questions + confirmations)
+export const globalRateLimiter = new RateLimiter(30, 60000);

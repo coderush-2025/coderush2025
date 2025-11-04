@@ -116,19 +116,32 @@ export async function DELETE(req: NextRequest) {
     await Registration.findByIdAndDelete(id);
 
     // Delete from Google Sheets
+    let sheetsDeleted = false;
+    let sheetsError = null;
+
     try {
       if (registration.teamName) {
-        await deleteFromGoogleSheets(registration.teamName);
-        console.log('✅ Deleted from both database and Google Sheets');
+        const result = await deleteFromGoogleSheets(registration.teamName);
+        if (result.success) {
+          sheetsDeleted = true;
+          console.log('✅ Deleted from both database and Google Sheets');
+        } else {
+          sheetsError = result.error;
+          console.error('⚠️ Failed to delete from Google Sheets:', result.error);
+        }
       }
-    } catch (sheetsError) {
-      console.error('⚠️ Failed to delete from Google Sheets:', sheetsError);
-      // Continue even if sheets deletion fails
+    } catch (error) {
+      sheetsError = error instanceof Error ? error.message : 'Unknown error';
+      console.error('⚠️ Failed to delete from Google Sheets:', error);
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Registration deleted successfully from database and sheets',
+      message: sheetsDeleted
+        ? 'Registration deleted successfully from database and Google Sheets'
+        : 'Registration deleted from database only. Google Sheets error: ' + (sheetsError || 'Unknown'),
+      sheetsDeleted,
+      sheetsError: sheetsDeleted ? null : sheetsError,
     });
   } catch (error) {
     console.error('Error deleting registration:', error);

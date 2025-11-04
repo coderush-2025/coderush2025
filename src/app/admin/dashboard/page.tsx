@@ -147,8 +147,17 @@ export default function AdminDashboard() {
                 });
 
                 if (res.ok) {
+                  const data = await res.json();
                   setRegistrations(registrations.filter(r => r._id !== id));
-                  toast.success('Registration deleted successfully!', { id: loadingToast });
+
+                  if (data.sheetsDeleted) {
+                    toast.success('Registration deleted from database and Google Sheets!', { id: loadingToast, duration: 4000 });
+                  } else {
+                    toast.error(
+                      `Deleted from database, but Google Sheets failed: ${data.sheetsError || 'Unknown error'}`,
+                      { id: loadingToast, duration: 8000 }
+                    );
+                  }
                 } else {
                   toast.error('Failed to delete registration', { id: loadingToast });
                 }

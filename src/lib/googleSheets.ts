@@ -12,7 +12,12 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({ version: 'v4', auth });
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
-const SHEET_NAME = process.env.GOOGLE_SHEET_NAME || 'Registration'; // Sheet name (can have spaces)
+const SHEET_NAME = (process.env.GOOGLE_SHEET_NAME || 'Registration').trim(); // Sheet name (can have spaces)
+
+// Debug log on module load
+console.log('📋 Google Sheets Config:');
+console.log(`   SHEET_NAME: "${SHEET_NAME}" (length: ${SHEET_NAME.length})`);
+console.log(`   SPREADSHEET_ID: ${SPREADSHEET_ID}`);
 
 export interface RegistrationData {
   teamName: string;
@@ -253,17 +258,37 @@ export async function deleteFromGoogleSheets(teamName: string) {
     }
 
     // Get sheet ID for batch delete
+    console.log(`🔍 Getting spreadsheet metadata for deletion...`);
+    console.log(`   Spreadsheet ID: ${SPREADSHEET_ID}`);
+    console.log(`   Looking for sheet: "${SHEET_NAME}"`);
+
     const spreadsheet = await sheets.spreadsheets.get({
       spreadsheetId: SPREADSHEET_ID,
     });
+
+    console.log(`   Found ${spreadsheet.data.sheets?.length || 0} sheets in spreadsheet`);
+
+    // Debug: Show what we're comparing
+    spreadsheet.data.sheets?.forEach((s) => {
+      const title = s.properties?.title;
+      console.log(`   - Sheet: "${title}" (length: ${title?.length}, match: ${title === SHEET_NAME})`);
+    });
+    console.log(`   Target: "${SHEET_NAME}" (length: ${SHEET_NAME?.length})`);
 
     const sheet = spreadsheet.data.sheets?.find(
       (s) => s.properties?.title === SHEET_NAME
     );
 
-    if (!sheet || !sheet.properties?.sheetId) {
-      return { success: false, error: 'Sheet not found' };
+    if (!sheet || sheet.properties?.sheetId === undefined || sheet.properties?.sheetId === null) {
+      const availableSheets = spreadsheet.data.sheets?.map(s => s.properties?.title).join(', ') || 'none';
+      console.log(`❌ Sheet "${SHEET_NAME}" not found in: ${availableSheets}`);
+      return {
+        success: false,
+        error: `Sheet "${SHEET_NAME}" not found. Available sheets: ${availableSheets}`
+      };
     }
+
+    console.log(`✅ Found sheet "${SHEET_NAME}" with ID: ${sheet.properties.sheetId}`);
 
     // Delete 3 rows (team takes 3 rows)
     await sheets.spreadsheets.batchUpdate({
