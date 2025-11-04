@@ -20,6 +20,74 @@ type ReqBody = {
 
 const MAX_TEAMS = 100;
 
+// Conversational phrases that indicate user wants something (used in Q&A detection)
+const REQUEST_PHRASES = ['i want', 'i need', 'i ask', 'give me', 'send me', 'show me', 'tell me', 'no no', 'wait', 'actually'];
+
+// Conversational phrases for team name extraction (includes common typos)
+const TEAM_NAME_PHRASES = [
+  // Correct spellings
+  'my name is', 'i am', 'this is', 'my team is', 'we are',
+  'our name is', 'our team is', 'our team name is', 'my team name is',
+  'the team name is', 'team name is', 'hello i am', 'hi i am', 'i\'m',
+  // Common typos
+  'my tema is', 'our tema is', 'our tema name is', 'my tema name is',
+  'the tema name is', 'tema name is', 'out team is', 'our team name',
+  'my team name', 'our name', 'team name', 'our team', 'my team'
+];
+
+// Conversational phrases for member name extraction
+const NAME_PHRASES = [
+  'my name is', 'his name is', 'her name is', 'their name is',
+  'name is', 'the name is', 'member name is', 'i am', 'he is', 'she is',
+  'this is', 'it is', "it's", 'full name is', 'my full name is',
+  'his full name is', 'her full name is'
+];
+
+// Conversational phrases for index number extraction
+const INDEX_PHRASES = [
+  'my index is', 'his index is', 'her index is', 'their index is',
+  'index is', 'the index is', 'index number is', 'my index number is',
+  'his index number is', 'her index number is', 'the index number is',
+  'member index is', 'student index is'
+];
+
+// Conversational phrases for email extraction
+const EMAIL_PHRASES = [
+  'my email is', 'his email is', 'her email is', 'their email is',
+  'email is', 'the email is', 'my email address is', 'his email address is',
+  'her email address is', 'email address is', 'the email address is'
+];
+
+// Conversational phrases for batch selection extraction
+const BATCH_PHRASES = [
+  'my batch is', 'our batch is', 'batch is', 'the batch is',
+  'we are batch', 'we are from batch', 'i am from batch', 'i am in batch',
+  'our batch', 'my batch', 'batch', 'we are in batch', 'from batch'
+];
+
+/**
+ * Smart extraction: Remove conversational phrases and extract relevant data
+ */
+function extractFromConversational(input: string, phrases: string[]): string {
+  let result = input.trim();
+  const lowerInput = result.toLowerCase();
+
+  for (const phrase of phrases) {
+    if (lowerInput.includes(phrase)) {
+      const phraseIndex = lowerInput.indexOf(phrase);
+      const afterPhrase = result.substring(phraseIndex + phrase.length).trim();
+
+      if (afterPhrase.length >= 1) {
+        result = afterPhrase;
+        console.log(`🔍 Extracted "${result}" from phrase "${phrase}"`);
+        break;
+      }
+    }
+  }
+
+  return result;
+}
+
 function escapeRegExp(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -82,13 +150,12 @@ export async function POST(req: Request) {
     } else {
       const questionWords = ['what', 'when', 'where', 'how', 'why', 'can', 'is', 'are', 'do', 'does', 'will', 'should', 'which', 'who'];
       const helpKeywords = ['help', 'format', 'example', 'explain', 'tell me', 'show me'];
-      const conversationalPhrases = ['i want', 'i need', 'i ask', 'give me', 'send me', 'show me', 'tell me', 'no no', 'wait', 'actually'];
       const eventKeywords = ['venue', 'location', 'address', 'place', 'map', 'event', 'coderush', 'buildathon', 'hackathon', 'competition', 'guidelines', 'guideline', 'rules', 'information', 'details'];
 
       const startsWithQuestionWord = questionWords.some(word => lowerMsg.startsWith(word + ' ') || lowerMsg.startsWith(word + "'"));
       const containsQuestionWord = questionWords.some(word => lowerMsg.includes(' ' + word + ' ') || lowerMsg.includes(' ' + word + '?') || lowerMsg.endsWith(' ' + word));
       const containsHelpKeyword = helpKeywords.some(word => lowerMsg.includes(word));
-      const containsConversationalPhrase = conversationalPhrases.some(phrase => lowerMsg.includes(phrase));
+      const containsConversationalPhrase = REQUEST_PHRASES.some(phrase => lowerMsg.includes(phrase));
       const containsEventKeyword = eventKeywords.some(keyword => lowerMsg.includes(keyword));
       const hasQuestionMark = message.includes('?');
 
@@ -272,16 +339,17 @@ export async function POST(req: Request) {
   if (!reg) {
     console.log("✨ Creating new registration with team name");
 
-    const trimmedTeamName = (message || "").trim();
+    // Smart extraction: Remove conversational phrases and extract actual team name
+    const trimmedTeamName = extractFromConversational(message || "", TEAM_NAME_PHRASES);
 
     // Validation 1: Empty or too short
     if (!trimmedTeamName || trimmedTeamName.length < 3) {
       return NextResponse.json({ reply: "❌ Team name must be at least 3 characters. Try again." });
     }
 
-    // Validation 2: Maximum length (10 characters)
-    if (trimmedTeamName.length > 10) {
-      return NextResponse.json({ reply: "❌ Team name must be 10 characters or less. Try again." });
+    // Validation 2: Maximum length (30 characters)
+    if (trimmedTeamName.length > 30) {
+      return NextResponse.json({ reply: "❌ Team name must be 30 characters or less. Try again." });
     }
 
     // Validation 3: Special characters - only allow letters, numbers, spaces, hyphens, underscores
@@ -330,7 +398,7 @@ export async function POST(req: Request) {
     // Validation 9: Detect question words and event-related terms
     const questionWords = ['what', 'where', 'when', 'who', 'why', 'how', 'which', 'prize', 'money', 'venue', 'location', 'date', 'time', 'event', 'registration', 'register', 'submit', 'guideline', 'rule'];
     if (questionWords.some(word => lowerTeamName.includes(word))) {
-      return NextResponse.json({ reply: "❌ That doesn't look like a valid team name. Please enter your actual team name (3-10 characters)." });
+      return NextResponse.json({ reply: "❌ That doesn't look like a valid team name. Please enter your actual team name (3-30 characters)." });
     }
 
     // Check team count (only count completed registrations)
@@ -595,7 +663,8 @@ export async function POST(req: Request) {
     if (!reg.tempMember) {
       if (!message) return NextResponse.json({ reply: `${memberLabel} — Full name:` });
 
-      const trimmedMessage = message.trim();
+      // Smart extraction: Remove conversational phrases and extract actual name
+      const trimmedMessage = extractFromConversational(message, NAME_PHRASES);
       const lowerMessage = trimmedMessage.toLowerCase();
 
       // Detect unhelpful responses
@@ -603,6 +672,20 @@ export async function POST(req: Request) {
       if (unhelpfulResponses.some(phrase => lowerMessage === phrase || lowerMessage.includes(phrase))) {
         return NextResponse.json({
           reply: `📝 Please provide the actual full name for ${memberLabel}. This is required for registration!\n\n${memberLabel} — Full name:`
+        });
+      }
+
+      // Validate that name is not an email address
+      if (trimmedMessage.includes('@') || /^[^\s]+@[^\s]+\.[^\s]+$/.test(trimmedMessage)) {
+        return NextResponse.json({
+          reply: `❌ That looks like an email address! Please provide the person's full name first.\n\n${memberLabel} — Full name:`
+        });
+      }
+
+      // Validate that name is not an index number (e.g., 234001T)
+      if (/^\d{6}[A-Z]$/i.test(trimmedMessage)) {
+        return NextResponse.json({
+          reply: `❌ That looks like an index number! Please provide the person's full name first.\n\n${memberLabel} — Full name:`
         });
       }
 
@@ -651,6 +734,14 @@ export async function POST(req: Request) {
         });
       }
 
+      // Check for duplicate names in current team (case-insensitive)
+      const nameExistsInTeam = reg.members.some(m => m.fullName.toLowerCase() === lowerMessage);
+      if (nameExistsInTeam) {
+        return NextResponse.json({
+          reply: `❌ This name (${trimmedMessage}) is already registered in your team. Each team member must have a unique name.\n\n${memberLabel} — Full name:`
+        });
+      }
+
       reg.tempMember = { fullName: trimmedMessage, batch: reg.teamBatch };
       await reg.save();
       const emoji = reg.currentMember === 1 ? "👑" : "👤";
@@ -659,8 +750,10 @@ export async function POST(req: Request) {
 
     // indexNumber (validate against team batch)
     if (reg.tempMember && !reg.tempMember.indexNumber) {
-      const trimmedMessage = message.trim().toUpperCase();
-      const lowerMessage = message.trim().toLowerCase();
+      // Smart extraction: Remove conversational phrases and extract actual index
+      const extracted = extractFromConversational(message, INDEX_PHRASES);
+      const trimmedMessage = extracted.trim().toUpperCase();
+      const lowerMessage = extracted.trim().toLowerCase();
 
       // Detect unhelpful responses
       const unhelpfulResponses = ['i dont know', 'i don\'t know', 'idk', 'dont know', 'don\'t know', 'skip', 'pass', 'next', 'later', 'unknown', 'not sure', 'no idea', 'no index', 'none'];
@@ -745,7 +838,9 @@ export async function POST(req: Request) {
 
     // email
     if (reg.tempMember && reg.tempMember.indexNumber && !reg.tempMember.email) {
-      const trimmedMessage = message.trim();
+      // Smart extraction: Remove conversational phrases and extract actual email
+      const extracted = extractFromConversational(message, EMAIL_PHRASES);
+      const trimmedMessage = extracted.trim();
       const lowerEmail = trimmedMessage.toLowerCase();
 
       // Detect unhelpful responses
@@ -884,7 +979,9 @@ export async function POST(req: Request) {
 
   // BATCH_SELECTION handling
   if (reg.state === "BATCH_SELECTION") {
-    const trimmedMessage = message.trim();
+    // Apply smart extraction for batch selection
+    const extracted = extractFromConversational(message, BATCH_PHRASES);
+    const trimmedMessage = extracted.trim();
 
     // Check if this is a question instead of batch selection
     const lowerMsg = trimmedMessage.toLowerCase();
