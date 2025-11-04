@@ -118,7 +118,7 @@ export const knowledgeBase: KnowledgeDocument[] = [
     id: "team-name-rules",
     category: "registration",
     question: "What are the team name rules?",
-    answer: "Choose a cool team name! 😎 It should be 3-10 characters and can include letters, numbers, spaces, hyphens (-), or underscores (_). Make it unique and creative! Just avoid using only numbers. Examples: Team42, Code_Ninjas, Rush-2025",
+    answer: "Choose a cool team name! 😎 It should be 3-30 characters and can include letters, numbers, spaces, hyphens (-), or underscores (_). Make it unique and creative! Just avoid using only numbers. Examples: Team42, Code_Ninjas, Rush-2025",
     keywords: ["team name", "name rules", "characters", "format", "naming"],
     priority: 10
   },
@@ -152,7 +152,7 @@ export const knowledgeBase: KnowledgeDocument[] = [
     id: "registration-steps",
     category: "registration",
     question: "How do I register my team?",
-    answer: "You can register right here in this chat! 🚀 Super easy - I'll guide you through it:\n\n1️⃣ Share your team name (3-10 characters)\n2️⃣ Select your batch (23 or 24)\n3️⃣ Add all 4 teammates (name, index, email for each)\n4️⃣ Review and confirm!\n\nReady to start? Just type your team name now! 😊",
+    answer: "You can register right here in this chat! 🚀 Super easy - I'll guide you through it:\n\n1️⃣ Share your team name (3-30 characters)\n2️⃣ Select your batch (23 or 24)\n3️⃣ Add all 4 teammates (name, index, email for each)\n4️⃣ Review and confirm!\n\nReady to start? Just type your team name now! 😊",
     keywords: ["how to register", "process", "steps", "procedure", "how do i register", "register team", "start registration", "registration process"],
     priority: 10
   },
@@ -615,11 +615,9 @@ export function searchByKeyword(query: string, limit = 5): KnowledgeDocument[] {
     const docText = `${doc.question} ${doc.answer} ${doc.keywords.join(' ')}`.toLowerCase();
     if (words.length >= 2) {
       // Check if multiple query words appear together
-      let phraseMatches = 0;
       for (let i = 0; i < words.length - 1; i++) {
         const phrase = `${words[i]} ${words[i + 1]}`;
         if (docText.includes(phrase)) {
-          phraseMatches++;
           score += 8; // High bonus for phrase matches
         }
       }
