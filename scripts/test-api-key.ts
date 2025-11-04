@@ -30,10 +30,11 @@ async function testAPIKey() {
 
     console.log('✅ SUCCESS! Gemini 2.0 Flash is working!');
     console.log('📨 Response:', response);
-  } catch (error: any) {
-    console.error('❌ ERROR:', error.message);
-    if (error.status) {
-      console.error('Status:', error.status);
+  } catch (error) {
+    const err = error as { message?: string; status?: number };
+    console.error('❌ ERROR:', err.message);
+    if (err.status) {
+      console.error('Status:', err.status);
     }
   }
 }

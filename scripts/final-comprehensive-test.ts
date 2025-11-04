@@ -163,8 +163,9 @@ async function runFinalTest() {
       // Small delay
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-    } catch (error: any) {
-      console.log('❌ ERROR:', error.message);
+    } catch (error) {
+      const err = error as { message?: string };
+      console.log('❌ ERROR:', err.message);
       errors++;
     }
   }
